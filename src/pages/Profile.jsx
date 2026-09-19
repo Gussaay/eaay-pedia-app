@@ -4,6 +4,7 @@ import { useNavigate } from 'react-router-dom';
 import { BarChart3, Camera, GraduationCap, LogOut, MapPin, Pencil, Clock } from 'lucide-react';
 import { useAuth, logout } from '../hooks/useAuth';
 import { updateAt, uploadImage } from '../lib/rtdb';
+import BottomNav from '../components/BottomNav';
 import { AppBar, Avatar, Button, Card, Confirm, Page, useToast } from '../components/ui';
 
 export default function Profile() {
@@ -35,8 +36,8 @@ export default function Profile() {
   ];
 
   return (
-    <div className="min-h-screen">
-      <AppBar title="My profile" />
+    <div className="min-h-screen pb-28">
+      <AppBar title="My profile" back={false} />
       <Page className="space-y-4">
         <Card className="p-6 text-center">
           <div className="relative inline-block">
@@ -71,6 +72,7 @@ export default function Profile() {
           </Button>
         </div>
       </Page>
+      <BottomNav />
       <Confirm
         open={askLogout}
         message="Do you want to sign out?"

@@ -22,6 +22,7 @@ const Contact = lazy(() => import('./pages/Contact'));
 const About = lazy(() => import('./pages/About'));
 const Privacy = lazy(() => import('./pages/Privacy'));
 const Admin = lazy(() => import('./pages/admin/AdminRoutes'));
+const Download = lazy(() => import('./pages/Download'));
 
 function Splash() {
   return (
@@ -67,9 +68,11 @@ function useNativeBackButton() {
 
 export default function App() {
   const { authLoading } = useAuth();
+  const location = useLocation();
   useNativeBackButton();
 
-  if (authLoading) return <Splash />;
+  // The public download page must not wait for (or require) sign-in.
+  if (authLoading && location.pathname !== '/download') return <Splash />;
 
   const guard = (el) => <RequireAuth>{el}</RequireAuth>;
 
@@ -79,6 +82,7 @@ export default function App() {
         <Routes>
           <Route path="/login" element={<SignIn />} />
           <Route path="/privacy" element={<Privacy />} />
+          <Route path="/download" element={<Download />} />
           <Route path="/" element={guard(<Home />)} />
           <Route path="/setup" element={guard(<ProfileSetup />)} />
           <Route path="/cat/:source" element={guard(<Books />)} />

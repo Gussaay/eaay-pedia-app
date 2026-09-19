@@ -7,6 +7,7 @@ import { useAuth } from '../hooks/useAuth';
 import { useAsync } from '../hooks/useData';
 import { getLatest, incrementString, updateAt } from '../lib/rtdb';
 import { openUrl } from '../lib/native';
+import BottomNav from '../components/BottomNav';
 import { AppBar, Button, Empty, ErrorBox, Modal, Page, SkeletonList, ZoomImage } from '../components/ui';
 
 const hasContent = (n) => !!(n && (n.title || n.message));
@@ -46,8 +47,8 @@ export default function Notifications() {
   };
 
   return (
-    <div className="min-h-screen">
-      <AppBar title="Notifications" />
+    <div className="min-h-screen pb-28">
+      <AppBar title="Notifications" back={false} />
       <Page>
         <ErrorBox error={!list.data.length && list.error} onRetry={list.reload} />
         {list.loading ? (
@@ -77,6 +78,7 @@ export default function Notifications() {
           </div>
         )}
       </Page>
+      <BottomNav />
       <Modal
         open={!!open}
         onClose={() => setOpen(null)}

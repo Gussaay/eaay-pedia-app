@@ -27,7 +27,7 @@ export default function Books() {
             New books will appear here once they are published.
           </Empty>
         ) : (
-          <div className="space-y-3">
+          <div className="grid gap-3 md:grid-cols-2">
             {books.data.map((b) => (
               <ListCard
                 key={b._key}

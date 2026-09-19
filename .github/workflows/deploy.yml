@@ -1,7 +1,13 @@
 name: Build and Deploy Web and APK
 
-# Same flow as the IMCI app: every push to main builds the web app, deploys it
-# to Firebase Hosting (https://easy-pedia.web.app) and builds the Android APK.
+# Same flow as the IMCI app. Every push to main:
+#   1. builds the Android APK (signed with the release key from secrets),
+#   2. builds the web app and deploys it to Firebase Hosting together with the
+#      APK, so there is a permanent public download link:
+#        https://easy-pedia.web.app/download                   (download page)
+#        https://easy-pedia.web.app/download/easy-pedia-mcqs.apk
+#   3. publishes the same APK as a GitHub Release:
+#        https://github.com/Gussaay/eaay-pedia-app/releases/latest/download/easy-pedia-mcqs.apk
 on:
   push:
     branches:
@@ -13,45 +19,18 @@ concurrency:
   group: deploy-main
   cancel-in-progress: true
 
+env:
+  SITE_URL: https://easy-pedia.web.app
+  APK_NAME: easy-pedia-mcqs.apk
+
 jobs:
-  web:
-    name: Build & deploy web (Firebase Hosting)
-    runs-on: ubuntu-latest
-    steps:
-      - name: Checkout code
-        uses: actions/checkout@v4
-
-      - name: Setup Node.js
-        uses: actions/setup-node@v4
-        with:
-          node-version: '22'
-          cache: 'npm'
-
-      - name: Install dependencies
-        run: npm ci
-
-      - name: Unit tests
-        run: npm test
-
-      - name: Build web assets
-        run: npm run build
-
-      # Secret FIREBASE_SERVICE_ACCOUNT_EASY_PEDIA = JSON key of a service account
-      # with the "Firebase Hosting Admin" role (created by `firebase init hosting:github`).
-      - name: Deploy to Firebase Hosting
-        uses: FirebaseExtended/action-hosting-deploy@v0
-        with:
-          repoToken: ${{ secrets.GITHUB_TOKEN }}
-          firebaseServiceAccount: ${{ secrets.FIREBASE_SERVICE_ACCOUNT_EASY_PEDIA }}
-          channelId: live
-          projectId: easy-pedia
-
   android:
     name: Build Android APK
     runs-on: ubuntu-latest
+    outputs:
+      version: ${{ steps.version.outputs.version }}
+      version_code: ${{ steps.version.outputs.version_code }}
     env:
-      # Old Sketchware app was versionCode 9; keep every CI build above it.
-      VERSION_CODE: ${{ github.run_number }}
       HAS_KEYSTORE: ${{ secrets.KEYSTORE_BASE64 != '' }}
     steps:
       - name: Checkout code
@@ -70,6 +49,19 @@ jobs:
           java-version: '21'
           cache: 'gradle'
 
+      # Version = <major>.<minor> from package.json + GitHub run number, e.g. 6.0.12.
+      # versionCode stays above the old Sketchware app (9).
+      - name: Set app version
+        id: version
+        run: |
+          BASE=$(node -p "require('./package.json').version.split('.').slice(0,2).join('.')")
+          VERSION="${BASE}.${{ github.run_number }}"
+          CODE=$(( ${{ github.run_number }} + 10 ))
+          npm version "$VERSION" --no-git-tag-version --allow-same-version
+          echo "version=$VERSION" >> "$GITHUB_OUTPUT"
+          echo "version_code=$CODE" >> "$GITHUB_OUTPUT"
+          echo "Building $VERSION (versionCode $CODE)"
+
       - name: Install dependencies
         run: npm ci
 
@@ -80,14 +72,12 @@ jobs:
 
       - name: Set versionCode / versionName
         run: |
-          CODE=$((VERSION_CODE + 10))
-          NAME=$(node -p "require('./package.json').version")
-          sed -i -e "s/versionCode [0-9]*/versionCode ${CODE}/" android/app/build.gradle
-          sed -i -e "s/versionName \".*\"/versionName \"${NAME}\"/" android/app/build.gradle
+          sed -i -e "s/versionCode [0-9]*/versionCode ${{ steps.version.outputs.version_code }}/" android/app/build.gradle
+          sed -i -e "s/versionName \".*\"/versionName \"${{ steps.version.outputs.version }}\"/" android/app/build.gradle
           grep -E "versionCode|versionName" android/app/build.gradle
 
-      # Signed release APK when the keystore secrets exist. To update the
-      # existing Play Store app it MUST be the same keystore as the old app.
+      # Release APK signed with the key from secrets (see keystore-secrets.txt on
+      # the developer PC). A stable key is required so users can install updates.
       - name: Build signed release APK
         if: env.HAS_KEYSTORE == 'true'
         run: |
@@ -101,22 +91,139 @@ jobs:
             --ks-key-alias "${{ secrets.KEY_ALIAS }}" \
             --ks-pass "pass:${{ secrets.KEYSTORE_PASSWORD }}" \
             --key-pass "pass:${{ secrets.KEY_PASSWORD }}" \
-            --out ../easy-pedia-mcqs.apk \
+            --out "../$APK_NAME" \
             app/build/outputs/apk/release/app-release-aligned.apk
-          $BT/apksigner verify ../easy-pedia-mcqs.apk
+          $BT/apksigner verify "../$APK_NAME"
           rm -f app/release.keystore
 
+      # Fallback until the keystore secrets are added. Debug keys change on every
+      # CI run, so users would have to uninstall before updating.
       - name: Build debug APK (no keystore configured)
         if: env.HAS_KEYSTORE != 'true'
         run: |
+          echo "::warning::KEYSTORE_BASE64 secret not set - publishing a DEBUG-signed APK."
           cd android
           chmod +x gradlew
           ./gradlew assembleDebug
-          cp app/build/outputs/apk/debug/app-debug.apk ../easy-pedia-mcqs-debug.apk
+          cp app/build/outputs/apk/debug/app-debug.apk "../$APK_NAME"
 
-      - name: Upload APK
+      # Read by the installed app to offer updates (like IMCI's native-version.json).
+      - name: Create native-version.json
+        run: |
+          SIZE=$(du -h "$APK_NAME" | cut -f1)
+          NOTES=$(git log -1 --pretty=%s | sed 's/"/\\"/g')
+          cat > native-version.json <<EOF
+          {
+            "versionCode": ${{ steps.version.outputs.version_code }},
+            "version": "${{ steps.version.outputs.version }}",
+            "apkUrl": "${SITE_URL}/download/${APK_NAME}",
+            "size": "${SIZE}",
+            "signed": ${HAS_KEYSTORE},
+            "notes": "${NOTES}",
+            "date": "$(date -u +%Y-%m-%d)"
+          }
+          EOF
+          cat native-version.json
+
+      - name: Upload APK artifact
         uses: actions/upload-artifact@v4
         with:
-          name: easy-pedia-mcqs-apk-${{ github.run_number }}
-          path: easy-pedia-mcqs*.apk
+          name: apk
+          path: |
+            ${{ env.APK_NAME }}
+            native-version.json
           retention-days: 30
+
+  web:
+    name: Build & deploy web (Firebase Hosting)
+    needs: android
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+          cache: 'npm'
+
+      - name: Set app version
+        run: npm version "${{ needs.android.outputs.version }}" --no-git-tag-version --allow-same-version
+
+      - name: Install dependencies
+        run: npm ci
+
+      - name: Unit tests
+        run: npm test
+
+      - name: Build web assets
+        run: npm run build
+
+      - name: Download APK
+        uses: actions/download-artifact@v4
+        with:
+          name: apk
+          path: apk
+
+      - name: Add APK and version file to the site
+        run: |
+          mkdir -p dist/download
+          cp "apk/$APK_NAME" "dist/download/$APK_NAME"
+          cp apk/native-version.json dist/native-version.json
+          ls -la dist/download dist/native-version.json
+
+      # Secret FIREBASE_SERVICE_ACCOUNT_EASY_PEDIA was created by `firebase init hosting:github`.
+      - name: Deploy to Firebase Hosting
+        uses: FirebaseExtended/action-hosting-deploy@v0
+        with:
+          repoToken: ${{ secrets.GITHUB_TOKEN }}
+          firebaseServiceAccount: ${{ secrets.FIREBASE_SERVICE_ACCOUNT_EASY_PEDIA }}
+          channelId: live
+          projectId: easy-pedia
+
+      - name: Verify the download link is live
+        run: |
+          for i in 1 2 3 4 5; do
+            LIVE=$(curl -fsSL "${SITE_URL}/native-version.json?t=$(date +%s)" || echo "")
+            echo "$LIVE"
+            if echo "$LIVE" | grep -q "\"${{ needs.android.outputs.version }}\""; then
+              curl -fsSI "${SITE_URL}/download/${APK_NAME}" | head -5
+              exit 0
+            fi
+            echo "Not live yet, waiting..."
+            sleep 15
+          done
+          echo "::error::native-version.json did not show the new version."
+          exit 1
+
+  release:
+    name: Publish GitHub Release
+    needs: android
+    runs-on: ubuntu-latest
+    permissions:
+      contents: write
+    steps:
+      - name: Download APK
+        uses: actions/download-artifact@v4
+        with:
+          name: apk
+
+      - name: Create release
+        uses: softprops/action-gh-release@v2
+        with:
+          tag_name: v${{ needs.android.outputs.version }}
+          name: Easy Pedia MCQs v${{ needs.android.outputs.version }}
+          target_commitish: ${{ github.sha }}
+          make_latest: true
+          body: |
+            Android APK for Easy Pedia MCQs v${{ needs.android.outputs.version }} (versionCode ${{ needs.android.outputs.version_code }}).
+
+            Permanent download links (always the newest version):
+            - ${{ env.SITE_URL }}/download
+            - https://github.com/${{ github.repository }}/releases/latest/download/${{ env.APK_NAME }}
+
+            Web app: ${{ env.SITE_URL }}
+          files: |
+            ${{ env.APK_NAME }}
+            native-version.json

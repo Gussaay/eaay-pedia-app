@@ -25,7 +25,7 @@ export default function ImageField({ label = 'Image', folder, value, onChange })
     <div className="mb-3">
       <span className="block text-sm font-medium text-slate-700 mb-1">{label}</span>
       <div className="flex items-center gap-3">
-        <Thumb src={value} className="h-16 w-16" />
+        <Thumb src={value} label="+" fallback="/img/logo.png" className="h-16 w-16" />
         <label className="inline-flex items-center gap-2 text-brand-700 font-semibold cursor-pointer">
           <ImagePlus size={18} /> {busy ? 'Uploading…' : value ? 'Change image' : 'Upload image'}
           <input type="file" accept="image/*" className="hidden" onChange={pick} disabled={busy} />

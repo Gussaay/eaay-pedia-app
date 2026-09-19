@@ -5,6 +5,7 @@ import { RotateCcw, Share2 } from 'lucide-react';
 import { useAuth } from '../hooks/useAuth';
 import { num, updateAt } from '../lib/rtdb';
 import { shareImage } from '../lib/native';
+import BottomNav from '../components/BottomNav';
 import { AppBar, Avatar, Button, Confirm, Page, useToast } from '../components/ui';
 
 function Donut({ correct, wrong }) {
@@ -58,8 +59,8 @@ export default function Performance() {
   };
 
   return (
-    <div className="min-h-screen">
-      <AppBar title="My performance" />
+    <div className="min-h-screen pb-28">
+      <AppBar title="My performance" back={false} />
       <Page className="space-y-4">
         <div ref={cardRef} className="bg-white rounded-3xl border border-slate-100 shadow-sm p-6 text-center">
           <div className="flex items-center justify-center gap-3">
@@ -90,6 +91,7 @@ export default function Performance() {
           <RotateCcw size={18} /> Reset statistics
         </Button>
       </Page>
+      <BottomNav />
       <Confirm
         open={confirmReset}
         danger

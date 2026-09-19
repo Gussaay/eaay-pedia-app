@@ -2,6 +2,7 @@ import { useEffect, useState } from 'react';
 import { Link, Navigate, useLocation, useNavigate } from 'react-router-dom';
 import { Mail, Lock, WifiOff } from 'lucide-react';
 import { useAuth } from '../hooks/useAuth';
+import { isNative } from '../lib/native';
 import { useOnline } from '../hooks/useData';
 import { Button, Confirm, Modal, useToast } from '../components/ui';
 import {
@@ -165,6 +166,11 @@ export default function SignIn() {
             privacy policy
           </Link>
         </p>
+        {!isNative && (
+          <Link to="/download" className="mt-5 flex items-center justify-center gap-2 text-sm font-semibold text-brand-700">
+            📱 Download the Android app
+          </Link>
+        )}
         <p className="text-xs text-slate-400 text-center mt-4">Made with ♥️ by Dr. Qusay Mohamed</p>
       </div>
 

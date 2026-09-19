@@ -26,6 +26,8 @@ export default defineConfig({
       },
       workbox: {
         navigateFallback: '/index.html',
+        // Let the APK download and the update manifest reach the network.
+        navigateFallbackDenylist: [/\.apk$/, /\.json$/, /^\/__\//],
         cleanupOutdatedCaches: true,
         maximumFileSizeToCacheInBytes: 6 * 1024 * 1024,
         globPatterns: ['**/*.{js,css,html,ico,png,svg,woff,woff2,ttf}'],

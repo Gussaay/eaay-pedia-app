@@ -1,7 +1,7 @@
 import { useNavigate } from 'react-router-dom';
-import { BarChart3, Info, LogOut, Megaphone, Shield, Share2, User, X } from 'lucide-react';
+import { BarChart3, Info, LogOut, Megaphone, Shield, Share2, Smartphone, User, X } from 'lucide-react';
 import { useAuth, logout } from '../hooks/useAuth';
-import { shareApp } from '../lib/native';
+import { isNative, shareApp } from '../lib/native';
 import { APP_VERSION } from '../config';
 import { Avatar } from './ui';
 
@@ -19,6 +19,7 @@ export default function Drawer({ open, onClose }) {
     { icon: Megaphone, label: 'Official pages', action: () => go('/contact') },
     { icon: Info, label: 'About developer', action: () => go('/about') },
     { icon: Shield, label: 'Privacy policy', action: () => go('/privacy') },
+    ...(isNative ? [] : [{ icon: Smartphone, label: 'Download Android app', action: () => go('/download') }]),
   ];
 
   return (
@@ -32,7 +33,7 @@ export default function Drawer({ open, onClose }) {
           open ? 'translate-x-0' : '-translate-x-full'
         }`}
       >
-        <div className="bg-gradient-to-br from-brand-700 to-brand-500 text-white p-5 pt-safe">
+        <div className="bg-gradient-to-br from-brand-700 to-brand-500 text-white px-5 pb-5 pt-[max(1.25rem,env(safe-area-inset-top))]">
           <button className="float-right p-1 text-white/80" onClick={onClose} aria-label="Close menu">
             <X size={20} />
           </button>

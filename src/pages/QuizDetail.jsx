@@ -67,7 +67,7 @@ export default function QuizDetail() {
       <Page className="space-y-4">
         <Card className="p-5">
           <div className="flex gap-4">
-            <Thumb src={q.img} fallback="/img/nelson.png" className="h-24 w-24" />
+            <Thumb src={q.img} label={q.title} className="h-24 w-24 text-2xl" />
             <div className="min-w-0">
               <h2 className="font-display text-xl text-slate-900 leading-snug">{q.title}</h2>
               {q.des && <p className="text-sm text-slate-600 mt-1">{q.des}</p>}

@@ -1,18 +1,56 @@
-// Main page (MainPageActivity): categories, daily quiz, notifications, drawer.
+// Main page (MainPageActivity): greeting + stats, daily quiz, question banks.
 import { useMemo, useState } from 'react';
-import { useNavigate } from 'react-router-dom';
-import { Bell, BookOpen, Mail, Menu, MessageCircle, Send, ShieldCheck } from 'lucide-react';
+import { Link, useNavigate } from 'react-router-dom';
+import { Bell, BookOpen, ChevronRight, Mail, Menu, MessageCircle, Send, ShieldCheck, Smartphone } from 'lucide-react';
 import { useAuth } from '../hooks/useAuth';
 import { useAsync, useList } from '../hooks/useData';
 import { getLatest, num } from '../lib/rtdb';
-import { openUrl } from '../lib/native';
+import { isNative, openUrl } from '../lib/native';
 import { LINKS } from '../config';
 import Drawer from '../components/Drawer';
+import BottomNav from '../components/BottomNav';
 import DailyQuiz, { useDailyQuiz } from '../components/DailyQuiz';
-import { AppBar, Button, Empty, ErrorBox, ListCard, Modal, OfflineBanner, Page, SkeletonList } from '../components/ui';
+import { AppBar, Button, Empty, ErrorBox, Modal, OfflineBanner, Page, Thumb } from '../components/ui';
+
+function greeting() {
+  const h = new Date().getHours();
+  if (h < 12) return 'Good morning';
+  if (h < 18) return 'Good afternoon';
+  return 'Good evening';
+}
+
+function Ring({ value }) {
+  const r = 26;
+  const c = 2 * Math.PI * r;
+  const v = Math.max(0, Math.min(100, value || 0));
+  return (
+    <svg viewBox="0 0 64 64" className="h-16 w-16 -rotate-90 shrink-0" aria-hidden="true">
+      <circle cx="32" cy="32" r={r} fill="none" stroke="rgba(255,255,255,0.25)" strokeWidth="7" />
+      <circle cx="32" cy="32" r={r} fill="none" stroke="white" strokeWidth="7" strokeLinecap="round" strokeDasharray={`${(c * v) / 100} ${c}`} />
+    </svg>
+  );
+}
+
+function CategoryCard({ c, onClick, hidden }) {
+  return (
+    <button
+      onClick={onClick}
+      className="group text-left bg-white rounded-2xl border border-slate-100 shadow-sm hover:shadow-lg hover:-translate-y-0.5 active:scale-[0.98] transition overflow-hidden flex sm:flex-col"
+    >
+      <Thumb src={c.img} label={c.title} className="h-24 w-24 sm:h-32 sm:w-full rounded-none text-3xl" />
+      <div className="flex-1 p-4 flex items-center gap-2 min-w-0">
+        <div className="min-w-0 flex-1">
+          <p className="font-display text-slate-900 leading-snug line-clamp-2">{c.title}</p>
+          <p className="text-xs text-slate-500 mt-1">{hidden ? 'Not published' : 'Tap to open'}</p>
+        </div>
+        <ChevronRight className="text-slate-300 group-hover:text-brand-500 shrink-0" size={20} />
+      </div>
+    </button>
+  );
+}
 
 export default function Home() {
-  const { user, isAdmin, profileIncomplete } = useAuth();
+  const { user, profile, isAdmin, profileIncomplete } = useAuth();
   const navigate = useNavigate();
   const [drawer, setDrawer] = useState(false);
   const [contact, setContact] = useState(false);
@@ -35,12 +73,19 @@ export default function Home() {
         .reduce((sum, q) => sum + num(q.number), 0),
     [quizzes.data],
   );
+  const overall = num(profile?.over_all);
+  const answered = num(profile?.total_play);
+  const firstName = String(profile?.name || user.displayName || '').trim().split(/\s+/)[0];
+
+  const skip = () => {
+    sessionStorage.setItem('skipProfile', '1');
+    setSkipProfile(true);
+  };
 
   return (
-    <div className="min-h-screen">
+    <div className="min-h-screen pb-28">
       <AppBar
         title="Easy Pedia MCQs"
-        subtitle={totalQuestions ? `Total of ${totalQuestions.toLocaleString()} questions are available` : undefined}
         left={
           <button className="p-2 rounded-full hover:bg-white/10" aria-label="Menu" onClick={() => setDrawer(true)}>
             <Menu size={22} />
@@ -58,7 +103,41 @@ export default function Home() {
         }
       />
       <OfflineBanner />
-      <Page className="space-y-4">
+      <Page className="space-y-5">
+        {/* Greeting + stats */}
+        <section className="relative overflow-hidden rounded-3xl bg-gradient-to-br from-brand-700 via-brand-600 to-sky-500 text-white p-5 shadow-lg shadow-brand-700/20">
+          <span className="absolute -right-10 -top-10 h-40 w-40 rounded-full bg-white/10" />
+          <span className="absolute right-16 -bottom-12 h-28 w-28 rounded-full bg-white/10" />
+          <div className="relative">
+            <p className="text-white/80 text-sm">{greeting()}{firstName ? ',' : ''}</p>
+            <h2 className="font-display text-2xl leading-tight">{firstName || 'Welcome'} 👋</h2>
+            <p className="text-white/80 text-sm mt-1">Ready for today’s practice?</p>
+            <div className="mt-4 flex items-center gap-4">
+              <button onClick={() => navigate('/performance')} className="flex items-center gap-3 text-left">
+                <div className="relative">
+                  <Ring value={overall} />
+                  <span className="absolute inset-0 flex items-center justify-center text-sm font-bold">{Math.round(overall)}%</span>
+                </div>
+                <span className="text-xs text-white/80 leading-tight">
+                  Overall
+                  <br />
+                  score
+                </span>
+              </button>
+              <div className="h-10 w-px bg-white/25" />
+              <div>
+                <p className="text-xl font-bold">{answered.toLocaleString()}</p>
+                <p className="text-xs text-white/80">answered</p>
+              </div>
+              <div className="h-10 w-px bg-white/25" />
+              <div>
+                <p className="text-xl font-bold">{totalQuestions ? totalQuestions.toLocaleString() : '—'}</p>
+                <p className="text-xs text-white/80">questions</p>
+              </div>
+            </div>
+          </div>
+        </section>
+
         {hasNewNotification && (
           <button
             onClick={() => navigate('/notifications')}
@@ -75,35 +154,60 @@ export default function Home() {
           </Button>
         )}
 
-        <h2 className="font-display text-slate-700 text-lg pt-2">Question banks</h2>
-        <ErrorBox error={!categories.data.length && categories.error} onRetry={categories.reload} />
-        {categories.loading ? (
-          <SkeletonList rows={4} />
-        ) : categories.data.length === 0 && !categories.error ? (
-          <Empty icon={<BookOpen size={40} />} title="No question banks yet" />
-        ) : (
-          <div className="space-y-3">
-            {categories.data.map((c) => (
-              <ListCard
-                key={c._key}
-                img={c.img}
-                title={c.title}
-                subtitle={isAdmin && String(c.publish) !== 'true' ? 'Not published' : undefined}
-                onClick={() => navigate(`/cat/${encodeURIComponent(c.source)}?title=${encodeURIComponent(c.title || '')}`)}
-              />
-            ))}
+        <div>
+          <div className="flex items-end justify-between mb-3">
+            <h2 className="font-display text-slate-800 text-xl">Question banks</h2>
+            {categories.data.length > 0 && <span className="text-xs text-slate-400">{categories.data.length} banks</span>}
           </div>
+          <ErrorBox error={!categories.data.length && categories.error} onRetry={categories.reload} />
+          {categories.loading ? (
+            <div className="grid gap-3 sm:grid-cols-2">
+              {[0, 1, 2, 3].map((i) => (
+                <div key={i} className="h-24 sm:h-48 rounded-2xl bg-slate-200/70 animate-pulse" />
+              ))}
+            </div>
+          ) : categories.data.length === 0 && !categories.error ? (
+            <Empty icon={<BookOpen size={40} />} title="No question banks yet" />
+          ) : (
+            <div className="grid gap-3 sm:grid-cols-2">
+              {categories.data.map((c) => (
+                <CategoryCard
+                  key={c._key}
+                  c={c}
+                  hidden={isAdmin && String(c.publish) !== 'true'}
+                  onClick={() => navigate(`/cat/${encodeURIComponent(c.source)}?title=${encodeURIComponent(c.title || '')}`)}
+                />
+              ))}
+            </div>
+          )}
+        </div>
+
+        {!isNative && (
+          <Link
+            to="/download"
+            className="flex items-center gap-4 rounded-2xl bg-slate-900 text-white p-4 hover:bg-slate-800 transition"
+          >
+            <div className="h-11 w-11 rounded-xl bg-white/10 flex items-center justify-center shrink-0">
+              <Smartphone size={22} />
+            </div>
+            <div className="flex-1 min-w-0">
+              <p className="font-semibold">Get the Android app</p>
+              <p className="text-xs text-white/70">Same account and scores on your phone</p>
+            </div>
+            <ChevronRight size={20} className="text-white/60" />
+          </Link>
         )}
       </Page>
 
       <button
         onClick={() => setContact(true)}
-        className="fixed bottom-6 right-5 h-14 w-14 rounded-full bg-white shadow-lg flex items-center justify-center text-brand-700 border border-slate-100 pb-safe"
+        className="fixed bottom-24 right-5 z-20 h-14 w-14 rounded-full bg-white shadow-lg flex items-center justify-center text-brand-700 border border-slate-100"
         aria-label="Contact us"
       >
         <MessageCircle size={26} />
       </button>
 
+      <BottomNav alertDot={hasNewNotification} />
       <Drawer open={drawer} onClose={() => setDrawer(false)} />
 
       <Modal open={contact} onClose={() => setContact(false)} title="Contact us">
@@ -124,20 +228,11 @@ export default function Home() {
 
       <Modal
         open={profileIncomplete && !skipProfile}
-        onClose={() => {
-          sessionStorage.setItem('skipProfile', '1');
-          setSkipProfile(true);
-        }}
+        onClose={skip}
         title="Complete your profile"
         footer={
           <>
-            <Button
-              variant="outline"
-              onClick={() => {
-                sessionStorage.setItem('skipProfile', '1');
-                setSkipProfile(true);
-              }}
-            >
+            <Button variant="outline" onClick={skip}>
               Later
             </Button>
             <Button onClick={() => navigate('/setup')}>

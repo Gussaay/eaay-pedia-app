@@ -175,8 +175,48 @@ export function ErrorBox({ error, onRetry }) {
 // ---------------------------------------------------------------------------
 // Images
 // ---------------------------------------------------------------------------
-export function Thumb({ src, alt = '', className = 'h-14 w-14', fallback = '/img/logo.png', style }) {
+// Colourful placeholder covers (Storage images are often missing): the same
+// title always gets the same gradient.
+const TILE_GRADIENTS = [
+  'from-sky-500 to-blue-700',
+  'from-emerald-500 to-teal-700',
+  'from-violet-500 to-indigo-700',
+  'from-rose-500 to-pink-700',
+  'from-amber-500 to-orange-600',
+  'from-cyan-500 to-sky-700',
+  'from-fuchsia-500 to-purple-700',
+  'from-lime-500 to-green-700',
+];
+const radius = (cls) => (/rounded-/.test(cls) ? '' : 'rounded-xl');
+const hash = (s) => [...String(s)].reduce((h, c) => (h * 31 + c.charCodeAt(0)) >>> 0, 7);
+export function initials(label = '') {
+  const words = String(label)
+    .replace(/[^\p{L}\p{N}\s]/gu, ' ')
+    .split(/\s+/)
+    .filter((w) => w && !/^(mcqs?|review|the|of|and|exams?)$/i.test(w));
+  if (!words.length) return 'EP';
+  if (words.length === 1) return words[0].slice(0, 2).toUpperCase();
+  return (words[0][0] + (/\d/.test(words[1]) ? words[1].slice(0, 2) : words[1][0])).toUpperCase();
+}
+
+export function CoverTile({ label, className = 'h-14 w-14', style }) {
+  const gradient = TILE_GRADIENTS[hash(label) % TILE_GRADIENTS.length];
+  return (
+    <div
+      style={style}
+      className={`${className} ${radius(className)} shrink-0 bg-gradient-to-br ${gradient} text-white flex items-center justify-center font-display tracking-wide shadow-inner relative overflow-hidden`}
+      aria-hidden="true"
+    >
+      <span className="absolute -right-3 -bottom-3 h-10 w-10 rounded-full bg-white/15" />
+      <span className="absolute -left-2 -top-2 h-6 w-6 rounded-full bg-white/10" />
+      <span className="relative text-[1.05em]">{initials(label)}</span>
+    </div>
+  );
+}
+
+export function Thumb({ src, alt = '', label, className = 'h-14 w-14', fallback, style }) {
   const [failed, setFailed] = useState(false);
+  if ((!src || failed) && !fallback) return <CoverTile label={label || alt} className={className} style={style} />;
   const url = !src || failed ? fallback : src;
   return (
     <img
@@ -185,7 +225,7 @@ export function Thumb({ src, alt = '', className = 'h-14 w-14', fallback = '/img
       style={style}
       loading="lazy"
       onError={() => setFailed(true)}
-      className={`${className} rounded-xl object-cover bg-slate-100 shrink-0`}
+      className={`${className} ${radius(className)} object-cover bg-slate-100 shrink-0`}
     />
   );
 }
@@ -245,7 +285,7 @@ export function ListCard({ img, title, subtitle, right, onClick, badge }) {
       onClick={onClick}
       className="w-full text-left flex items-center gap-3 bg-white rounded-2xl p-3 border border-slate-100 shadow-sm hover:shadow-md active:scale-[0.98] transition"
     >
-      <Thumb src={img} />
+      <Thumb src={img} label={title} />
       <div className="flex-1 min-w-0">
         <p className="font-semibold text-slate-800 leading-snug line-clamp-2">{title}</p>
         {subtitle && <p className="text-xs text-slate-500 mt-0.5 line-clamp-2">{subtitle}</p>}

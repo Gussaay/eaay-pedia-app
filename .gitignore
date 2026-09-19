@@ -18,3 +18,7 @@ android/.gradle
 /.idea/
 /.claude/
 *.zip
+
+# Local signing secrets (never commit)
+keystore-secrets.txt
+*.jks

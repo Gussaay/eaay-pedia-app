@@ -68,7 +68,7 @@ export default function Exams() {
         ) : active.data.length === 0 ? (
           <Empty icon={<FileQuestion size={40} />} title="No quizzes yet" />
         ) : tab === 'exam' ? (
-          <div className="space-y-3">
+          <div className="grid gap-3 md:grid-cols-2">
             {exams.data.map((q) => (
               <ListCard
                 key={q._key}
@@ -87,11 +87,11 @@ export default function Exams() {
             ))}
           </div>
         ) : (
-          <div className="space-y-3">
+          <div className="grid gap-3 md:grid-cols-2">
             {chapters.data.map((c) => (
               <ListCard
                 key={c._key}
-                img={c.chapter_img || '/icon.png'}
+                img={c.chapter_img}
                 title={c.chapter}
                 badge={countBadge(num(c[`${type}number`]))}
                 onClick={() => navigate(quizPath('chapter', c._key, { type, source, name }))}

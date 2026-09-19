@@ -12,6 +12,13 @@ export const SUPER_ADMIN_EMAIL = 'gussaay@gmail.com';
 export const APP_VERSION = import.meta.env.VITE_APP_VERSION || '6.0.0';
 export const APP_VERSION_NUMBER = parseFloat(APP_VERSION);
 
+// Web app + permanent APK download (published by .github/workflows/deploy.yml).
+export const SITE_URL = 'https://easy-pedia.web.app';
+export const APK_URL = `${SITE_URL}/download/easy-pedia-mcqs.apk`;
+export const APK_URL_GITHUB =
+  'https://github.com/Gussaay/eaay-pedia-app/releases/latest/download/easy-pedia-mcqs.apk';
+export const NATIVE_VERSION_URL = `${SITE_URL}/native-version.json`;
+
 export const GOOGLE_WEB_CLIENT_ID =
   '444201218220-ub2mt5dcl5557vp3f608gqltnvhfovlp.apps.googleusercontent.com';
 
