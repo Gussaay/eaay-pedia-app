@@ -1,6 +1,6 @@
 # Easy Pedia MCQs — React web app + Capacitor mobile app
 
-A rewrite of the Sketchware/Java Android app (`../app`, package `com.easy.pediamcqs`)
+A rewrite of the Sketchware/Java Android app (`app/` in this folder, package `com.easy.pediamcqs`)
 as a React web app that also ships as a native Android app through Capacitor —
 the same stack and conventions as the IMCI app (`C:\Users\Lenovo\imci-app`):
 Vite + React 18 + Tailwind 3 + Firebase JS SDK + Capacitor 7 + PWA (vite-plugin-pwa)

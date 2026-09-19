@@ -6,3 +6,15 @@ android/app/build
 android/build
 android/.gradle
 *.keystore
+
+# Old Sketchware Android project kept in this folder for reference only
+# (not part of the web/Capacitor build).
+/app/
+/gradle/
+/build.gradle
+/settings.gradle
+/local.properties
+/.gradle/
+/.idea/
+/.claude/
+*.zip
