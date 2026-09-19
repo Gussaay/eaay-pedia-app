@@ -1,0 +1,122 @@
+name: Build and Deploy Web and APK
+
+# Same flow as the IMCI app: every push to main builds the web app, deploys it
+# to Firebase Hosting (https://easy-pedia.web.app) and builds the Android APK.
+on:
+  push:
+    branches:
+      - main
+  workflow_dispatch:
+
+# Stops an older run when you push twice quickly, so two deploys never race.
+concurrency:
+  group: deploy-main
+  cancel-in-progress: true
+
+jobs:
+  web:
+    name: Build & deploy web (Firebase Hosting)
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+          cache: 'npm'
+
+      - name: Install dependencies
+        run: npm ci
+
+      - name: Unit tests
+        run: npm test
+
+      - name: Build web assets
+        run: npm run build
+
+      # Secret FIREBASE_SERVICE_ACCOUNT_EASY_PEDIA = JSON key of a service account
+      # with the "Firebase Hosting Admin" role (created by `firebase init hosting:github`).
+      - name: Deploy to Firebase Hosting
+        uses: FirebaseExtended/action-hosting-deploy@v0
+        with:
+          repoToken: ${{ secrets.GITHUB_TOKEN }}
+          firebaseServiceAccount: ${{ secrets.FIREBASE_SERVICE_ACCOUNT_EASY_PEDIA }}
+          channelId: live
+          projectId: easy-pedia
+
+  android:
+    name: Build Android APK
+    runs-on: ubuntu-latest
+    env:
+      # Old Sketchware app was versionCode 9; keep every CI build above it.
+      VERSION_CODE: ${{ github.run_number }}
+      HAS_KEYSTORE: ${{ secrets.KEYSTORE_BASE64 != '' }}
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+          cache: 'npm'
+
+      - name: Setup Java 21 (required by Capacitor 7)
+        uses: actions/setup-java@v4
+        with:
+          distribution: 'zulu'
+          java-version: '21'
+          cache: 'gradle'
+
+      - name: Install dependencies
+        run: npm ci
+
+      - name: Build web assets and sync Android
+        run: |
+          npm run build
+          npx cap sync android
+
+      - name: Set versionCode / versionName
+        run: |
+          CODE=$((VERSION_CODE + 10))
+          NAME=$(node -p "require('./package.json').version")
+          sed -i -e "s/versionCode [0-9]*/versionCode ${CODE}/" android/app/build.gradle
+          sed -i -e "s/versionName \".*\"/versionName \"${NAME}\"/" android/app/build.gradle
+          grep -E "versionCode|versionName" android/app/build.gradle
+
+      # Signed release APK when the keystore secrets exist. To update the
+      # existing Play Store app it MUST be the same keystore as the old app.
+      - name: Build signed release APK
+        if: env.HAS_KEYSTORE == 'true'
+        run: |
+          echo "${{ secrets.KEYSTORE_BASE64 }}" | base64 --decode > android/app/release.keystore
+          cd android
+          chmod +x gradlew
+          ./gradlew assembleRelease
+          BT=$(ls -d ${ANDROID_HOME}/build-tools/* | sort -V | tail -1)
+          $BT/zipalign -v -p 4 app/build/outputs/apk/release/app-release-unsigned.apk app/build/outputs/apk/release/app-release-aligned.apk
+          $BT/apksigner sign --ks app/release.keystore \
+            --ks-key-alias "${{ secrets.KEY_ALIAS }}" \
+            --ks-pass "pass:${{ secrets.KEYSTORE_PASSWORD }}" \
+            --key-pass "pass:${{ secrets.KEY_PASSWORD }}" \
+            --out ../easy-pedia-mcqs.apk \
+            app/build/outputs/apk/release/app-release-aligned.apk
+          $BT/apksigner verify ../easy-pedia-mcqs.apk
+          rm -f app/release.keystore
+
+      - name: Build debug APK (no keystore configured)
+        if: env.HAS_KEYSTORE != 'true'
+        run: |
+          cd android
+          chmod +x gradlew
+          ./gradlew assembleDebug
+          cp app/build/outputs/apk/debug/app-debug.apk ../easy-pedia-mcqs-debug.apk
+
+      - name: Upload APK
+        uses: actions/upload-artifact@v4
+        with:
+          name: easy-pedia-mcqs-apk-${{ github.run_number }}
+          path: easy-pedia-mcqs*.apk
+          retention-days: 30

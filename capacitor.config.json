@@ -1,0 +1,26 @@
+{
+  "appId": "com.easy.pediamcqs",
+  "appName": "Easy Pedia MCQs",
+  "webDir": "dist",
+  "server": {
+    "androidScheme": "https"
+  },
+  "plugins": {
+    "SplashScreen": {
+      "launchShowDuration": 1200,
+      "launchAutoHide": true,
+      "backgroundColor": "#1976D2",
+      "showSpinner": false
+    },
+    "StatusBar": {
+      "style": "DARK",
+      "backgroundColor": "#1976D2"
+    },
+    "SocialLogin": {
+      "google": true,
+      "facebook": false,
+      "apple": false,
+      "twitter": false
+    }
+  }
+}

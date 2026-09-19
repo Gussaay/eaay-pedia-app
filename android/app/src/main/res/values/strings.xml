@@ -1,0 +1,7 @@
+<?xml version='1.0' encoding='utf-8'?>
+<resources>
+    <string name="app_name">Easy Pedia MCQs</string>
+    <string name="title_activity_main">Easy Pedia MCQs</string>
+    <string name="package_name">com.easy.pediamcqs</string>
+    <string name="custom_url_scheme">com.easy.pediamcqs</string>
+</resources>

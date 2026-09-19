@@ -1,0 +1,16 @@
+{
+  "//": "MERGE these .indexOn entries into your existing Realtime Database rules (Firebase console > Realtime Database > Rules). Do NOT deploy this file as-is: a rules deploy replaces ALL existing rules, and the .read/.write lines below are placeholders to be replaced by your current ones.",
+  "rules": {
+    ".read": "auth != null",
+    ".write": "auth != null",
+    "quizqq": {
+      ".indexOn": ["key", "category1", "category2"]
+    },
+    "resume": {
+      ".indexOn": ["uid"]
+    },
+    "feedback": {
+      ".indexOn": ["key"]
+    }
+  }
+}

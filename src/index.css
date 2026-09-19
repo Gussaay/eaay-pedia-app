@@ -1,0 +1,36 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+@font-face {
+  font-family: 'EasyBold';
+  src: url('/fonts/bold.ttf') format('truetype');
+  font-display: swap;
+}
+
+html,
+body,
+#root {
+  overflow-x: hidden;
+  max-width: 100vw;
+  width: 100%;
+  min-height: 100%;
+}
+
+body {
+  @apply bg-slate-50 text-slate-900 antialiased;
+  -webkit-tap-highlight-color: transparent;
+  overscroll-behavior-y: none;
+}
+
+@layer utilities {
+  .pt-safe {
+    padding-top: env(safe-area-inset-top);
+  }
+  .pb-safe {
+    padding-bottom: max(env(safe-area-inset-bottom), 0px);
+  }
+  .touch-pinch-zoom {
+    touch-action: pinch-zoom pan-x pan-y;
+  }
+}
