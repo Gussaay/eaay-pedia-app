@@ -71,8 +71,8 @@ export default function Download() {
           <div className="mt-6 rounded-2xl bg-amber-50 text-amber-900 p-4 text-sm flex gap-3">
             <ShieldAlert size={20} className="shrink-0 mt-0.5" />
             <p>
-              Have the <b>old</b> Easy Pedia MCQs installed from the Play Store? Uninstall it first — Android
-              will not install the new version over it. Your scores are saved in your account, not on the phone.
+              Have the <b>old</b> Easy Pedia MCQs installed? If Android says “App not installed”, uninstall the
+              old version first, then install again. Your scores are saved in your account, not on the phone.
             </p>
           </div>
           {info && info.signed === false && (

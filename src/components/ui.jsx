@@ -32,7 +32,11 @@ export function AppBar({ title, subtitle, back = true, onBack, actions, left }) 
 }
 
 export function Page({ children, className = '' }) {
-  return <main className={`max-w-3xl mx-auto w-full px-4 py-4 pb-safe ${className}`}>{children}</main>;
+  return (
+    <main className={`max-w-3xl mx-auto w-full px-4 pt-4 pb-[max(1.5rem,env(safe-area-inset-bottom))] ${className}`}>
+      {children}
+    </main>
+  );
 }
 
 export function OfflineBanner() {
@@ -299,14 +303,22 @@ export function ListCard({ img, title, subtitle, right, onClick, badge }) {
 // ---------------------------------------------------------------------------
 // Dialogs
 // ---------------------------------------------------------------------------
+// Counts open dialogs so closing them in any order always restores scrolling.
+let openModals = 0;
+function lockScroll() {
+  openModals += 1;
+  document.body.style.overflow = 'hidden';
+}
+function unlockScroll() {
+  openModals = Math.max(0, openModals - 1);
+  if (openModals === 0) document.body.style.overflow = '';
+}
+
 export function Modal({ open, onClose, title, children, footer, dismissable = true, wide }) {
   useEffect(() => {
     if (!open) return undefined;
-    const prev = document.body.style.overflow;
-    document.body.style.overflow = 'hidden';
-    return () => {
-      document.body.style.overflow = prev;
-    };
+    lockScroll();
+    return unlockScroll;
   }, [open]);
   if (!open) return null;
   return (

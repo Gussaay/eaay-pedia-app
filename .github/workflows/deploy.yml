@@ -80,23 +80,32 @@ jobs:
 
       # Release APK signed with the key from secrets (see keystore-secrets.txt on
       # the developer PC). A stable key is required so users can install updates.
+      # The original app's key (easypediamcqs.jks) is a Sketchware/BouncyCastle
+      # UBER keystore; scripts/prepare-keystore.sh converts any format to PKCS12.
+      # KEY_ALIAS is optional (auto-detected when the keystore has one key).
       - name: Build signed release APK
         if: env.HAS_KEYSTORE == 'true'
+        env:
+          KEYSTORE_PASSWORD: ${{ secrets.KEYSTORE_PASSWORD }}
+          KEY_PASSWORD: ${{ secrets.KEY_PASSWORD }}
+          KEY_ALIAS: ${{ secrets.KEY_ALIAS }}
         run: |
-          echo "${{ secrets.KEYSTORE_BASE64 }}" | base64 --decode > android/app/release.keystore
+          echo "${{ secrets.KEYSTORE_BASE64 }}" | base64 --decode > "$RUNNER_TEMP/src.keystore"
+          export SRC_KEYSTORE="$RUNNER_TEMP/src.keystore" OUT_P12="$RUNNER_TEMP/release.p12"
+          SIGN_ALIAS=$(bash scripts/prepare-keystore.sh | tee /dev/stderr | sed -n 's/^SIGN_ALIAS=//p')
           cd android
           chmod +x gradlew
           ./gradlew assembleRelease
           BT=$(ls -d ${ANDROID_HOME}/build-tools/* | sort -V | tail -1)
           $BT/zipalign -v -p 4 app/build/outputs/apk/release/app-release-unsigned.apk app/build/outputs/apk/release/app-release-aligned.apk
-          $BT/apksigner sign --ks app/release.keystore \
-            --ks-key-alias "${{ secrets.KEY_ALIAS }}" \
-            --ks-pass "pass:${{ secrets.KEYSTORE_PASSWORD }}" \
-            --key-pass "pass:${{ secrets.KEY_PASSWORD }}" \
+          $BT/apksigner sign --ks "$OUT_P12" --ks-type PKCS12 \
+            --ks-key-alias "$SIGN_ALIAS" \
+            --ks-pass env:KEYSTORE_PASSWORD \
+            --key-pass env:KEYSTORE_PASSWORD \
             --out "../$APK_NAME" \
             app/build/outputs/apk/release/app-release-aligned.apk
-          $BT/apksigner verify "../$APK_NAME"
-          rm -f app/release.keystore
+          $BT/apksigner verify --print-certs "../$APK_NAME" | head -3
+          rm -f "$RUNNER_TEMP/src.keystore" "$OUT_P12"
 
       # Fallback until the keystore secrets are added. Debug keys change on every
       # CI run, so users would have to uninstall before updating.

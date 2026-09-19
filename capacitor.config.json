@@ -22,5 +22,8 @@
       "apple": false,
       "twitter": false
     }
+  },
+  "android": {
+    "adjustMarginsForEdgeToEdge": "force"
   }
 }
