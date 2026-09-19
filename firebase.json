@@ -43,15 +43,13 @@
             "value": "*"
           }
         ]
-      },
+      }
+    ],
+    "redirects": [
       {
-        "source": "/download/**/*.apk",
-        "headers": [
-          {
-            "key": "Cache-Control",
-            "value": "no-cache"
-          }
-        ]
+        "source": "/download/easy-pedia-mcqs.apk",
+        "destination": "https://github.com/Gussaay/eaay-pedia-app/releases/latest/download/easy-pedia-mcqs.apk",
+        "type": 302
       }
     ]
   }

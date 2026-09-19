@@ -17,6 +17,7 @@ export const SITE_URL = 'https://easy-pedia.web.app';
 export const APK_URL = `${SITE_URL}/download/easy-pedia-mcqs.apk`;
 export const APK_URL_GITHUB =
   'https://github.com/Gussaay/eaay-pedia-app/releases/latest/download/easy-pedia-mcqs.apk';
+export const RELEASES_URL = 'https://github.com/Gussaay/eaay-pedia-app/releases';
 export const NATIVE_VERSION_URL = `${SITE_URL}/native-version.json`;
 
 export const GOOGLE_WEB_CLIENT_ID =

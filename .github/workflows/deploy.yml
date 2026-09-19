@@ -2,12 +2,14 @@ name: Build and Deploy Web and APK
 
 # Same flow as the IMCI app. Every push to main:
 #   1. builds the Android APK (signed with the release key from secrets),
-#   2. builds the web app and deploys it to Firebase Hosting together with the
-#      APK, so there is a permanent public download link:
-#        https://easy-pedia.web.app/download                   (download page)
-#        https://easy-pedia.web.app/download/easy-pedia-mcqs.apk
-#   3. publishes the same APK as a GitHub Release:
+#   2. publishes the APK as a GitHub Release (permanent public link):
 #        https://github.com/Gussaay/eaay-pedia-app/releases/latest/download/easy-pedia-mcqs.apk
+#   3. builds the web app and deploys it to Firebase Hosting with
+#      native-version.json (read by the app to offer updates). The short link
+#        https://easy-pedia.web.app/download/easy-pedia-mcqs.apk
+#      redirects to the GitHub Release (firebase.json "redirects"), because
+#      Firebase Hosting refuses .apk files on the free Spark plan.
+#      Download page: https://easy-pedia.web.app/download
 on:
   push:
     branches:
@@ -136,7 +138,8 @@ jobs:
 
   web:
     name: Build & deploy web (Firebase Hosting)
-    needs: android
+    # Waits for the release so the /download redirect target already exists.
+    needs: [android, release]
     runs-on: ubuntu-latest
     steps:
       - name: Checkout code
@@ -160,18 +163,15 @@ jobs:
       - name: Build web assets
         run: npm run build
 
-      - name: Download APK
+      - name: Download build info
         uses: actions/download-artifact@v4
         with:
           name: apk
           path: apk
 
-      - name: Add APK and version file to the site
-        run: |
-          mkdir -p dist/download
-          cp "apk/$APK_NAME" "dist/download/$APK_NAME"
-          cp apk/native-version.json dist/native-version.json
-          ls -la dist/download dist/native-version.json
+      # Only the version file: the APK itself is served from the GitHub Release.
+      - name: Add version file to the site
+        run: cp apk/native-version.json dist/native-version.json
 
       # Secret FIREBASE_SERVICE_ACCOUNT_EASY_PEDIA was created by `firebase init hosting:github`.
       - name: Deploy to Firebase Hosting
@@ -188,7 +188,7 @@ jobs:
             LIVE=$(curl -fsSL "${SITE_URL}/native-version.json?t=$(date +%s)" || echo "")
             echo "$LIVE"
             if echo "$LIVE" | grep -q "\"${{ needs.android.outputs.version }}\""; then
-              curl -fsSI "${SITE_URL}/download/${APK_NAME}" | head -5
+              curl -sSI "${SITE_URL}/download/${APK_NAME}" | grep -iE "^(HTTP|location)"
               exit 0
             fi
             echo "Not live yet, waiting..."

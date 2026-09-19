@@ -2,7 +2,7 @@
 import { useEffect, useState } from 'react';
 import { Link } from 'react-router-dom';
 import { CheckCircle2, Download as DownloadIcon, Github, Globe, ShieldAlert, Smartphone } from 'lucide-react';
-import { APK_URL, APK_URL_GITHUB } from '../config';
+import { APK_URL, RELEASES_URL } from '../config';
 import { fetchNativeVersion } from '../lib/nativeVersion';
 
 const STEPS = [
@@ -53,8 +53,8 @@ export default function Download() {
           >
             <DownloadIcon size={22} /> Download APK
           </a>
-          <a href={APK_URL_GITHUB} className="mt-3 flex items-center justify-center gap-2 text-sm text-slate-500 hover:text-slate-700">
-            <Github size={16} /> Mirror on GitHub
+          <a href={RELEASES_URL} className="mt-3 flex items-center justify-center gap-2 text-sm text-slate-500 hover:text-slate-700">
+            <Github size={16} /> All versions (GitHub releases)
           </a>
 
           <ol className="mt-6 space-y-3">
