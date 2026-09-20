@@ -15,6 +15,7 @@ import {
   visibleOptions,
 } from '../lib/quiz';
 import { invalidateQuestions, loadQuestions, loadQuizMeta } from '../lib/quizSource';
+import { queuePendingResult } from '../lib/sync';
 import { AppBar, Button, Card, ErrorBox, Input, Modal, Page, Spinner, Textarea, ZoomImage, useToast } from '../components/ui';
 import QuestionEditModal from '../components/QuestionEditModal';
 
@@ -123,6 +124,44 @@ export default function QuizPlay() {
       }
       submittedRef.current = true;
       setPhase('submitting');
+
+      const goToResults = (percentage, points, pending) =>
+        navigate('/results', {
+          replace: true,
+          state: {
+            title: meta.title,
+            source: meta.source,
+            key: meta.pkey,
+            points,
+            percentage,
+            correct: final.correct,
+            played: final.played,
+            mode,
+            pending,
+          },
+        });
+
+      // Finished without a connection: keep the result and send it later.
+      const saveForLater = async (err) => {
+        const percentage = Math.trunc((final.correct / final.played) * 100);
+        await queuePendingResult({
+          uid: user.uid,
+          pkey: meta.pkey,
+          correct: final.correct,
+          played: final.played,
+          name: profile?.name || user.displayName || '',
+          img: profile?.img || '',
+          title: meta.title,
+        }).catch(() => {});
+        if (err) console.warn('[quiz] result queued for later:', err?.message || err);
+        goToResults(percentage, final.correct, true);
+      };
+
+      if (typeof navigator !== 'undefined' && navigator.onLine === false) {
+        await saveForLater();
+        return;
+      }
+
       try {
         const [u, lead] = await Promise.all([
           getOne(`quizusers/${user.uid}`),
@@ -155,26 +194,13 @@ export default function QuizPlay() {
           );
         }
         await Promise.all(writes);
-        navigate('/results', {
-          replace: true,
-          state: {
-            title: meta.title,
-            source: meta.source,
-            key: meta.pkey,
-            points: r.points,
-            percentage: r.percentage,
-            correct: final.correct,
-            played: final.played,
-            mode,
-          },
-        });
+        goToResults(r.percentage, r.points, false);
       } catch (e) {
-        submittedRef.current = false;
-        setPhase('playing');
-        toast(`Could not save your result: ${e.message}`, 'error');
+        // The connection died mid-save: queue instead of losing the session.
+        await saveForLater(e);
       }
     },
-    [played, correct, meta, user, profile, navigate, mode, toast],
+    [played, correct, meta, user, profile, navigate, mode],
   );
 
   // ---------------------------------------------------------------- answering

@@ -2,7 +2,7 @@
 import { useRef, useState } from 'react';
 import { Navigate, useLocation, useNavigate } from 'react-router-dom';
 import { toPng } from 'html-to-image';
-import { Home as HomeIcon, RotateCcw, Share2 } from 'lucide-react';
+import { CloudOff, Home as HomeIcon, RotateCcw, Share2 } from 'lucide-react';
 import { useAuth } from '../hooks/useAuth';
 import { useList } from '../hooks/useData';
 import { rating } from '../lib/quiz';
@@ -66,6 +66,12 @@ export default function Results() {
             </p>
           </div>
         </div>
+        {state.pending && (
+          <div className="flex items-center gap-2 rounded-2xl bg-amber-50 text-amber-900 p-3 text-sm">
+            <CloudOff size={18} className="shrink-0" />
+            <p>Saved on your device. Your score will be sent automatically when you are back online.</p>
+          </div>
+        )}
         <Button className="w-full !py-3" onClick={share} loading={sharing}>
           <Share2 size={18} /> Share your result
         </Button>

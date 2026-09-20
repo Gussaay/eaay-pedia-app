@@ -6,6 +6,7 @@ import { useAuth, logout } from '../hooks/useAuth';
 import { updateAt, uploadImage } from '../lib/rtdb';
 import BottomNav from '../components/BottomNav';
 import { AppBar, Avatar, Button, Card, Confirm, Page, useToast } from '../components/ui';
+import OfflineDownloads from '../components/OfflineDownloads';
 
 export default function Profile() {
   const { user, profile } = useAuth();
@@ -60,6 +61,7 @@ export default function Profile() {
             </div>
           ))}
         </Card>
+        <OfflineDownloads />
         <div className="grid gap-3">
           <Button variant="secondary" onClick={() => navigate('/setup')}>
             <Pencil size={18} /> Edit information

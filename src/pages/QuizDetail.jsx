@@ -1,12 +1,13 @@
 // QuizdetailActivity: quiz info, your score, leaderboard, start buttons.
 import { useEffect, useState } from 'react';
 import { useNavigate, useParams, useSearchParams } from 'react-router-dom';
-import { BookOpenCheck, Timer, Trophy } from 'lucide-react';
+import { BookOpenCheck, CheckCircle2, DownloadCloud, Timer, Trophy } from 'lucide-react';
 import { useAuth } from '../hooks/useAuth';
-import { useAsync } from '../hooks/useData';
+import { useAsync, useOnline } from '../hooks/useData';
 import { incrementString, str, updateAt } from '../lib/rtdb';
-import { loadLeaderboard, loadQuestions, loadQuizMeta, playPath } from '../lib/quizSource';
-import { AppBar, Avatar, Button, Card, ErrorBox, Page, Spinner, Thumb } from '../components/ui';
+import { downloadQuiz, loadLeaderboard, loadQuestions, loadQuizMeta, playPath } from '../lib/quizSource';
+import { getQuiz, quizKey, removeQuiz } from '../lib/offline';
+import { AppBar, Avatar, Button, Card, ErrorBox, Page, Spinner, Thumb, useToast } from '../components/ui';
 
 export default function QuizDetail() {
   const { kind, id } = useParams();
@@ -19,6 +20,10 @@ export default function QuizDetail() {
   const [count, setCount] = useState(null);
   const [countError, setCountError] = useState(null);
   const [leaders, setLeaders] = useState(null);
+  const [saved, setSaved] = useState(null); // offline copy, if any
+  const [downloading, setDownloading] = useState(false);
+  const online = useOnline();
+  const toast = useToast();
 
   useEffect(() => {
     if (!meta.data) return;
@@ -34,6 +39,7 @@ export default function QuizDetail() {
     loadLeaderboard(meta.data.pkey)
       .then(setLeaders)
       .catch(() => setLeaders([]));
+    getQuiz(meta.data).then(setSaved).catch(() => setSaved(null));
   }, [meta.data]);
 
   if (meta.loading) return <><AppBar title="Loading…" /><Spinner /></>;
@@ -101,6 +107,43 @@ export default function QuizDetail() {
             <Button variant="secondary" className="!py-3" disabled={!count} onClick={() => start('exam')}>
               <Timer size={20} /> Start with Exam mode
             </Button>
+            {saved?.manual ? (
+              <div className="flex items-center justify-center gap-3 text-sm">
+                <span className="inline-flex items-center gap-1.5 text-emerald-700 font-semibold">
+                  <CheckCircle2 size={18} /> Saved for offline
+                </span>
+                <button
+                  className="text-slate-400 hover:text-red-600"
+                  onClick={async () => {
+                    await removeQuiz(quizKey(q));
+                    setSaved(null);
+                    toast('Removed from offline downloads');
+                  }}
+                >
+                  Remove
+                </button>
+              </div>
+            ) : (
+              <Button
+                variant="ghost"
+                className="!py-2"
+                loading={downloading}
+                disabled={!online || !count}
+                onClick={async () => {
+                  setDownloading(true);
+                  try {
+                    setSaved(await downloadQuiz(q));
+                    toast('Saved for offline use', 'success');
+                  } catch (e) {
+                    toast(`Could not save: ${e.message}`, 'error');
+                  } finally {
+                    setDownloading(false);
+                  }
+                }}
+              >
+                <DownloadCloud size={18} /> {online ? 'Save for offline' : 'Offline'}
+              </Button>
+            )}
           </div>
         </Card>
 

@@ -51,6 +51,20 @@ Not ported (unreachable from any screen in the Android app, or platform-specific
 ExamBook/ShowExamList/DownloadFiles, Chat/ChatList/AllUsers/UserInfo, Fcm/SendNotification,
 TestActivity, the boot/reboot services, AdMob ads and FCM push.
 
+## Offline use
+
+The Realtime Database JS SDK has no disk cache (only the native Android/iOS SDKs
+do), so offline support is built in `src/lib/offline.js` (IndexedDB) and
+`src/lib/sync.js`:
+
+- every quiz opened online is saved automatically (newest 40 kept);
+- "Save for offline" on a quiz keeps it permanently (never auto-removed);
+- quizzes play fully offline: questions, options, explanations, images;
+- a result finished offline is queued and sent automatically when the
+  connection returns (even after the app is closed), recalculated against the
+  server values at that moment so it never overwrites newer progress;
+- Profile > Offline shows what is stored, pending results and "Clear offline data".
+
 ## ⚠️ Things to do in the Firebase console
 
 1. **Add database indexes.** Without `.indexOn` rules the Firebase JS SDK rejects

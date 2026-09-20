@@ -2,14 +2,28 @@
 //  - "exam":    an allquiz/<childKey> record; questions are quizqq where key == allquiz.key
 //  - "chapter": a chapters/<chapterKey> record played "by system"; questions are
 //               quizqq where category1/category2 == chapter name and type == sub-type.
+//
+// Everything opened online is also saved for offline play (src/lib/offline.js),
+// and reads fall back to that copy when the device has no connection.
 import { get, query, ref, orderByChild, startAt } from 'firebase/database';
 import { db } from '../firebase';
 import { getOne, getWhere, toList, num } from './rtdb';
 import { matchesChapter } from './quiz';
+import { getQuiz, saveQuiz } from './offline';
 
 const questionCache = new Map();
 
-export async function loadQuizMeta(kind, id, params = {}) {
+const isOffline = () => typeof navigator !== 'undefined' && navigator.onLine === false;
+
+/** Rejects instead of hanging forever when the connection is dead. */
+function withTimeout(promise, ms = 20000) {
+  return Promise.race([
+    promise,
+    new Promise((_, reject) => setTimeout(() => reject(new Error('Request timed out')), ms)),
+  ]);
+}
+
+async function fetchMeta(kind, id, params) {
   if (kind === 'chapter') {
     const ch = (await getOne(`chapters/${id}`)) || {};
     const type = params.type || '';
@@ -49,10 +63,32 @@ export async function loadQuizMeta(kind, id, params = {}) {
   };
 }
 
-export async function loadQuestions(meta, { fresh = false } = {}) {
-  const cacheKey = `${meta.kind}:${meta.pkey}`;
-  if (!fresh && questionCache.has(cacheKey)) return questionCache.get(cacheKey);
+export async function loadQuizMeta(kind, id, params = {}) {
+  // The saved copy is keyed by pkey, which for chapters we can rebuild locally.
+  const offlineKey = kind === 'chapter' ? { kind, pkey: `${id}${params.type || ''}` } : null;
+  if (!isOffline()) {
+    try {
+      return await withTimeout(fetchMeta(kind, id, params));
+    } catch (e) {
+      const saved = offlineKey && (await getQuiz(offlineKey));
+      if (saved) return { ...saved.meta, ...params, offline: true };
+      const anySaved = await findSavedByExamId(kind, id);
+      if (anySaved) return { ...anySaved.meta, ...params, offline: true };
+      throw e;
+    }
+  }
+  const saved = offlineKey ? await getQuiz(offlineKey) : await findSavedByExamId(kind, id);
+  if (saved) return { ...saved.meta, ...params, offline: true };
+  throw new Error('You are offline and this quiz is not saved on your device.');
+}
 
+async function findSavedByExamId(kind, id) {
+  const { listQuizzes } = await import('./offline');
+  const rows = await listQuizzes();
+  return rows.find((r) => r.kind === kind && r.id === id) || null;
+}
+
+async function fetchQuestions(meta) {
   let list;
   if (meta.bysystem) {
     const [c1, c2] = await Promise.all([
@@ -67,8 +103,43 @@ export async function loadQuestions(meta, { fresh = false } = {}) {
   }
   list = list.filter((q) => q.question !== undefined);
   list.sort((a, b) => (a._key < b._key ? -1 : a._key > b._key ? 1 : 0));
-  questionCache.set(cacheKey, list);
   return list;
+}
+
+export async function loadQuestions(meta, { fresh = false, manual = false } = {}) {
+  const cacheKey = `${meta.kind}:${meta.pkey}`;
+  if (!fresh && !manual && questionCache.has(cacheKey)) return questionCache.get(cacheKey);
+
+  if (!isOffline()) {
+    try {
+      const list = await withTimeout(fetchQuestions(meta));
+      questionCache.set(cacheKey, list);
+      // Automatic offline copy of everything opened online.
+      saveQuiz(meta, list, { manual }).catch(() => {});
+      return list;
+    } catch (e) {
+      const saved = await getQuiz(meta);
+      if (saved?.questions?.length) {
+        questionCache.set(cacheKey, saved.questions);
+        return saved.questions;
+      }
+      throw e;
+    }
+  }
+
+  const saved = await getQuiz(meta);
+  if (saved?.questions?.length) {
+    questionCache.set(cacheKey, saved.questions);
+    return saved.questions;
+  }
+  throw new Error('You are offline and this quiz is not saved on your device.');
+}
+
+/** "Download for offline": fetches fresh and keeps it permanently. */
+export async function downloadQuiz(meta) {
+  const list = await fetchQuestions(meta);
+  questionCache.set(`${meta.kind}:${meta.pkey}`, list);
+  return saveQuiz(meta, list, { manual: true });
 }
 
 export function invalidateQuestions(meta) {

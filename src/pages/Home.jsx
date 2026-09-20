@@ -1,11 +1,12 @@
 // Main page (MainPageActivity): greeting + stats, daily quiz, question banks.
 import { useMemo, useState } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
-import { Bell, BookOpen, ChevronRight, Mail, Menu, MessageCircle, Send, ShieldCheck, Smartphone } from 'lucide-react';
+import { Bell, BookOpen, ChevronRight, CloudUpload, Mail, Menu, MessageCircle, Send, ShieldCheck, Smartphone } from 'lucide-react';
 import { useAuth } from '../hooks/useAuth';
 import { useAsync, useList } from '../hooks/useData';
 import { getLatest, num } from '../lib/rtdb';
 import { isNative, openUrl } from '../lib/native';
+import { usePendingSync, useSyncPendingResults } from '../lib/sync';
 import { LINKS } from '../config';
 import Drawer from '../components/Drawer';
 import BottomNav from '../components/BottomNav';
@@ -55,6 +56,8 @@ export default function Home() {
   const [drawer, setDrawer] = useState(false);
   const [contact, setContact] = useState(false);
   const [skipProfile, setSkipProfile] = useState(() => sessionStorage.getItem('skipProfile') === '1');
+  useSyncPendingResults(user);
+  const pendingResults = usePendingSync();
 
   // Admins also see unpublished categories (same as Android).
   const categories = useList('main_category', {
@@ -138,6 +141,14 @@ export default function Home() {
           </div>
         </section>
 
+        {pendingResults > 0 && (
+          <div className="w-full rounded-2xl bg-amber-50 text-amber-900 text-sm font-semibold p-3 flex items-center gap-2">
+            <CloudUpload size={18} />
+            {pendingResults === 1
+              ? '1 result saved offline — sending when you are online'
+              : `${pendingResults} results saved offline — sending when you are online`}
+          </div>
+        )}
         {hasNewNotification && (
           <button
             onClick={() => navigate('/notifications')}
