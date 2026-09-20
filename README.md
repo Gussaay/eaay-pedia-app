@@ -51,6 +51,21 @@ Not ported (unreachable from any screen in the Android app, or platform-specific
 ExamBook/ShowExamList/DownloadFiles, Chat/ChatList/AllUsers/UserInfo, Fcm/SendNotification,
 TestActivity, the boot/reboot services, AdMob ads and FCM push.
 
+## Bulk import of question sets
+
+Admin panel > a quiz > **Import**: upload a whole question set as Excel (.xlsx/.xls)
+or CSV, one question per row.
+
+- Column names are flexible ("Option A", "correct answer", "system"...), extra
+  columns are ignored; `src/lib/questionImport.js` holds the mapping and is unit-tested.
+- The correct answer may be a letter (`a`, `A.`, `option b`), a number (1-5) or the
+  full text of the correct option; labels typed inside an option ("a) Croup") are removed.
+- A preview lists rows with problems (missing options, unknown answer) and likely
+  duplicates (against the quiz and inside the file); only clean rows are imported.
+- The import is one atomic multi-path write (`updatePaths`), so a failure saves
+  nothing, and the quiz's question counter is updated in the same write.
+- "Download template (CSV)" gives a ready-made file with the expected columns.
+
 ## Offline use
 
 The Realtime Database JS SDK has no disk cache (only the native Android/iOS SDKs

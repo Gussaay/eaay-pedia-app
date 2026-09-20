@@ -1,12 +1,13 @@
 // EditMainDetailsActivity + AddNewQuestionActivity + EditQuestionsActivity.
 import { useEffect, useState } from 'react';
 import { useNavigate, useParams } from 'react-router-dom';
-import { ChevronLeft, ChevronRight, Plus, Trash2 } from 'lucide-react';
+import { ChevronLeft, ChevronRight, Plus, Trash2, Upload } from 'lucide-react';
 import { useAsync } from '../../hooks/useData';
 import { getOne, getWhere, pushTo, removeAt, str, updateAt } from '../../lib/rtdb';
 import { invalidateQuestions } from '../../lib/quizSource';
 import ImageField from '../../components/ImageField';
 import QuestionForm, { emptyQuestion, validateQuestion } from '../../components/QuestionForm';
+import ImportQuestionsModal from '../../components/ImportQuestionsModal';
 import { AppBar, Button, Card, Confirm, ErrorBox, Input, Page, Spinner, Textarea, Toggle, useToast } from '../../components/ui';
 
 async function loadQuiz(childKey) {
@@ -31,6 +32,7 @@ export function QuizEditor() {
   const [form, setForm] = useState(null);
   const [saving, setSaving] = useState(false);
   const [confirm, setConfirm] = useState(null);
+  const [importing, setImporting] = useState(false);
 
   useEffect(() => {
     if (data.data)
@@ -106,11 +108,16 @@ export function QuizEditor() {
           </div>
         </Card>
 
-        <div className="flex items-center justify-between">
+        <div className="flex flex-wrap items-center gap-2 justify-between">
           <h2 className="font-display text-lg">Questions ({questions.length})</h2>
-          <Button onClick={() => navigate(`/admin/quiz/${encodeURIComponent(childKey)}/question/new`)}>
-            <Plus size={18} /> Add question
-          </Button>
+          <div className="flex gap-2">
+            <Button variant="secondary" onClick={() => setImporting(true)}>
+              <Upload size={18} /> Import
+            </Button>
+            <Button onClick={() => navigate(`/admin/quiz/${encodeURIComponent(childKey)}/question/new`)}>
+              <Plus size={18} /> Add question
+            </Button>
+          </div>
         </div>
         <div className="space-y-2">
           {questions.map((q, i) => (
@@ -129,6 +136,19 @@ export function QuizEditor() {
           ))}
         </div>
       </Page>
+      {importing && (
+        <ImportQuestionsModal
+          quiz={quiz}
+          childKey={childKey}
+          existingQuestions={questions}
+          onClose={() => setImporting(false)}
+          onImported={() => {
+            setImporting(false);
+            invalidateQuestions({ kind: 'exam', pkey: quiz.key });
+            data.reload();
+          }}
+        />
+      )}
       <Confirm
         open={!!confirm}
         danger

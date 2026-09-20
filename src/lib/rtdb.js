@@ -99,6 +99,15 @@ export const removeAt = (path) => {
   forget(path);
   return remove(ref(db, path));
 };
+
+/**
+ * One atomic write across several paths: { "quizqq/-Nabc": {...}, ... }.
+ * Either everything is saved or nothing is (used by the bulk import).
+ */
+export const updatePaths = (updates) => {
+  Object.keys(updates).forEach(forget);
+  return update(ref(db), updates);
+};
 export async function pushTo(path, values) {
   forget(path);
   const r = push(ref(db, path));
