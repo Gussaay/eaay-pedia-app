@@ -16,7 +16,9 @@ android/.gradle
 /local.properties
 /.gradle/
 /.idea/
-/.claude/
+# Local editor/session settings, but skills are shared with the repo
+/.claude/launch.json
+/.claude/settings.local.json
 *.zip
 
 # Local signing secrets (never commit)
