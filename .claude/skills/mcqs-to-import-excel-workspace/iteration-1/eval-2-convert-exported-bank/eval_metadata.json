@@ -1,0 +1,14 @@
+{
+  "eval_id": 2,
+  "eval_name": "convert-exported-bank",
+  "prompt": "This csv came out of another question bank tool and the columns are all named differently. Convert it into the format our app's import button accepts and save it in Downloads.",
+  "assertions": [
+    {"id": "a1", "text": "Produced a spreadsheet in Downloads with the app's import columns"},
+    {"id": "a2", "text": "The file parses through the app's own importer with zero rejected rows"},
+    {"id": "a3", "text": "All 5 source questions converted"},
+    {"id": "a4", "text": "The 'Correct Option' full text was converted to the right answer LETTER in every row"},
+    {"id": "a5", "text": "Rationale mapped to explanation and Topic mapped to category1"},
+    {"id": "a6", "text": "Topic capitalisation corrected to the app's actual chapter names ('pediatric surgery', 'infectious disease' lower case) so 'By system' still matches"},
+    {"id": "a7", "text": "Empty option columns (e) left empty rather than padded with filler text"}
+  ]
+}

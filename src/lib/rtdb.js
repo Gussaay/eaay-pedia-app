@@ -108,6 +108,10 @@ export const updatePaths = (updates) => {
   Object.keys(updates).forEach(forget);
   return update(ref(db), updates);
 };
+
+/** Deletes many paths in one atomic write (used by the bulk admin deletes). */
+export const removePaths = (paths) =>
+  updatePaths(Object.fromEntries(paths.map((p) => [p, null])));
 export async function pushTo(path, values) {
   forget(path);
   const r = push(ref(db, path));

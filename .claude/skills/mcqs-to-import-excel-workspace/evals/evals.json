@@ -1,0 +1,23 @@
+{
+  "skill_name": "mcqs-to-import-excel",
+  "evals": [
+    {
+      "id": 0,
+      "name": "messy-typed-recalls",
+      "prompt": "I typed up some recall questions from our revision session - they're in the attached text file. Can you get them ready to upload to the Easy Pedia MCQs app? Put the file in my Downloads folder.",
+      "files": ["inputs/recall-questions.txt"]
+    },
+    {
+      "id": 1,
+      "name": "write-new-mcqs",
+      "prompt": "I need 15 new MCQs on neonatal jaundice for the app - single best answer with 5 options and a proper explanation for each one. Make them ready for bulk import and save to Downloads.",
+      "files": []
+    },
+    {
+      "id": 2,
+      "name": "convert-exported-bank",
+      "prompt": "This csv came out of another question bank tool and the columns are all named differently. Convert it into the format our app's import button accepts and save it in Downloads.",
+      "files": ["inputs/exported-bank.csv"]
+    }
+  ]
+}

@@ -1,0 +1,44 @@
+{
+  "eval_id": 2,
+  "eval_name": "convert-exported-bank",
+  "run": "without_skill",
+  "passed": 6,
+  "total": 7,
+  "expectations": [
+    {
+      "text": "Produced a spreadsheet in Downloads with the app's import columns",
+      "passed": true,
+      "evidence": "columns: question, a, b, c, d, e, answer, explanation, category1, category2, explanationimageurl"
+    },
+    {
+      "text": "The file parses through the app's own importer with zero rejected rows",
+      "passed": true,
+      "evidence": "5 parsed, 5 ready, 0 rejected"
+    },
+    {
+      "text": "All 5 source questions converted",
+      "passed": true,
+      "evidence": "5 questions"
+    },
+    {
+      "text": "The 'Correct Option' full text was converted to the right answer LETTER in every row",
+      "passed": true,
+      "evidence": "5/5 rows keep the right correct-answer text under their letter"
+    },
+    {
+      "text": "Rationale mapped to explanation and Topic mapped to category1",
+      "passed": true,
+      "evidence": "5/5 rows carry the rationale as explanation"
+    },
+    {
+      "text": "Topic capitalisation corrected to the app's actual chapter names ('pediatric surgery', 'infectious disease' lower case) so 'By system' still matches",
+      "passed": false,
+      "evidence": "categories not matching app chapters: Pediatric surgery, Infectious Disease, Oncology"
+    },
+    {
+      "text": "Empty option columns (e) left empty rather than padded with filler text",
+      "passed": true,
+      "evidence": "no filler options"
+    }
+  ]
+}

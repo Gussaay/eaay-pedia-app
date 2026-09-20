@@ -1,0 +1,49 @@
+{
+  "eval_id": 0,
+  "eval_name": "messy-typed-recalls",
+  "run": "with_skill",
+  "passed": 8,
+  "total": 8,
+  "expectations": [
+    {
+      "text": "Produced a spreadsheet (.xlsx or .csv) in Downloads with the app's import columns (question, a-e, answer, explanation, category1)",
+      "passed": true,
+      "evidence": "columns: question, a, b, c, d, e, answer, explanation, category1, category2, explanationimageurl"
+    },
+    {
+      "text": "The file parses through the app's own importer (questionImport.js) with zero rejected rows",
+      "passed": true,
+      "evidence": "6 parsed, 6 ready, 0 rejected"
+    },
+    {
+      "text": "Every row's answer letter points at a non-empty option",
+      "passed": true,
+      "evidence": "every answer letter points at a non-empty option"
+    },
+    {
+      "text": "All 6 source questions are accounted for (imported or explicitly held back with a reason)",
+      "passed": true,
+      "evidence": "6 rows in file"
+    },
+    {
+      "text": "Noticed the answer key the user flagged as doubtful (Q4, UTI investigation) instead of silently importing 'B'",
+      "passed": true,
+      "evidence": "response mentions the doubtful UTI answer"
+    },
+    {
+      "text": "Option text does not still carry 'A)' / 'a)' style labels that would render as 'a) a) ...'",
+      "passed": true,
+      "evidence": "no leftover option labels"
+    },
+    {
+      "text": "category1 values exactly match chapter names used by the app (e.g. 'Respiratory', 'nephrology', 'infectious disease')",
+      "passed": true,
+      "evidence": "categories: Respiratory, nephrology, pediatric surgery, Haematology, vaccination"
+    },
+    {
+      "text": "Correct answers are not overwhelmingly one letter (no letter above 60% where more than 4 questions)",
+      "passed": true,
+      "evidence": "answer spread {\"e\":1,\"d\":2,\"b\":1,\"a\":1,\"c\":1}"
+    }
+  ]
+}

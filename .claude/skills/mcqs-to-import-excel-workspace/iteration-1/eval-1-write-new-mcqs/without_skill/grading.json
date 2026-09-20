@@ -1,0 +1,49 @@
+{
+  "eval_id": 1,
+  "eval_name": "write-new-mcqs",
+  "run": "without_skill",
+  "passed": 7,
+  "total": 7,
+  "expectations": [
+    {
+      "text": "Produced a spreadsheet in Downloads with the app's import columns",
+      "passed": true,
+      "evidence": "columns: question, a, b, c, d, e, answer, explanation, category1, category2"
+    },
+    {
+      "text": "The file parses through the app's own importer with zero rejected rows",
+      "passed": true,
+      "evidence": "15 parsed, 15 ready, 0 rejected"
+    },
+    {
+      "text": "Exactly 15 questions",
+      "passed": true,
+      "evidence": "15 questions"
+    },
+    {
+      "text": "Every question has 5 non-empty options as the user asked",
+      "passed": true,
+      "evidence": "15/15 questions have 5 options"
+    },
+    {
+      "text": "Every question has an explanation of at least 60 characters",
+      "passed": true,
+      "evidence": "15/15 explanations >= 60 chars"
+    },
+    {
+      "text": "Correct answers are spread across letters (no single letter above 45%)",
+      "passed": true,
+      "evidence": "answer spread {\"b\":5,\"c\":3,\"a\":3,\"d\":3,\"e\":1}"
+    },
+    {
+      "text": "category1 values exactly match app chapter names (e.g. 'Neonatology', 'GIT', 'Haematology')",
+      "passed": true,
+      "evidence": "categories: Neonatology"
+    },
+    {
+      "text": "Questions are clinically accurate with a single defensible answer",
+      "passed": null,
+      "evidence": "clinical accuracy - manual review"
+    }
+  ]
+}

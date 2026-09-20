@@ -1,0 +1,51 @@
+Paediatric recall questions - part 1 (typed by Dr A)
+
+1- A 2 year old child presents with barking cough, hoarse voice and inspiratory stridor for 1 day. temp 37.8. What is the best initial treatment?
+A) oral dexamethasone
+B) IV ceftriaxone
+C) nebulised salbutamol
+D) chest x ray
+E) intubation
+Ans: A
+Croup is treated with steroids, antibiotics have no role.
+
+2- Which of the following is the commonest cause of nephrotic syndrome in children?
+a) minimal change disease
+b) membranous nephropathy
+c) FSGS
+d) post strep GN
+answer = a
+Minimal change disease accounts for the majority and responds to steroids.
+
+3- A newborn of 36 weeks has bilious vomiting on day 1. abdominal xray shows double bubble. the most likely diagnosis:
+A. duodenal atresia
+B. pyloric stenosis
+C. NEC
+D. Hirschsprung
+Correct: A
+Double bubble = duodenal atresia, associated with Down syndrome.
+
+4- Best initial investigation in suspected UTI in infant 6 months?
+A) urine dipstick and culture
+B) renal biopsy
+C) MCUG
+D) DMSA
+Ans B
+(NOTE: check this one, I think the answer is wrong)
+
+5- a 5 year old with sickle cell disease has fever 39 and looks unwell. what is the most important immediate action?
+A) blood cultures and IV antibiotics
+B) reassure and give oral fluids
+C) exchange transfusion
+D) urgent MRI brain
+E) vitamin D
+Ans: A
+Children with sickle cell are functionally asplenic. Sepsis can kill quickly.
+
+6- Which vaccine is contraindicated in a child on high dose steroids?
+A) MMR
+B) inactivated polio
+C) hepatitis B
+D) DTP
+Ans: A
+Live vaccines are avoided in significant immunosuppression.

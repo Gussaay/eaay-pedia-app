@@ -1,0 +1,15 @@
+{
+  "eval_id": 1,
+  "eval_name": "write-new-mcqs",
+  "prompt": "I need 15 new MCQs on neonatal jaundice for the app - single best answer with 5 options and a proper explanation for each one. Make them ready for bulk import and save to Downloads.",
+  "assertions": [
+    {"id": "a1", "text": "Produced a spreadsheet in Downloads with the app's import columns"},
+    {"id": "a2", "text": "The file parses through the app's own importer with zero rejected rows"},
+    {"id": "a3", "text": "Exactly 15 questions"},
+    {"id": "a4", "text": "Every question has 5 non-empty options as the user asked"},
+    {"id": "a5", "text": "Every question has an explanation of at least 60 characters"},
+    {"id": "a6", "text": "Correct answers are spread across letters (no single letter above 45%)"},
+    {"id": "a7", "text": "category1 values exactly match app chapter names (e.g. 'Neonatology', 'GIT', 'Haematology')"},
+    {"id": "a8", "text": "Questions are clinically accurate with a single defensible answer"}
+  ]
+}

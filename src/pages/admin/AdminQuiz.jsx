@@ -1,13 +1,14 @@
 // EditMainDetailsActivity + AddNewQuestionActivity + EditQuestionsActivity.
 import { useEffect, useState } from 'react';
 import { useNavigate, useParams } from 'react-router-dom';
-import { ChevronLeft, ChevronRight, Plus, Trash2, Upload } from 'lucide-react';
+import { ChevronLeft, ChevronRight, Eraser, Plus, Trash2, Upload } from 'lucide-react';
 import { useAsync } from '../../hooks/useData';
-import { getOne, getWhere, pushTo, removeAt, str, updateAt } from '../../lib/rtdb';
+import { getOne, getWhere, pushTo, removeAt, removePaths, str, updateAt } from '../../lib/rtdb';
 import { invalidateQuestions } from '../../lib/quizSource';
 import ImageField from '../../components/ImageField';
 import QuestionForm, { emptyQuestion, validateQuestion } from '../../components/QuestionForm';
 import ImportQuestionsModal from '../../components/ImportQuestionsModal';
+import DangerConfirm from '../../components/DangerConfirm';
 import { AppBar, Button, Card, Confirm, ErrorBox, Input, Page, Spinner, Textarea, Toggle, useToast } from '../../components/ui';
 
 async function loadQuiz(childKey) {
@@ -33,6 +34,7 @@ export function QuizEditor() {
   const [saving, setSaving] = useState(false);
   const [confirm, setConfirm] = useState(null);
   const [importing, setImporting] = useState(false);
+  const [busy, setBusy] = useState(false); // destructive actions in progress
 
   useEffect(() => {
     if (data.data)
@@ -71,10 +73,25 @@ export function QuizEditor() {
     }
   };
 
-  const deleteQuiz = async () => {
+  // Deleting the quiz record alone leaves its questions in the database, which
+  // is what the admin wants when a quiz is being rebuilt, so removing them is a
+  // separate explicit choice.
+  const deleteQuiz = async (withQuestions) => {
+    if (withQuestions && questions.length) {
+      await removePaths(questions.map((q) => `quizqq/${q._key}`));
+    }
     await removeAt(`allquiz/${childKey}`);
-    toast('Quiz deleted', 'success');
+    invalidateQuestions({ kind: 'exam', pkey: quiz.key });
+    toast(withQuestions ? 'Quiz and its questions deleted' : 'Quiz deleted', 'success');
     navigate(-1);
+  };
+
+  // One atomic write, so a dropped connection cannot leave half a quiz behind.
+  const deleteAllQuestions = async () => {
+    await removePaths(questions.map((q) => `quizqq/${q._key}`));
+    await syncCount(childKey, quiz, 0);
+    toast(`${questions.length} questions deleted`, 'success');
+    data.reload();
   };
 
   const deleteQuestion = async (q) => {
@@ -102,9 +119,14 @@ export function QuizEditor() {
           <Toggle label="Preview only (hidden from users)" checked={form.preview} onChange={(v) => setForm({ ...form, preview: v })} />
           <div className="flex gap-2 mt-3">
             <Button className="flex-1" onClick={save} loading={saving}>Save details</Button>
-            <Button variant="danger" onClick={() => setConfirm({ kind: 'quiz' })}>
-              <Trash2 size={16} />
+            <Button variant="danger" onClick={() => setConfirm({ kind: 'quiz', withQuestions: false })}>
+              <Trash2 size={16} /> Delete quiz
             </Button>
+            {questions.length > 0 && (
+              <Button variant="outline" className="!text-red-600" onClick={() => setConfirm({ kind: 'quiz', withQuestions: true })}>
+                + questions
+              </Button>
+            )}
           </div>
         </Card>
 
@@ -114,6 +136,11 @@ export function QuizEditor() {
             <Button variant="secondary" onClick={() => setImporting(true)}>
               <Upload size={18} /> Import
             </Button>
+            {questions.length > 0 && (
+              <Button variant="outline" className="!text-red-600" onClick={() => setConfirm({ kind: 'all-questions' })}>
+                <Eraser size={18} /> Delete all
+              </Button>
+            )}
             <Button onClick={() => navigate(`/admin/quiz/${encodeURIComponent(childKey)}/question/new`)}>
               <Plus size={18} /> Add question
             </Button>
@@ -149,23 +176,65 @@ export function QuizEditor() {
           }}
         />
       )}
+      {/* A single question is a small, obvious action: a plain confirm is enough. */}
       <Confirm
-        open={!!confirm}
+        open={confirm?.kind === 'question'}
         danger
-        title={confirm?.kind === 'quiz' ? 'Delete quiz?' : 'Delete question?'}
-        message={
-          confirm?.kind === 'quiz'
-            ? 'This removes the quiz from the list. Its questions stay in the database.'
-            : confirm?.q?.question
-        }
+        title="Delete question?"
+        message={confirm?.q?.question}
         confirmText="Delete"
         cancelText="Cancel"
         onCancel={() => setConfirm(null)}
         onConfirm={async () => {
           const c = confirm;
           setConfirm(null);
-          if (c.kind === 'quiz') await deleteQuiz();
-          else await deleteQuestion(c.q);
+          await deleteQuestion(c.q);
+        }}
+      />
+
+      <DangerConfirm
+        open={confirm?.kind === 'all-questions'}
+        busy={busy}
+        title="Delete all questions?"
+        confirmLabel={`Delete ${questions.length} questions`}
+        message={`All ${questions.length} questions in "${quiz.title}" will be deleted.`}
+        impact={[`${questions.length} questions removed from the database`, 'The quiz stays, with a question count of 0']}
+        keeps={['Scores users already earned on this quiz are kept']}
+        onCancel={() => setConfirm(null)}
+        onConfirm={async () => {
+          setBusy(true);
+          try {
+            await deleteAllQuestions();
+            setConfirm(null);
+          } catch (e) {
+            toast(e.message, 'error');
+          } finally {
+            setBusy(false);
+          }
+        }}
+      />
+
+      <DangerConfirm
+        open={confirm?.kind === 'quiz'}
+        busy={busy}
+        title="Delete quiz?"
+        message={`"${quiz.title}" will disappear from the app for every user.`}
+        impact={[
+          'The quiz is removed from its book immediately',
+          confirm?.withQuestions
+            ? `Its ${questions.length} questions are deleted too`
+            : `Its ${questions.length} questions stay in the database`,
+        ]}
+        keeps={['Scores and leaderboard entries users already earned are kept']}
+        onCancel={() => setConfirm(null)}
+        onConfirm={async () => {
+          setBusy(true);
+          try {
+            await deleteQuiz(!!confirm.withQuestions);
+          } catch (e) {
+            toast(e.message, 'error');
+            setBusy(false);
+          }
         }}
       />
     </div>

@@ -1,0 +1,15 @@
+{
+  "eval_id": 0,
+  "eval_name": "messy-typed-recalls",
+  "prompt": "I typed up some recall questions from our revision session - they're in the attached text file. Can you get them ready to upload to the Easy Pedia MCQs app? Put the file in my Downloads folder.",
+  "assertions": [
+    {"id": "a1", "text": "Produced a spreadsheet (.xlsx or .csv) in Downloads with the app's import columns (question, a-e, answer, explanation, category1)"},
+    {"id": "a2", "text": "The file parses through the app's own importer (questionImport.js) with zero rejected rows"},
+    {"id": "a3", "text": "Every row's answer letter points at a non-empty option"},
+    {"id": "a4", "text": "All 6 source questions are accounted for (imported or explicitly held back with a reason)"},
+    {"id": "a5", "text": "Noticed the answer key the user flagged as doubtful (Q4, UTI investigation) instead of silently importing 'B'"},
+    {"id": "a6", "text": "Option text does not still carry 'A)' / 'a)' style labels that would render as 'a) a) ...'"},
+    {"id": "a7", "text": "category1 values exactly match chapter names used by the app (e.g. 'Respiratory', 'nephrology', 'infectious disease')"},
+    {"id": "a8", "text": "Correct answers are not overwhelmingly one letter (no letter above 60% where more than 4 questions)"}
+  ]
+}
