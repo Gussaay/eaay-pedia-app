@@ -35,12 +35,32 @@ that ever changes, the progress data is small and could move.
 
 ## Where the data lives
 
+Flashcards follow the same four levels as the question banks — Category →
+Book → Deck → Cards — so there is one way round this app rather than two:
+
 ```
-flashdecks/<deckId>                    title, system, topic, cover, count
+flashcategory/<key>                    title, source, cover, publish
+flashbooks/<key>                       title, source, main_category, publish
+flashdecks/<deckId>                    title, source, system, topic, count
 flashcard_items/<deckId>/<cardId>      front, back, hint, note, images, tags
 flashprogress/<uid>/<deckId>/<cardId>  box, due date, seen/right/wrong
 flashstats/<uid>                       totals, streak, per-system tallies
 ```
+
+It is a **separate tree** from `main_category`/`mcqs`/`allquiz`, so flashcards
+can be organised to suit themselves without disturbing the question banks.
+
+Levels are linked by a **`source` string**, exactly as the MCQ side does. That
+is why deleting a category does not delete the books under it: the link is a
+name, not a parent id, so a cascade would have to guess. The dialogs say what
+is left behind, and renaming a source has the same effect. A deck *does* own
+its cards, so deleting a deck does delete them.
+
+A deck also carries a **`system`** (Cardiology, Neurology…). That is a
+different axis from the hierarchy — it is what the progress and gaps screen
+groups by, the same way MCQ questions carry `category1` alongside their book —
+and the deck form offers the systems already in use so one system does not end
+up split between two spellings.
 
 **Note the card node is `flashcard_items`, not `flashcards`.** `flashcards`
 already exists and belongs to the old Android app, which keeps per-topic scores

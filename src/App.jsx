@@ -29,6 +29,12 @@ const AppUpdates = lazy(() => import('./pages/AppUpdates'));
 const Mcqs = lazy(() => import('./pages/Mcqs'));
 const ComingSoon = lazy(() => import('./pages/ComingSoon'));
 const Flashcards = lazy(() => import('./pages/Flashcards'));
+const FlashCategoryBooks = lazy(() =>
+  import('./pages/FlashBooks').then((m) => ({ default: m.FlashCategoryBooks })),
+);
+const FlashBookDecks = lazy(() =>
+  import('./pages/FlashBooks').then((m) => ({ default: m.FlashBookDecks })),
+);
 const FlashDeck = lazy(() => import('./pages/FlashDeck'));
 const FlashStudy = lazy(() => import('./pages/FlashStudy'));
 const FlashGaps = lazy(() => import('./pages/FlashGaps'));
@@ -154,6 +160,8 @@ export default function App() {
           <Route path="/soon/:key" element={guard(<ComingSoon />)} />
           <Route path="/flashcards" element={guard(<Flashcards />)} />
           <Route path="/flashcards/gaps" element={guard(<FlashGaps />)} />
+          <Route path="/flashcards/cat/:source" element={guard(<FlashCategoryBooks />)} />
+          <Route path="/flashcards/book/:source" element={guard(<FlashBookDecks />)} />
           <Route path="/flashcards/deck/:deckId" element={guard(<FlashDeck />)} />
           <Route path="/flashcards/study/:deckId" element={guard(<FlashStudy />)} />
           <Route path="/cat/:source" element={guard(<Books />)} />

@@ -1,19 +1,43 @@
 {
   "project_info": {
     "project_number": "444201218220",
+    "firebase_url": "https://easy-pedia.firebaseio.com",
     "project_id": "easy-pedia",
-    "storage_bucket": "easy-pedia.appspot.com",
-    "firebase_url": "https://easy-pedia.firebaseio.com"
+    "storage_bucket": "easy-pedia.appspot.com"
   },
   "client": [
     {
       "client_info": {
         "mobilesdk_app_id": "1:444201218220:android:8221b6da25e9c967022f09",
         "android_client_info": {
-          "package_name": "com.easy.pediamcqs"
+          "package_name": "com.easy.pedia"
         }
       },
       "oauth_client": [
+        {
+          "client_id": "444201218220-gi4ufb9dj5inm56klv1lb0k6daqqtmls.apps.googleusercontent.com",
+          "client_type": 1,
+          "android_info": {
+            "package_name": "com.easy.pedia",
+            "certificate_hash": "272e1b0b881f4ebf68467f2c5dc4ac273acaf80d"
+          }
+        },
+        {
+          "client_id": "444201218220-n00cmcpilqlr7q8ucojai8kpgpnmlv50.apps.googleusercontent.com",
+          "client_type": 1,
+          "android_info": {
+            "package_name": "com.easy.pedia",
+            "certificate_hash": "4172e036e2e2cca55fed1cbba41e0eddd96636ba"
+          }
+        },
+        {
+          "client_id": "444201218220-o3jpople3omhqud8b81200nm8lcbu80f.apps.googleusercontent.com",
+          "client_type": 1,
+          "android_info": {
+            "package_name": "com.easy.pedia",
+            "certificate_hash": "61ed377e85d386a8dfee6b864bd85b0bfaa5af81"
+          }
+        },
         {
           "client_id": "444201218220-ub2mt5dcl5557vp3f608gqltnvhfovlp.apps.googleusercontent.com",
           "client_type": 3
@@ -21,14 +45,60 @@
       ],
       "api_key": [
         {
-          "current_key": "AIzaSyAnt2Yl_5-nxCAeTc-DSXFGHCL1eKrkA3E"
+          "current_key": "AIzaSyAi7dChb9xuZLCLFv6VT5mM3kYvEOREtaQ"
         }
       ],
       "services": {
         "appinvite_service": {
           "other_platform_oauth_client": [
             {
-              "client_id": "444201218220-ub2mt5dcl5557vp3f608gqltnvhfovlp.apps.googleusercontent.com",
+              "client_id": "444201218220-6ugmlvj1r46j7kp78ighbu4eq9hd7gls.apps.googleusercontent.com",
+              "client_type": 3
+            }
+          ]
+        }
+      },
+      "admob_app_id": "ca-app-pub-4053402935226982~8551653105"
+    },
+    {
+      "client_info": {
+        "mobilesdk_app_id": "1:444201218220:android:36ca0f1710f9082c022f09",
+        "android_client_info": {
+          "package_name": "com.easy.pediamcqs"
+        }
+      },
+      "oauth_client": [
+        {
+          "client_id": "444201218220-a0g01ton8cq1d6v86f0ddhtuv3miq2lj.apps.googleusercontent.com",
+          "client_type": 1,
+          "android_info": {
+            "package_name": "com.easy.pediamcqs",
+            "certificate_hash": "4172e036e2e2cca55fed1cbba41e0eddd96636ba"
+          }
+        },
+        {
+          "client_id": "444201218220-so0gec8eskl74spgd4lajbs9e5q5o89i.apps.googleusercontent.com",
+          "client_type": 1,
+          "android_info": {
+            "package_name": "com.easy.pediamcqs",
+            "certificate_hash": "384d337de2e2fae38feff53d3a996311881dd52b"
+          }
+        },
+        {
+          "client_id": "444201218220-ub2mt5dcl5557vp3f608gqltnvhfovlp.apps.googleusercontent.com",
+          "client_type": 3
+        }
+      ],
+      "api_key": [
+        {
+          "current_key": "AIzaSyAi7dChb9xuZLCLFv6VT5mM3kYvEOREtaQ"
+        }
+      ],
+      "services": {
+        "appinvite_service": {
+          "other_platform_oauth_client": [
+            {
+              "client_id": "444201218220-6ugmlvj1r46j7kp78ighbu4eq9hd7gls.apps.googleusercontent.com",
               "client_type": 3
             }
           ]

@@ -1,14 +1,24 @@
-// Flashcard admin: decks, and the cards inside one deck.
+// Flashcard admin, laid out the same way as the MCQ catalogue:
 //
-// Deleting a deck does delete its cards, unlike the MCQ catalogue — here the
-// parent really does own the children (flashcard_items/<deckId>), so there is
-// nothing to guess. What it leaves alone is everyone's progress, which lives
-// under each user and cannot be reached from this screen.
+//   flashcategory  ->  flashbooks  ->  flashdecks  ->  flashcard_items
+//   (category)         (book)          (deck)          (cards)
+//
+// It is a separate tree from the MCQ one, so flashcards can be organised
+// however suits them without disturbing the question banks.
+//
+// Levels are linked by a "source" string, exactly as the MCQ side does — which
+// is why deleting a category or a book does NOT delete what sits under it: the
+// link is a name, not a parent id, so a cascade would have to guess. The
+// dialogs say what is left behind, and renaming a source has the same effect.
+//
+// A deck also carries a `system` (Cardiology, Neurology…). That is a different
+// axis from the book hierarchy — it is what the progress and gaps screen
+// groups by, the same way MCQ questions carry category1 alongside their book.
 import { useMemo, useState } from 'react';
-import { useNavigate, useParams } from 'react-router-dom';
-import { ChevronRight, Layers, Pencil, Plus, Search, Trash2, Upload } from 'lucide-react';
+import { useNavigate, useParams, useSearchParams } from 'react-router-dom';
+import { Layers, Pencil, Plus, Search, Trash2, Upload } from 'lucide-react';
 import { useAsync, useList } from '../../hooks/useData';
-import { getOne, newKey, num, updateAt, updatePaths } from '../../lib/rtdb';
+import { getOne, newKey, num, pushTo, removeAt, updateAt, updatePaths } from '../../lib/rtdb';
 import { deleteDeck, loadCards } from '../../lib/flashcardData';
 import ImageField from '../../components/ImageField';
 import ImportCardsModal from '../../components/ImportCardsModal';
@@ -20,88 +30,381 @@ import {
   Empty,
   ErrorBox,
   Input,
+  ListCard,
   Modal,
   Page,
   SkeletonList,
   Textarea,
-  Thumb,
   Toggle,
   useToast,
 } from '../../components/ui';
 
-const BLANK_DECK = { title: '', system: '', topic: '', img: '', about: '', order: '', publish: true };
-const BLANK_CARD = { front: '', back: '', hint: '', note: '', img: '', back_img: '', tags: '', topic: '' };
+const plural = (n, word) => `${n} ${word}${n === 1 ? '' : 's'}`;
+const isPublished = (x) => String(x?.publish) !== 'false';
 
 function RowActions({ onEdit, onDelete }) {
+  const stop = (fn) => (e) => {
+    e.stopPropagation();
+    fn();
+  };
   return (
-    <div className="flex shrink-0 gap-1">
-      <button
-        aria-label="Edit"
-        title="Edit"
-        className="p-2 rounded-lg text-slate-400 hover:bg-slate-100 hover:text-slate-700"
-        onClick={(e) => {
-          e.stopPropagation();
-          onEdit();
-        }}
-      >
+    <div className="flex items-center gap-1 shrink-0">
+      <button onClick={stop(onEdit)} aria-label="Edit" className="p-2 rounded-lg text-slate-400 hover:text-brand-700 hover:bg-brand-50">
         <Pencil size={18} />
       </button>
-      <button
-        aria-label="Delete"
-        title="Delete"
-        className="p-2 rounded-lg text-slate-400 hover:bg-red-50 hover:text-red-600"
-        onClick={(e) => {
-          e.stopPropagation();
-          onDelete();
-        }}
-      >
+      <button onClick={stop(onDelete)} aria-label="Delete" className="p-2 rounded-lg text-slate-400 hover:text-red-600 hover:bg-red-50">
         <Trash2 size={18} />
       </button>
     </div>
   );
 }
 
+function AddButton({ onClick, children }) {
+  return (
+    <Button className="w-full" onClick={onClick}>
+      <Plus size={18} /> {children}
+    </Button>
+  );
+}
+
 // ---------------------------------------------------------------------------
-// Deck list
+// Level 1: categories
 // ---------------------------------------------------------------------------
-export function FlashDecks() {
+export function FlashCategories() {
   const navigate = useNavigate();
   const toast = useToast();
-  const [q, setQ] = useState('');
-  const [form, setForm] = useState(null); // null | { ...deck, _key? }
+  const list = useList('flashcategory');
+  const books = useList('flashbooks');
+  const [form, setForm] = useState(null);
   const [confirm, setConfirm] = useState(null);
   const [busy, setBusy] = useState(false);
 
-  const decks = useList('flashdecks', {
-    sort: (a, b) =>
-      String(a.system || '').localeCompare(b.system || '') ||
-      num(a.order) - num(b.order) ||
-      String(a.title || '').localeCompare(b.title || ''),
-  });
-
-  const systems = useMemo(
-    () => [...new Set(decks.data.map((d) => d.system).filter(Boolean))].sort(),
-    [decks.data],
-  );
-
-  const shown = decks.data.filter((d) => {
-    const needle = q.trim().toLowerCase();
-    return (
-      !needle ||
-      String(d.title || '').toLowerCase().includes(needle) ||
-      String(d.system || '').toLowerCase().includes(needle) ||
-      String(d.topic || '').toLowerCase().includes(needle)
-    );
-  });
+  const booksUnder = (source) => books.data.filter((b) => b.main_category === source).length;
 
   const save = async () => {
-    if (!form.title.trim()) return toast('A title is needed', 'error');
-    if (!form.system.trim()) return toast('A system is needed — it is how decks are grouped', 'error');
+    if (!form.source.trim()) return toast('Enter a source', 'error');
+    if (!form.title.trim()) return toast('Enter a title', 'error');
+    setBusy(true);
+    try {
+      const record = {
+        title: form.title.trim(),
+        source: form.source.trim(),
+        img: form.img || '',
+        publish: form.publish,
+      };
+      if (form._key) await updateAt(`flashcategory/${form._key}`, record);
+      else await pushTo('flashcategory', record);
+      toast(form._key ? 'Category saved' : 'Category added', 'success');
+      setForm(null);
+      list.reload();
+    } catch (e) {
+      toast(e.message, 'error');
+    } finally {
+      setBusy(false);
+    }
+  };
+
+  return (
+    <div className="min-h-screen">
+      <AppBar title="Flashcards" subtitle="Categories — tap one to open its books" />
+      <Page className="space-y-3">
+        <ErrorBox error={list.error} onRetry={list.reload} />
+        <AddButton onClick={() => setForm({ title: '', source: '', img: '', publish: true })}>
+          Add new category
+        </AddButton>
+
+        {list.loading ? (
+          <SkeletonList />
+        ) : list.data.length === 0 ? (
+          <Empty icon={<Layers size={40} />} title="No flashcard categories yet">
+            Add a category, then a book inside it, then the decks.
+          </Empty>
+        ) : (
+          list.data.map((c) => (
+            <ListCard
+              key={c._key}
+              img={c.img}
+              title={c.title}
+              subtitle={`source: ${c.source} · ${plural(booksUnder(c.source), 'book')}${isPublished(c) ? '' : ' · hidden'}`}
+              onClick={() =>
+                navigate(
+                  `/admin/flashcards/category/${encodeURIComponent(c.source)}?title=${encodeURIComponent(c.title || '')}`,
+                )
+              }
+              right={
+                <RowActions
+                  onEdit={() =>
+                    setForm({
+                      _key: c._key,
+                      title: c.title || '',
+                      source: c.source || '',
+                      img: c.img || '',
+                      publish: isPublished(c),
+                    })
+                  }
+                  onDelete={() => setConfirm(c)}
+                />
+              }
+            />
+          ))
+        )}
+      </Page>
+
+      <Modal
+        open={!!form}
+        onClose={() => setForm(null)}
+        title={form?._key ? 'Edit category' : 'New category'}
+        footer={
+          <Button onClick={save} loading={busy}>
+            {form?._key ? 'Save' : 'Add'}
+          </Button>
+        }
+      >
+        {form && (
+          <>
+            <Input
+              label="Title"
+              value={form.title}
+              onChange={(e) => setForm({ ...form, title: e.target.value })}
+              placeholder="Nelson essentials"
+            />
+            <Input
+              label="Source"
+              hint={
+                form._key
+                  ? 'Books are matched to this category by source — changing it hides the books already under it.'
+                  : 'Books are matched to this category by source.'
+              }
+              value={form.source}
+              onChange={(e) => setForm({ ...form, source: e.target.value })}
+            />
+            <ImageField folder="flashcards" value={form.img} onChange={(img) => setForm({ ...form, img })} />
+            <Toggle
+              label="Published — visible to everyone"
+              checked={form.publish}
+              onChange={(publish) => setForm({ ...form, publish })}
+            />
+          </>
+        )}
+      </Modal>
+
+      <DangerConfirm
+        open={!!confirm}
+        busy={busy}
+        title="Delete category?"
+        message={`"${confirm?.title}" will be removed for every user.`}
+        impact={['The category disappears from the app immediately']}
+        keeps={
+          confirm && booksUnder(confirm.source) > 0
+            ? [
+                `Its ${plural(booksUnder(confirm.source), 'book')} and their decks stay in the database but become unreachable — open the category and delete them first if you want them gone`,
+              ]
+            : []
+        }
+        onCancel={() => setConfirm(null)}
+        onConfirm={async () => {
+          setBusy(true);
+          try {
+            await removeAt(`flashcategory/${confirm._key}`);
+            toast('Category deleted', 'success');
+            setConfirm(null);
+            list.reload();
+          } catch (e) {
+            toast(e.message, 'error');
+          } finally {
+            setBusy(false);
+          }
+        }}
+      />
+    </div>
+  );
+}
+
+// ---------------------------------------------------------------------------
+// Level 2: books inside a category
+// ---------------------------------------------------------------------------
+export function FlashCategoryBooks() {
+  const { source } = useParams();
+  const [params] = useSearchParams();
+  const navigate = useNavigate();
+  const toast = useToast();
+  const list = useList('flashbooks', { filter: (b) => b.main_category === source });
+  const decks = useList('flashdecks');
+  const [form, setForm] = useState(null);
+  const [confirm, setConfirm] = useState(null);
+  const [busy, setBusy] = useState(false);
+
+  const decksUnder = (b) => decks.data.filter((d) => d.source === b.source).length;
+
+  const save = async () => {
+    if (!form.source.trim()) return toast('Enter a source', 'error');
+    if (!form.title.trim()) return toast('Enter a title', 'error');
+    setBusy(true);
+    try {
+      const record = {
+        title: form.title.trim(),
+        source: form.source.trim(),
+        img: form.img || '',
+        publish: form.publish,
+        // Needed so the book shows under its category.
+        main_category: source,
+      };
+      if (form._key) await updateAt(`flashbooks/${form._key}`, record);
+      else await pushTo('flashbooks', record);
+      toast(form._key ? 'Book saved' : 'Book added', 'success');
+      setForm(null);
+      list.reload();
+    } catch (e) {
+      toast(e.message, 'error');
+    } finally {
+      setBusy(false);
+    }
+  };
+
+  return (
+    <div className="min-h-screen">
+      <AppBar title={params.get('title') || source} subtitle="Books — tap one to open its decks" />
+      <Page className="space-y-3">
+        <AddButton onClick={() => setForm({ title: '', source: '', img: '', publish: true })}>
+          Add new book
+        </AddButton>
+
+        {list.loading ? (
+          <SkeletonList />
+        ) : list.data.length === 0 ? (
+          <Empty title="No books in this category yet" />
+        ) : (
+          list.data.map((b) => (
+            <ListCard
+              key={b._key}
+              img={b.img}
+              title={b.title}
+              subtitle={`source: ${b.source} · ${plural(decksUnder(b), 'deck')}${isPublished(b) ? '' : ' · hidden'}`}
+              onClick={() =>
+                navigate(
+                  `/admin/flashcards/book/${encodeURIComponent(b.source)}?title=${encodeURIComponent(b.title || '')}`,
+                )
+              }
+              right={
+                <RowActions
+                  onEdit={() =>
+                    setForm({
+                      _key: b._key,
+                      title: b.title || '',
+                      source: b.source || '',
+                      img: b.img || '',
+                      publish: isPublished(b),
+                    })
+                  }
+                  onDelete={() => setConfirm(b)}
+                />
+              }
+            />
+          ))
+        )}
+      </Page>
+
+      <Modal
+        open={!!form}
+        onClose={() => setForm(null)}
+        title={form?._key ? 'Edit book' : 'New book'}
+        footer={
+          <Button onClick={save} loading={busy}>
+            {form?._key ? 'Save' : 'Add'}
+          </Button>
+        }
+      >
+        {form && (
+          <>
+            <Input label="Title" value={form.title} onChange={(e) => setForm({ ...form, title: e.target.value })} />
+            <Input
+              label="Source"
+              hint={
+                form._key
+                  ? 'Decks are matched to this book by source — changing it hides the decks already under it.'
+                  : 'Decks are matched to this book by source.'
+              }
+              value={form.source}
+              onChange={(e) => setForm({ ...form, source: e.target.value })}
+            />
+            <ImageField folder="flashcards" value={form.img} onChange={(img) => setForm({ ...form, img })} />
+            <Toggle
+              label="Published — visible to everyone"
+              checked={form.publish}
+              onChange={(publish) => setForm({ ...form, publish })}
+            />
+          </>
+        )}
+      </Modal>
+
+      <DangerConfirm
+        open={!!confirm}
+        busy={busy}
+        title="Delete book?"
+        message={`"${confirm?.title}" will be removed from this category for every user.`}
+        impact={['The book disappears from the app immediately']}
+        keeps={
+          confirm && decksUnder(confirm) > 0
+            ? [
+                `Its ${plural(decksUnder(confirm), 'deck')} and their cards stay in the database but become unreachable — open the book and delete them first if you want them gone`,
+              ]
+            : []
+        }
+        onCancel={() => setConfirm(null)}
+        onConfirm={async () => {
+          setBusy(true);
+          try {
+            await removeAt(`flashbooks/${confirm._key}`);
+            toast('Book deleted', 'success');
+            setConfirm(null);
+            list.reload();
+          } catch (e) {
+            toast(e.message, 'error');
+          } finally {
+            setBusy(false);
+          }
+        }}
+      />
+    </div>
+  );
+}
+
+// ---------------------------------------------------------------------------
+// Level 3: decks inside a book
+// ---------------------------------------------------------------------------
+const BLANK_DECK = { title: '', system: '', topic: '', img: '', about: '', order: '', publish: true };
+
+export function FlashBookDecks() {
+  const { source } = useParams();
+  const [params] = useSearchParams();
+  const navigate = useNavigate();
+  const toast = useToast();
+  const list = useList('flashdecks', {
+    filter: (d) => d.source === source,
+    sort: (a, b) => num(a.order) - num(b.order) || String(a.title || '').localeCompare(b.title || ''),
+  });
+  const allDecks = useList('flashdecks');
+  const [form, setForm] = useState(null);
+  const [confirm, setConfirm] = useState(null);
+  const [busy, setBusy] = useState(false);
+
+  // Offered in the System box, so the same spelling is reused rather than
+  // "Cardiology" and "cardiology" splitting one system into two on the gaps
+  // screen.
+  const systems = useMemo(
+    () => [...new Set(allDecks.data.map((d) => d.system).filter(Boolean))].sort(),
+    [allDecks.data],
+  );
+
+  const save = async () => {
+    if (!form.title.trim()) return toast('Enter a title', 'error');
+    if (!form.system.trim()) return toast('Enter a system — the progress screen groups by it', 'error');
     setBusy(true);
     try {
       const key = form._key || newKey('flashdecks');
       await updateAt(`flashdecks/${key}`, {
         key,
+        source,
         title: form.title.trim(),
         system: form.system.trim(),
         topic: form.topic.trim(),
@@ -109,107 +412,74 @@ export function FlashDecks() {
         about: form.about.trim(),
         order: num(form.order),
         publish: form.publish !== false,
-        // Only set on creation: an edit must not wipe the real card count.
+        // Only on creation: an edit must not wipe the real card count.
         ...(form._key ? {} : { count: 0, created: new Date().toISOString().slice(0, 10) }),
       });
-      toast(form._key ? 'Deck updated.' : 'Deck created.', 'success');
+      toast(form._key ? 'Deck saved' : 'Deck added', 'success');
       setForm(null);
-      decks.reload();
+      list.reload();
     } catch (e) {
-      toast(e.message || 'Could not save', 'error');
+      toast(e.message, 'error');
     } finally {
       setBusy(false);
     }
   };
 
   return (
-    <div className="min-h-screen pb-24">
-      <AppBar title="Flashcard decks" subtitle={`${decks.data.length} decks`} />
+    <div className="min-h-screen">
+      <AppBar title={params.get('title') || source} subtitle="Decks — tap one to open its cards" />
       <Page className="space-y-3">
-        <ErrorBox error={decks.error} onRetry={decks.reload} />
+        <AddButton onClick={() => setForm({ ...BLANK_DECK })}>Add new deck</AddButton>
 
-        <div className="flex items-center gap-2 rounded-xl border border-slate-300 bg-white px-3">
-          <Search size={16} className="text-slate-400" />
-          <input
-            className="flex-1 py-2.5 outline-none"
-            placeholder="Search decks"
-            value={q}
-            onChange={(e) => setQ(e.target.value)}
-          />
-        </div>
-
-        {decks.loading ? (
+        {list.loading ? (
           <SkeletonList />
-        ) : shown.length === 0 ? (
-          <Empty icon={<Layers size={40} />} title={q ? 'No decks match' : 'No decks yet'}>
-            {q ? null : 'Create a deck, then add cards to it by hand or from a spreadsheet.'}
-          </Empty>
+        ) : list.data.length === 0 ? (
+          <Empty icon={<Layers size={40} />} title="No decks in this book yet" />
         ) : (
-          shown.map((deck) => (
-            <div
-              key={deck._key}
-              className="flex items-center gap-3 rounded-2xl border border-slate-100 bg-white p-3 shadow-sm"
-            >
-              <button
-                className="flex min-w-0 flex-1 items-center gap-3 text-left"
-                onClick={() => navigate(`/admin/flashcards/${encodeURIComponent(deck._key)}`)}
-              >
-                <Thumb src={deck.img} label={deck.title} className="h-12 w-12 shrink-0" />
-                <div className="min-w-0 flex-1">
-                  <p className="font-semibold text-slate-800 truncate">{deck.title}</p>
-                  <p className="text-xs text-slate-500 truncate">
-                    {deck.system}
-                    {deck.topic ? ` · ${deck.topic}` : ''} · {num(deck.count)} cards
-                    {deck.publish === false ? ' · not published' : ''}
-                  </p>
-                </div>
-                <ChevronRight size={18} className="shrink-0 text-slate-300" />
-              </button>
-              <RowActions
-                onEdit={() => setForm({ ...BLANK_DECK, ...deck, order: String(num(deck.order) || '') })}
-                onDelete={() => setConfirm(deck)}
-              />
-            </div>
+          list.data.map((d) => (
+            <ListCard
+              key={d._key}
+              img={d.img}
+              title={d.title}
+              subtitle={`${d.system}${d.topic ? ` · ${d.topic}` : ''} · ${plural(num(d.count), 'card')}${isPublished(d) ? '' : ' · hidden'}`}
+              onClick={() => navigate(`/admin/flashcards/deck/${encodeURIComponent(d._key)}`)}
+              right={
+                <RowActions
+                  onEdit={() =>
+                    setForm({ ...BLANK_DECK, ...d, order: String(num(d.order) || ''), publish: isPublished(d) })
+                  }
+                  onDelete={() => setConfirm(d)}
+                />
+              }
+            />
           ))
         )}
       </Page>
-
-      <button
-        onClick={() => setForm({ ...BLANK_DECK })}
-        className="fixed bottom-6 right-5 z-30 flex items-center gap-2 rounded-full bg-brand-600 px-5 py-3.5 font-semibold text-white shadow-lg"
-      >
-        <Plus size={20} /> New deck
-      </button>
 
       <Modal
         open={!!form}
         onClose={() => setForm(null)}
         title={form?._key ? 'Edit deck' : 'New deck'}
         footer={
-          <>
-            <Button variant="outline" onClick={() => setForm(null)} disabled={busy}>
-              Cancel
-            </Button>
-            <Button onClick={save} loading={busy}>
-              Save
-            </Button>
-          </>
+          <Button onClick={save} loading={busy}>
+            {form?._key ? 'Save' : 'Add'}
+          </Button>
         }
       >
         {form && (
-          <div>
+          <>
             <Input
               label="Title"
               value={form.title}
-              onChange={(e) => setForm((f) => ({ ...f, title: e.target.value }))}
+              onChange={(e) => setForm({ ...form, title: e.target.value })}
               placeholder="Congenital heart disease"
             />
             <Input
               label="System"
               value={form.system}
-              onChange={(e) => setForm((f) => ({ ...f, system: e.target.value }))}
+              onChange={(e) => setForm({ ...form, system: e.target.value })}
               placeholder="Cardiology"
-              hint="Decks are grouped by this on the Flash Cards screen."
+              hint="Used by the progress and gaps screen. Reuse the same spelling across decks."
               list="flash-systems"
             />
             <datalist id="flash-systems">
@@ -220,55 +490,55 @@ export function FlashDecks() {
             <Input
               label="Topic (optional)"
               value={form.topic}
-              onChange={(e) => setForm((f) => ({ ...f, topic: e.target.value }))}
+              onChange={(e) => setForm({ ...form, topic: e.target.value })}
               placeholder="Cyanotic lesions"
             />
             <Textarea
               label="About (optional)"
               rows={2}
               value={form.about}
-              onChange={(e) => setForm((f) => ({ ...f, about: e.target.value }))}
+              onChange={(e) => setForm({ ...form, about: e.target.value })}
             />
-            <ImageField label="Cover image" folder="flashcards" value={form.img} onChange={(url) => setForm((f) => ({ ...f, img: url }))} />
+            <ImageField folder="flashcards" value={form.img} onChange={(img) => setForm({ ...form, img })} />
             <Input
               label="Order (optional)"
               type="number"
               value={form.order}
-              onChange={(e) => setForm((f) => ({ ...f, order: e.target.value }))}
-              hint="Lower numbers come first inside a system."
+              onChange={(e) => setForm({ ...form, order: e.target.value })}
+              hint="Lower numbers come first inside this book."
             />
             <Toggle
               label="Published — visible to everyone"
               checked={form.publish !== false}
-              onChange={(v) => setForm((f) => ({ ...f, publish: v }))}
+              onChange={(publish) => setForm({ ...form, publish })}
             />
-          </div>
+          </>
         )}
       </Modal>
 
       <DangerConfirm
         open={!!confirm}
+        busy={busy}
         title={`Delete “${confirm?.title}”?`}
         message="The deck and every card in it are removed for everyone."
-        impact={[`All ${num(confirm?.count)} card(s) in this deck are deleted.`]}
+        impact={[`All ${plural(num(confirm?.count), 'card')} in this deck are deleted.`]}
         keeps={[
-          'Each person’s study history stays in their own account, so restoring a deck with the same cards would not bring it back into use.',
-          'Other decks are untouched.',
+          'Each person’s study history stays in their own account.',
+          'Other decks in this book are untouched.',
         ]}
         confirmWord="DELETE"
-        busy={busy}
         onCancel={() => setConfirm(null)}
         onConfirm={async () => {
           setBusy(true);
           try {
             await deleteDeck(confirm._key);
-            toast('Deck deleted.', 'success');
-            decks.reload();
+            toast('Deck deleted', 'success');
+            setConfirm(null);
+            list.reload();
           } catch (e) {
-            toast(e.message || 'Could not delete', 'error');
+            toast(e.message, 'error');
           } finally {
             setBusy(false);
-            setConfirm(null);
           }
         }}
       />
@@ -277,8 +547,10 @@ export function FlashDecks() {
 }
 
 // ---------------------------------------------------------------------------
-// Cards inside one deck
+// Level 4: cards inside a deck
 // ---------------------------------------------------------------------------
+const BLANK_CARD = { front: '', back: '', hint: '', note: '', img: '', back_img: '', tags: '', topic: '' };
+
 export function FlashDeckCards() {
   const { deckId } = useParams();
   const toast = useToast();
@@ -334,7 +606,7 @@ export function FlashDeckCards() {
       if (!form._key) updates[`flashdecks/${deckId}/count`] = cards.length + 1;
 
       await updatePaths(updates);
-      toast(form._key ? 'Card updated.' : 'Card added.', 'success');
+      toast(form._key ? 'Card updated' : 'Card added', 'success');
       setForm(null);
       data.reload();
     } catch (e) {
@@ -348,7 +620,7 @@ export function FlashDeckCards() {
     <div className="min-h-screen pb-24">
       <AppBar
         title={deck?.title || 'Deck'}
-        subtitle={`${cards.length} card${cards.length === 1 ? '' : 's'}`}
+        subtitle={`${plural(cards.length, 'card')}${deck?.system ? ` · ${deck.system}` : ''}`}
         actions={
           <button
             onClick={() => setImporting(true)}
@@ -477,8 +749,8 @@ export function FlashDeckCards() {
               onChange={(e) => setForm((f) => ({ ...f, note: e.target.value }))}
               hint="Extra detail shown under the answer."
             />
-            <ImageField label="Front image" folder="flashcards" value={form.img} onChange={(url) => setForm((f) => ({ ...f, img: url }))} />
-            <ImageField label="Back image" folder="flashcards" value={form.back_img} onChange={(url) => setForm((f) => ({ ...f, back_img: url }))} />
+            <ImageField label="Front image" folder="flashcards" value={form.img} onChange={(img) => setForm((f) => ({ ...f, img }))} />
+            <ImageField label="Back image" folder="flashcards" value={form.back_img} onChange={(img) => setForm((f) => ({ ...f, back_img: img }))} />
             <Input
               label="Topic (optional)"
               value={form.topic}
@@ -499,12 +771,12 @@ export function FlashDeckCards() {
         title={confirm?.all ? 'Delete every card in this deck?' : 'Delete this card?'}
         message={
           confirm?.all
-            ? `All ${cards.length} card(s) in “${deck?.title}” will be removed for everyone.`
+            ? `All ${plural(cards.length, 'card')} in “${deck?.title}” will be removed for everyone.`
             : confirm?.card?.front
         }
         impact={
           confirm?.all
-            ? [`${cards.length} card(s) deleted in one go.`]
+            ? [`${plural(cards.length, 'card')} deleted in one go.`]
             : ['This one card is removed for everyone.']
         }
         keeps={
@@ -523,13 +795,13 @@ export function FlashDeckCards() {
                 [`flashcard_items/${deckId}`]: null,
                 [`flashdecks/${deckId}/count`]: 0,
               });
-              toast('All cards deleted.', 'success');
+              toast('All cards deleted', 'success');
             } else {
               await updatePaths({
                 [`flashcard_items/${deckId}/${confirm.card._key}`]: null,
                 [`flashdecks/${deckId}/count`]: Math.max(0, cards.length - 1),
               });
-              toast('Card deleted.', 'success');
+              toast('Card deleted', 'success');
             }
             data.reload();
           } catch (e) {

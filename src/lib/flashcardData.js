@@ -17,8 +17,15 @@
 // ("all cards in any deck tagged X, due today, ordered by difficulty"). It
 // does not — the deck is the unit people study and the unit we load.
 //
-//   flashdecks/<deckId>                     the deck list: one small read
+//   flashcategory/<key>                     categories   \
+//   flashbooks/<key>                        books         | same shape as the
+//   flashdecks/<deckId>                     decks        /  MCQ catalogue
 //   flashcard_items/<deckId>/<cardId>       the cards: one read per deck
+//
+// Those first three are separate from the MCQ catalogue's main_category/mcqs/
+// allquiz, so flashcards can be organised to suit themselves. They are linked
+// down the chain by a "source" string, like the MCQ side, which is why
+// deleting a category does not delete the books under it.
 //   flashprogress/<uid>/<deckId>/<cardId>   this person's boxes and due dates
 //   flashstats/<uid>                        totals, streak, per-system tallies
 //

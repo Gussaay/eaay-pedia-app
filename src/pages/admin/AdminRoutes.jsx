@@ -4,7 +4,12 @@ import { AppBar, Page } from '../../components/ui';
 import { Categories, CategoryBooks, BookQuizzes } from './AdminCatalog';
 import { QuizEditor, QuestionEditorPage } from './AdminQuiz';
 import { Previews, Chapters, ChapterEditor } from './AdminMisc';
-import { FlashDecks, FlashDeckCards } from './AdminFlashcards';
+import {
+  FlashCategories,
+  FlashCategoryBooks,
+  FlashBookDecks,
+  FlashDeckCards,
+} from './AdminFlashcards';
 import AdminUpdates from './AdminUpdates';
 import AdminUsers from './AdminUsers';
 import AdminNotify from './AdminNotify';
@@ -16,7 +21,7 @@ function AdminHome() {
     { icon: PencilLine, title: 'Edit quizzes', desc: 'Edit published quizzes and their questions', to: '/cat/*?mode=edit&title=Edit%20quizzes' },
     { icon: Eye, title: 'Preview quizzes', desc: 'Quizzes saved in preview (not published)', to: '/admin/previews' },
     { icon: FolderTree, title: 'Chapters / systems', desc: 'Edit chapters used by "By system" quizzes', to: '/admin/chapters' },
-    { icon: Layers, title: 'Flashcard decks', desc: 'Decks and cards, by hand or from a spreadsheet', to: '/admin/flashcards' },
+    { icon: Layers, title: 'Flashcards', desc: 'Categories → books → decks → cards', to: '/admin/flashcards' },
     { icon: ArrowUpCircle, title: 'Update manager', desc: 'Roll out, pause or roll back app updates', to: '/admin/updates' },
     { icon: Users, title: 'User manager', desc: 'Accounts, activity, admin access and blocking', to: '/admin/users' },
     { icon: BellRing, title: 'Notification manager', desc: 'Announcements and push notifications', to: '/admin/notifications' },
@@ -53,8 +58,10 @@ export default function AdminRoutes() {
       <Route path="previews" element={<Previews />} />
       <Route path="chapters" element={<Chapters />} />
       <Route path="chapter/:key" element={<ChapterEditor />} />
-      <Route path="flashcards" element={<FlashDecks />} />
-      <Route path="flashcards/:deckId" element={<FlashDeckCards />} />
+      <Route path="flashcards" element={<FlashCategories />} />
+      <Route path="flashcards/category/:source" element={<FlashCategoryBooks />} />
+      <Route path="flashcards/book/:source" element={<FlashBookDecks />} />
+      <Route path="flashcards/deck/:deckId" element={<FlashDeckCards />} />
       <Route path="updates" element={<AdminUpdates />} />
       <Route path="users" element={<AdminUsers />} />
       <Route path="notifications" element={<AdminNotify />} />
