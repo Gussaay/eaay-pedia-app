@@ -50,11 +50,23 @@ const HEADER_ALIASES = {
   tag: 'tags',
   keywords: 'tags',
 
-  topic: 'topic',
-  subtopic: 'topic',
+  // The card's sub-division inside its deck. This is what the "study these
+  // chapters" picker lists, so every one of these spellings has to land in the
+  // same field — a sheet calling it "Section" must not produce a second,
+  // parallel set of chapters.
+  chapter: 'chapter',
+  subchapter: 'chapter',
+  subcategory: 'chapter',
+  section: 'chapter',
+  part: 'chapter',
+  topic: 'chapter',
+  subtopic: 'chapter',
+
+  // Deck-level, and only informational on an import: the deck already knows
+  // its own system, and a sheet cannot move cards between decks.
   system: 'system',
-  chapter: 'system',
   category: 'system',
+  specialty: 'system',
 
   deck: 'deck',
   title: 'deck',
@@ -140,7 +152,7 @@ export function parseCardRows(rows, { existingCards = [] } = {}) {
         img: clean(values.img),
         back_img: clean(values.back_img),
         tags: parseTags(values.tags),
-        topic: clean(values.topic),
+        chapter: clean(values.chapter),
       },
       deckFromFile: clean(values.deck),
       systemFromFile: clean(values.system),
@@ -164,7 +176,7 @@ export const buildCardRecord = (item, { deckId, order }) => ({
   ...item.record,
 });
 
-export const TEMPLATE_HEADERS = ['front', 'back', 'hint', 'note', 'topic', 'tags', 'image_url'];
+export const TEMPLATE_HEADERS = ['front', 'back', 'hint', 'note', 'chapter', 'tags', 'image_url'];
 
 export const TEMPLATE_EXAMPLE = [
   'Most common cause of bronchiolitis in infants',

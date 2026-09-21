@@ -1,14 +1,30 @@
-// One deck: what state its cards are in, and the ways to start studying it.
-import { useState } from 'react';
+// One deck: what state its cards are in, and a short setup before studying —
+// which chapters, how many cards, and what to study.
+//
+// The setup shows how many cards the session will actually contain before you
+// start it. Choosing "50" from a chapter holding 12 should not be a surprise
+// halfway through, and "nothing is due" is worth knowing before tapping Start
+// rather than after.
+import { useMemo, useState } from 'react';
 import { useNavigate, useParams } from 'react-router-dom';
 import { AlertTriangle, BookOpen, Clock, Layers, Play, RotateCcw, Sparkles, Target } from 'lucide-react';
 import { useAuth } from '../hooks/useAuth';
 import { useAsync } from '../hooks/useData';
-import { getOne, num } from '../lib/rtdb';
+import { getOne } from '../lib/rtdb';
 import { loadCards, loadDeckProgress, resetDeckProgress } from '../lib/flashcardData';
-import { buildSession, deckSummary } from '../lib/flashcards';
+import { buildSession, chaptersOf, deckSummary } from '../lib/flashcards';
 import DangerConfirm from '../components/DangerConfirm';
 import { AppBar, Button, Card, Empty, ErrorBox, Page, SkeletonList, Thumb, useToast } from '../components/ui';
+
+const MODES = [
+  { key: 'due', label: 'Due', hint: 'What has come back round' },
+  { key: 'new', label: 'New', hint: 'Cards you have not seen' },
+  { key: 'weak', label: 'Weak', hint: 'What you keep missing' },
+  { key: 'all', label: 'All', hint: 'Everything, in order' },
+];
+
+const SIZES = [10, 20, 50, 0]; // 0 = every card that matches
+const sizeLabel = (n) => (n === 0 ? 'All' : n);
 
 function Tile({ icon: Icon, value, label, tint }) {
   return (
@@ -20,6 +36,22 @@ function Tile({ icon: Icon, value, label, tint }) {
   );
 }
 
+function Chip({ active, onClick, children }) {
+  return (
+    <button
+      type="button"
+      onClick={onClick}
+      className={`rounded-full border px-3.5 py-1.5 text-sm font-medium transition ${
+        active
+          ? 'border-violet-500 bg-violet-600 text-white'
+          : 'border-slate-200 bg-white text-slate-600 hover:border-violet-300'
+      }`}
+    >
+      {children}
+    </button>
+  );
+}
+
 export default function FlashDeck() {
   const { deckId } = useParams();
   const { user } = useAuth();
@@ -27,6 +59,10 @@ export default function FlashDeck() {
   const toast = useToast();
   const [confirmReset, setConfirmReset] = useState(false);
   const [busy, setBusy] = useState(false);
+
+  const [mode, setMode] = useState('due');
+  const [size, setSize] = useState(20);
+  const [picked, setPicked] = useState([]); // empty = every chapter
 
   const data = useAsync(
     () =>
@@ -42,21 +78,36 @@ export default function FlashDeck() {
   const cards = data.data?.cards || [];
   const progress = data.data?.progress || {};
   const summary = deckSummary(cards, progress);
+  const chapters = useMemo(() => chaptersOf(cards), [cards]);
+  const hasChapters = chapters.length > 1;
 
-  const start = (mode) => {
-    const queue = buildSession(cards, progress, { mode });
-    if (!queue.length) {
-      toast(
-        mode === 'weak'
-          ? 'Nothing to review yet — answer a few cards first.'
-          : mode === 'new'
-            ? 'You have seen every card in this deck.'
-            : 'Nothing is due right now.',
-      );
-      return;
-    }
-    navigate(`/flashcards/study/${encodeURIComponent(deckId)}?mode=${mode}`);
+  // The real queue, rebuilt as the choices change, so the button can say how
+  // many cards this will actually be.
+  const queue = useMemo(
+    () => buildSession(cards, progress, { mode, limit: size, chapters: picked }),
+    [cards, progress, mode, size, picked],
+  );
+
+  const toggleChapter = (name) =>
+    setPicked((list) => (list.includes(name) ? list.filter((c) => c !== name) : [...list, name]));
+
+  const start = () => {
+    if (!queue.length) return;
+    const params = new URLSearchParams({ mode, limit: String(size) });
+    // "|" rather than a comma: chapter names contain commas, such as
+    // "Infection, immunity and allergy".
+    if (picked.length) params.set('chapters', picked.join('|'));
+    navigate(`/flashcards/study/${encodeURIComponent(deckId)}?${params}`);
   };
+
+  const emptyReason =
+    mode === 'weak'
+      ? 'Nothing to review here yet — answer a few cards first.'
+      : mode === 'new'
+        ? 'You have seen every card in this selection.'
+        : mode === 'due'
+          ? 'Nothing is due in this selection. Try New or All.'
+          : 'No cards in this selection.';
 
   if (data.loading) {
     return (
@@ -91,8 +142,8 @@ export default function FlashDeck() {
             <div className="min-w-0 flex-1">
               <p className="font-display text-xl text-slate-900 leading-snug">{deck.title}</p>
               <p className="text-sm text-slate-500 mt-0.5">
-                {deck.topic ? `${deck.topic} · ` : ''}
                 {summary.total} card{summary.total === 1 ? '' : 's'}
+                {hasChapters ? ` · ${chapters.length} chapters` : ''}
               </p>
             </div>
           </div>
@@ -106,10 +157,7 @@ export default function FlashDeck() {
               </span>
             </div>
             <div className="mt-1.5 h-2 w-full overflow-hidden rounded-full bg-slate-100">
-              <div
-                className="h-full bg-violet-500 transition-all"
-                style={{ width: `${summary.progress}%` }}
-              />
+              <div className="h-full bg-violet-500 transition-all" style={{ width: `${summary.progress}%` }} />
             </div>
           </div>
         </Card>
@@ -129,23 +177,73 @@ export default function FlashDeck() {
         {summary.total === 0 ? (
           <Empty icon={<Layers size={36} />} title="This deck has no cards yet" />
         ) : (
-          <Card className="p-5 space-y-2">
-            <Button className="w-full justify-center" onClick={() => start('due')}>
-              <Play size={18} />
-              {summary.due > 0 ? `Study ${summary.due} due card${summary.due === 1 ? '' : 's'}` : 'Start studying'}
-            </Button>
-            <Button variant="outline" className="w-full justify-center" onClick={() => start('new')}>
-              <Sparkles size={18} /> Learn new cards ({summary.new})
-            </Button>
-            <Button variant="outline" className="w-full justify-center" onClick={() => start('weak')}>
-              <AlertTriangle size={18} /> Review what I keep getting wrong
-            </Button>
-            <Button variant="outline" className="w-full justify-center" onClick={() => start('all')}>
-              <Layers size={18} /> Go through the whole deck
-            </Button>
-            <p className="pt-1 text-center text-xs text-slate-400">
-              Sessions stop after 20 cards so they always end.
-            </p>
+          <Card className="p-5 space-y-5">
+            <div>
+              <p className="text-sm font-semibold text-slate-700">What to study</p>
+              <div className="mt-2 flex flex-wrap gap-2">
+                {MODES.map((m) => (
+                  <Chip key={m.key} active={mode === m.key} onClick={() => setMode(m.key)}>
+                    {m.label}
+                  </Chip>
+                ))}
+              </div>
+              <p className="mt-1.5 text-xs text-slate-400">
+                {MODES.find((m) => m.key === mode)?.hint}
+              </p>
+            </div>
+
+            {hasChapters && (
+              <div>
+                <div className="flex items-baseline justify-between">
+                  <p className="text-sm font-semibold text-slate-700">Chapters</p>
+                  {picked.length > 0 && (
+                    <button onClick={() => setPicked([])} className="text-xs text-slate-400 hover:text-slate-600">
+                      Clear
+                    </button>
+                  )}
+                </div>
+                <div className="mt-2 flex flex-wrap gap-2">
+                  <Chip active={picked.length === 0} onClick={() => setPicked([])}>
+                    All chapters
+                  </Chip>
+                  {chapters.map((c) => (
+                    <Chip key={c.name} active={picked.includes(c.name)} onClick={() => toggleChapter(c.name)}>
+                      {c.name} <span className="opacity-60">{c.total}</span>
+                    </Chip>
+                  ))}
+                </div>
+              </div>
+            )}
+
+            <div>
+              <p className="text-sm font-semibold text-slate-700">How many cards</p>
+              <div className="mt-2 flex flex-wrap gap-2">
+                {SIZES.map((n) => (
+                  <Chip key={n} active={size === n} onClick={() => setSize(n)}>
+                    {sizeLabel(n)}
+                  </Chip>
+                ))}
+              </div>
+            </div>
+
+            <div>
+              <Button className="w-full justify-center" onClick={start} disabled={!queue.length}>
+                <Play size={18} />
+                {queue.length
+                  ? `Study ${queue.length} card${queue.length === 1 ? '' : 's'}`
+                  : 'Nothing to study'}
+              </Button>
+              <p className="mt-2 text-center text-xs text-slate-400">
+                {queue.length ? (
+                  <>
+                    {picked.length ? `${picked.length} chapter${picked.length === 1 ? '' : 's'} · ` : 'Whole deck · '}
+                    {size === 0 ? 'no limit' : `up to ${size}`}
+                  </>
+                ) : (
+                  emptyReason
+                )}
+              </p>
+            </div>
           </Card>
         )}
 

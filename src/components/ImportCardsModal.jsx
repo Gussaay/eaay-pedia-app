@@ -117,6 +117,10 @@ export default function ImportCardsModal({ deckId, existingCards = [], onClose, 
           <p className="mt-2 text-sm text-slate-500">
             Optional columns: {TEMPLATE_HEADERS.slice(2).join(', ')}.
           </p>
+          <p className="mt-1 text-sm text-slate-500">
+            A <b>chapter</b> column splits the deck up, so people can study just the chapters they
+            choose. <b>Section</b>, <b>topic</b> and <b>sub-category</b> mean the same thing.
+          </p>
 
           <button
             onClick={() => fileRef.current?.click()}

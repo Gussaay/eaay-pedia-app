@@ -10,6 +10,8 @@ import {
   findGaps,
   gradeCard,
   isDue,
+  chapterOf,
+  chaptersOf,
   isMastered,
   isNew,
 } from './flashcards.js';
@@ -154,4 +156,67 @@ test('the streak continues from yesterday, holds today, and restarts after a gap
   assert.deepEqual(bumpStreak({ streak: 4, lastDay: DAY }, DAY), { streak: 4, lastDay: DAY });
   assert.deepEqual(bumpStreak({ streak: 9, lastDay: '2026-09-01' }, DAY), { streak: 1, lastDay: DAY });
   assert.deepEqual(bumpStreak(null, DAY), { streak: 1, lastDay: DAY });
+});
+
+
+// ---------------------------------------------------------------------------
+// Chapters and session size
+// ---------------------------------------------------------------------------
+const chCard = (key, chapter) => ({ _key: key, front: key, back: 'x', chapter });
+
+test('a card falls back to the older `topic` field for its chapter', () => {
+  assert.equal(chapterOf({ chapter: 'Airway' }), 'Airway');
+  assert.equal(chapterOf({ topic: 'Airway' }), 'Airway', 'cards written before the rename');
+  assert.equal(chapterOf({ chapter: ' Airway ' }), 'Airway');
+  assert.equal(chapterOf({}), '');
+});
+
+test('chapters are listed with their counts, in the order the cards are stored', () => {
+  assert.deepEqual(
+    chaptersOf([chCard('a', 'Airway'), chCard('b', 'Cardio'), chCard('c', 'Airway'), chCard('d', '')]),
+    [
+      { name: 'Airway', total: 2 },
+      { name: 'Cardio', total: 1 },
+      { name: 'Unsorted', total: 1 },
+    ],
+  );
+});
+
+test('a session can be limited to chosen chapters', () => {
+  const cards = [chCard('a', 'Airway'), chCard('b', 'Cardio'), chCard('c', 'Airway')];
+  assert.deepEqual(
+    buildSession(cards, {}, { mode: 'all', chapters: ['Airway'], day: DAY }).map((c) => c._key),
+    ['a', 'c'],
+  );
+  assert.equal(buildSession(cards, {}, { mode: 'all', chapters: ['Airway', 'Cardio'], day: DAY }).length, 3);
+});
+
+test('no chapters chosen means the whole deck', () => {
+  const cards = [chCard('a', 'Airway'), chCard('b', 'Cardio')];
+  assert.equal(buildSession(cards, {}, { mode: 'all', chapters: [], day: DAY }).length, 2);
+  assert.equal(buildSession(cards, {}, { mode: 'all', chapters: null, day: DAY }).length, 2);
+});
+
+test('cards with no chapter can still be studied on their own', () => {
+  const cards = [chCard('a', 'Airway'), chCard('b', '')];
+  assert.deepEqual(
+    buildSession(cards, {}, { mode: 'all', chapters: ['Unsorted'], day: DAY }).map((c) => c._key),
+    ['b'],
+  );
+});
+
+test('a chosen number caps the session, and 0 means the whole selection', () => {
+  const cards = Array.from({ length: 40 }, (_, i) => chCard(`c${i}`, i < 10 ? 'Airway' : 'Cardio'));
+  assert.equal(buildSession(cards, {}, { mode: 'all', limit: 5, day: DAY }).length, 5);
+  assert.equal(buildSession(cards, {}, { mode: 'all', limit: 0, day: DAY }).length, 40);
+  // The cap applies after the chapter filter, not before it.
+  assert.equal(
+    buildSession(cards, {}, { mode: 'all', limit: 0, chapters: ['Airway'], day: DAY }).length,
+    10,
+  );
+});
+
+test('asking for more cards than a chapter holds just gives what there is', () => {
+  const cards = [chCard('a', 'Airway'), chCard('b', 'Airway')];
+  assert.equal(buildSession(cards, {}, { mode: 'all', limit: 50, chapters: ['Airway'], day: DAY }).length, 2);
 });

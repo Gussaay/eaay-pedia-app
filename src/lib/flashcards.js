@@ -86,6 +86,22 @@ export function gradeCard(prev, rating, day = today()) {
 // ---------------------------------------------------------------------------
 // Building a session
 // ---------------------------------------------------------------------------
+/** The chapter a card belongs to. `topic` is the name the first version used. */
+export const chapterOf = (card) => String(card?.chapter || card?.topic || '').trim();
+
+/**
+ * The chapters in a deck with how many cards each holds, in the order the
+ * cards are stored — which is the order the author put them in.
+ */
+export function chaptersOf(cards = []) {
+  const counts = new Map();
+  cards.forEach((card) => {
+    const name = chapterOf(card) || 'Unsorted';
+    counts.set(name, (counts.get(name) || 0) + 1);
+  });
+  return [...counts.entries()].map(([name, total]) => ({ name, total }));
+}
+
 /**
  * Cards to study now, in the order to show them.
  *
@@ -95,28 +111,40 @@ export function gradeCard(prev, rating, day = today()) {
  *   'weak'  the ones being got wrong most — what the gaps screen sends you to
  *   'all'   everything, oldest-seen first
  *
- * `limit` keeps a session finishable. An endless queue is the main reason
- * people abandon flashcards, so a deck of 400 still ends after 20.
+ * `chapters` limits the session to those chapters; empty or missing means the
+ * whole deck. `limit` keeps a session finishable — an endless queue is the
+ * main reason people abandon flashcards — and `0` means no limit, for someone
+ * who deliberately asks for the lot.
  */
-export function buildSession(cards, progress = {}, { mode = 'due', limit = 20, day = today() } = {}) {
-  const withProgress = cards.map((card) => ({ card, p: progress[card._key] || null }));
+export function buildSession(
+  cards,
+  progress = {},
+  { mode = 'due', limit = 20, chapters = null, day = today() } = {},
+) {
+  const wanted = chapters?.length ? new Set(chapters) : null;
+  const pool = wanted
+    ? cards.filter((card) => wanted.has(chapterOf(card) || 'Unsorted'))
+    : cards;
+  // 0 means "everything"; anything else caps the queue.
+  const cap = limit > 0 ? limit : pool.length;
+  const withProgress = pool.map((card) => ({ card, p: progress[card._key] || null }));
 
   if (mode === 'new') {
-    return withProgress.filter((x) => isNew(x.p)).slice(0, limit).map((x) => x.card);
+    return withProgress.filter((x) => isNew(x.p)).slice(0, cap).map((x) => x.card);
   }
 
   if (mode === 'weak') {
     return withProgress
       .filter((x) => x.p && x.p.wrong > 0)
       .sort((a, b) => accuracyOf(a.p) - accuracyOf(b.p) || b.p.wrong - a.p.wrong)
-      .slice(0, limit)
+      .slice(0, cap)
       .map((x) => x.card);
   }
 
   if (mode === 'all') {
     return withProgress
       .sort((a, b) => (a.p?.last || '').localeCompare(b.p?.last || ''))
-      .slice(0, limit)
+      .slice(0, cap)
       .map((x) => x.card);
   }
 
@@ -126,7 +154,7 @@ export function buildSession(cards, progress = {}, { mode = 'due', limit = 20, d
     .filter((x) => isDue(x.p, day))
     .sort((a, b) => (a.p.due || '').localeCompare(b.p.due || ''));
   const fresh = withProgress.filter((x) => isNew(x.p));
-  return [...due, ...fresh].slice(0, limit).map((x) => x.card);
+  return [...due, ...fresh].slice(0, cap).map((x) => x.card);
 }
 
 export const accuracyOf = (p) => {

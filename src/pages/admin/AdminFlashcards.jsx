@@ -20,6 +20,7 @@ import { Layers, Pencil, Plus, Search, Trash2, Upload } from 'lucide-react';
 import { useAsync, useList } from '../../hooks/useData';
 import { getOne, newKey, num, pushTo, removeAt, updateAt, updatePaths } from '../../lib/rtdb';
 import { deleteDeck, loadCards } from '../../lib/flashcardData';
+import { chapterOf, chaptersOf } from '../../lib/flashcards';
 import ImageField from '../../components/ImageField';
 import ImportCardsModal from '../../components/ImportCardsModal';
 import DangerConfirm from '../../components/DangerConfirm';
@@ -549,7 +550,7 @@ export function FlashBookDecks() {
 // ---------------------------------------------------------------------------
 // Level 4: cards inside a deck
 // ---------------------------------------------------------------------------
-const BLANK_CARD = { front: '', back: '', hint: '', note: '', img: '', back_img: '', tags: '', topic: '' };
+const BLANK_CARD = { front: '', back: '', hint: '', note: '', img: '', back_img: '', tags: '', chapter: '' };
 
 export function FlashDeckCards() {
   const { deckId } = useParams();
@@ -571,6 +572,7 @@ export function FlashDeckCards() {
 
   const deck = data.data?.deck;
   const cards = data.data?.cards || [];
+  const deckChapters = chaptersOf(cards).filter((c) => c.name !== 'Unsorted');
   const needle = q.trim().toLowerCase();
   const shown = needle
     ? cards.filter(
@@ -598,7 +600,7 @@ export function FlashDeckCards() {
           img: form.img || '',
           back_img: form.back_img || '',
           tags: form.tags.trim(),
-          topic: form.topic.trim(),
+          chapter: form.chapter.trim(),
         },
       };
       // The deck list shows the count without reading the cards, so it has to
@@ -620,7 +622,7 @@ export function FlashDeckCards() {
     <div className="min-h-screen pb-24">
       <AppBar
         title={deck?.title || 'Deck'}
-        subtitle={`${plural(cards.length, 'card')}${deck?.system ? ` · ${deck.system}` : ''}`}
+        subtitle={`${plural(cards.length, 'card')}${deckChapters.length ? ` · ${plural(deckChapters.length, 'chapter')}` : ''}`}
         actions={
           <button
             onClick={() => setImporting(true)}
@@ -678,10 +680,19 @@ export function FlashDeckCards() {
                 <div className="min-w-0 flex-1">
                   <p className="font-medium text-slate-800 line-clamp-2">{card.front}</p>
                   <p className="mt-1 text-sm text-slate-500 line-clamp-2">{card.back}</p>
-                  {card.tags && <p className="mt-1.5 text-xs text-slate-400">{card.tags}</p>}
+                  <p className="mt-1.5 text-xs text-slate-400">
+                    {[chapterOf(card), card.tags].filter(Boolean).join(' · ')}
+                  </p>
                 </div>
                 <RowActions
-                  onEdit={() => setForm({ ...BLANK_CARD, ...card, order: num(card.order) || i + 1 })}
+                  onEdit={() =>
+                    setForm({
+                      ...BLANK_CARD,
+                      ...card,
+                      chapter: chapterOf(card),
+                      order: num(card.order) || i + 1,
+                    })
+                  }
                   onDelete={() => setConfirm({ card })}
                 />
               </div>
@@ -752,10 +763,17 @@ export function FlashDeckCards() {
             <ImageField label="Front image" folder="flashcards" value={form.img} onChange={(img) => setForm((f) => ({ ...f, img }))} />
             <ImageField label="Back image" folder="flashcards" value={form.back_img} onChange={(img) => setForm((f) => ({ ...f, back_img: img }))} />
             <Input
-              label="Topic (optional)"
-              value={form.topic}
-              onChange={(e) => setForm((f) => ({ ...f, topic: e.target.value }))}
+              label="Chapter (optional)"
+              value={form.chapter}
+              onChange={(e) => setForm((f) => ({ ...f, chapter: e.target.value }))}
+              hint="Groups cards inside this deck, so a session can be limited to chosen chapters."
+              list="deck-chapters"
             />
+            <datalist id="deck-chapters">
+              {deckChapters.map((c) => (
+                <option key={c.name} value={c.name} />
+              ))}
+            </datalist>
             <Input
               label="Tags (optional)"
               value={form.tags}

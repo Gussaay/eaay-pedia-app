@@ -88,6 +88,28 @@ The logic is in `src/lib/flashcards.js` with 14 tests — including that a faile
 card comes back the same day, that "easy" cannot overshoot the last box, and
 that grading never mutates the record it was given.
 
+## Chapters, and choosing what to study
+
+Each card carries a **chapter** — its sub-division inside the deck. Before a
+session starts you choose three things, and the Start button says how many
+cards that actually comes to *before* you commit:
+
+- **What to study** — due, new, weak, or everything
+- **Which chapters** — any combination, or all of them
+- **How many cards** — 10, 20, 50, or no limit
+
+Choosing "50" from a chapter holding 12 should not be a surprise halfway
+through, and "nothing is due" is worth knowing before tapping Start rather
+than after.
+
+The choices travel in the URL, so a session can be linked to directly. Chapter
+names are joined with `|` rather than a comma, because chapter names contain
+commas — "Infection, immunity and allergy" is a real one.
+
+On import, a **chapter** column splits the deck up; `section`, `topic`,
+`sub-category`, `part` and `sub-chapter` all mean the same thing and land in
+the same field, so two spellings cannot create two parallel sets of chapters.
+
 ## Gaps
 
 The progress screen ranks systems weakest-first and **holds back any system

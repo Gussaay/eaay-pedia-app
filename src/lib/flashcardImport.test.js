@@ -100,11 +100,34 @@ test('the first matching column wins when a sheet has two names for one side', (
 });
 
 test('the record keeps the sheet order so a chapter deck stays in sequence', () => {
-  const { items } = parseCardRows([{ front: 'a', back: 'b', topic: 'Airway' }]);
+  const { items } = parseCardRows([{ front: 'a', back: 'b', chapter: 'Airway' }]);
   const record = buildCardRecord(items[0], { deckId: '-Nabc', order: 7 });
   assert.equal(record.deck, '-Nabc');
   assert.equal(record.order, 7);
-  assert.equal(record.topic, 'Airway');
+  assert.equal(record.chapter, 'Airway');
+});
+
+test('every name a sheet gives the chapter column lands in one field', () => {
+  // A sheet calling it "Section" must not create a second set of chapters
+  // alongside one calling it "Topic" — the study picker lists them together.
+  ['chapter', 'Chapter', 'Sub-category', 'Section', 'Topic', 'sub chapter', 'Part'].forEach((h) =>
+    assert.equal(fieldForHeader(h), 'chapter', `${h} should map to chapter`),
+  );
+  const { items } = parseCardRows([
+    { front: 'a', back: 'b', Section: 'Airway' },
+    { front: 'c', back: 'd', Topic: 'Airway' },
+  ]);
+  assert.equal(items[0].record.chapter, 'Airway');
+  assert.equal(items[1].record.chapter, 'Airway');
+});
+
+test('a specialty column is read as deck-level, not as the chapter', () => {
+  const { items, unknownHeaders } = parseCardRows([
+    { front: 'a', back: 'b', Specialty: 'Respiratory', Chapter: 'Upper airway' },
+  ]);
+  assert.equal(items[0].record.chapter, 'Upper airway');
+  assert.equal(items[0].systemFromFile, 'Respiratory');
+  assert.deepEqual(unknownHeaders, [], 'a specialty column should not be reported as unknown');
 });
 
 test('the template parses back into exactly one valid card', () => {
@@ -120,4 +143,5 @@ test('the template parses back into exactly one valid card', () => {
   assert.equal(items.length, 1);
   assert.deepEqual(items[0].errors, []);
   assert.equal(items[0].record.tags, 'bronchiolitis, RSV, viral');
+  assert.equal(items[0].record.chapter, 'Lower respiratory tract infection');
 });

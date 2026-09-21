@@ -29,6 +29,9 @@ export default function FlashStudy() {
   const { deckId } = useParams();
   const [params] = useSearchParams();
   const mode = params.get('mode') || 'due';
+  // "|" rather than a comma, because chapter names contain commas.
+  const chapters = (params.get('chapters') || '').split('|').filter(Boolean);
+  const limit = params.has('limit') ? Number(params.get('limit')) : 20;
   const { user } = useAuth();
   const navigate = useNavigate();
   const toast = useToast();
@@ -55,8 +58,18 @@ export default function FlashStudy() {
   // cards appear and disappear underneath the person answering them.
   useEffect(() => {
     if (!data.data || queue) return;
-    setQueue(buildSession(data.data.cards, data.data.progress, { mode }));
-  }, [data.data, queue, mode]);
+    setQueue(
+      buildSession(data.data.cards, data.data.progress, {
+        mode,
+        limit: Number.isFinite(limit) ? limit : 20,
+        chapters,
+      }),
+    );
+    // `chapters` is rebuilt from the query string on every render, so it is
+    // deliberately not a dependency — the guard above already stops the queue
+    // being replaced once it exists.
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [data.data, queue, mode, limit]);
 
   const gradedRef = useRef(graded);
   gradedRef.current = graded;
