@@ -1,17 +1,22 @@
-// Main page (MainPageActivity): greeting + stats, daily quiz, question banks.
+// Main page: greeting and stats, then the sections the app is made of.
+//
+// The question banks used to live here. They moved to /mcqs when the app grew
+// past being only an MCQ app — this page's job is now to get you into the
+// right section in one tap, not to list everything.
 import { useMemo, useState } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
-import { Bell, BookOpen, ChevronRight, CloudUpload, Mail, Menu, MessageCircle, Send, ShieldCheck, Smartphone } from 'lucide-react';
+import { Bell, ChevronRight, CloudUpload, Mail, Menu, MessageCircle, Send, ShieldCheck, Smartphone } from 'lucide-react';
 import { useAuth } from '../hooks/useAuth';
 import { useAsync, useList } from '../hooks/useData';
 import { getLatest, num } from '../lib/rtdb';
 import { isNative, openUrl } from '../lib/native';
 import { usePendingSync, useSyncPendingResults } from '../lib/sync';
+import { SECTIONS } from '../lib/sections';
 import { LINKS } from '../config';
 import Drawer from '../components/Drawer';
 import BottomNav from '../components/BottomNav';
 import DailyQuiz, { useDailyQuiz } from '../components/DailyQuiz';
-import { AppBar, Button, Empty, ErrorBox, Modal, OfflineBanner, Page, Thumb } from '../components/ui';
+import { AppBar, Button, Modal, OfflineBanner, Page } from '../components/ui';
 
 function greeting() {
   const h = new Date().getHours();
@@ -32,20 +37,23 @@ function Ring({ value }) {
   );
 }
 
-function CategoryCard({ c, onClick, hidden }) {
+function SectionTile({ section, onClick }) {
+  const { icon: Icon, title, tagline, live, tint, ring } = section;
   return (
     <button
       onClick={onClick}
-      className="group text-left bg-white rounded-2xl border border-slate-100 shadow-sm hover:shadow-lg hover:-translate-y-0.5 active:scale-[0.98] transition overflow-hidden flex sm:flex-col"
+      className={`group relative text-left bg-white rounded-2xl border border-slate-100 p-4 shadow-sm ring-2 ring-transparent transition hover:shadow-lg hover:-translate-y-0.5 active:scale-[0.98] ${ring}`}
     >
-      <Thumb src={c.img} label={c.title} className="h-24 w-24 sm:h-32 sm:w-full rounded-none text-3xl" />
-      <div className="flex-1 p-4 flex items-center gap-2 min-w-0">
-        <div className="min-w-0 flex-1">
-          <p className="font-display text-slate-900 leading-snug line-clamp-2">{c.title}</p>
-          <p className="text-xs text-slate-500 mt-1">{hidden ? 'Not published' : 'Tap to open'}</p>
-        </div>
-        <ChevronRight className="text-slate-300 group-hover:text-brand-500 shrink-0" size={20} />
+      {!live && (
+        <span className="absolute top-3 right-3 rounded-full bg-slate-100 px-2 py-0.5 text-[10px] font-semibold uppercase tracking-wide text-slate-500">
+          Soon
+        </span>
+      )}
+      <div className={`h-12 w-12 rounded-2xl flex items-center justify-center ${tint}`}>
+        <Icon size={24} />
       </div>
+      <p className="font-display text-base text-slate-900 mt-3 leading-snug">{title}</p>
+      <p className="text-xs text-slate-500 mt-0.5 leading-snug">{tagline}</p>
     </button>
   );
 }
@@ -59,10 +67,6 @@ export default function Home() {
   useSyncPendingResults(user);
   const pendingResults = usePendingSync();
 
-  // Admins also see unpublished categories (same as Android).
-  const categories = useList('main_category', {
-    filter: (c) => isAdmin || String(c.publish) === 'true',
-  });
   const quizzes = useList('allquiz');
   const daily = useDailyQuiz();
   const recentNotifications = useAsync(() => getLatest('all_notification', 10), []);
@@ -88,7 +92,7 @@ export default function Home() {
   return (
     <div className="min-h-screen pb-28">
       <AppBar
-        title="Easy Pedia MCQs"
+        title="Easy Pedia"
         left={
           <button className="p-2 rounded-full hover:bg-white/10" aria-label="Menu" onClick={() => setDrawer(true)}>
             <Menu size={22} />
@@ -107,7 +111,6 @@ export default function Home() {
       />
       <OfflineBanner />
       <Page className="space-y-5">
-        {/* Greeting + stats */}
         <section className="relative overflow-hidden rounded-3xl bg-gradient-to-br from-brand-700 via-brand-600 to-sky-500 text-white p-5 shadow-lg shadow-brand-700/20">
           <span className="absolute -right-10 -top-10 h-40 w-40 rounded-full bg-white/10" />
           <span className="absolute right-16 -bottom-12 h-28 w-28 rounded-full bg-white/10" />
@@ -157,6 +160,16 @@ export default function Home() {
             <Bell size={18} /> New notification available
           </button>
         )}
+
+        <div>
+          <h2 className="font-display text-slate-800 text-xl mb-3">What would you like to do?</h2>
+          <div className="grid grid-cols-2 sm:grid-cols-3 gap-3">
+            {SECTIONS.map((section) => (
+              <SectionTile key={section.key} section={section} onClick={() => navigate(section.to)} />
+            ))}
+          </div>
+        </div>
+
         <DailyQuiz daily={daily} />
 
         {isAdmin && (
@@ -164,34 +177,6 @@ export default function Home() {
             <ShieldCheck size={18} /> Admin panel
           </Button>
         )}
-
-        <div>
-          <div className="flex items-end justify-between mb-3">
-            <h2 className="font-display text-slate-800 text-xl">Question banks</h2>
-            {categories.data.length > 0 && <span className="text-xs text-slate-400">{categories.data.length} banks</span>}
-          </div>
-          <ErrorBox error={!categories.data.length && categories.error} onRetry={categories.reload} />
-          {categories.loading ? (
-            <div className="grid gap-3 sm:grid-cols-2">
-              {[0, 1, 2, 3].map((i) => (
-                <div key={i} className="h-24 sm:h-48 rounded-2xl bg-slate-200/70 animate-pulse" />
-              ))}
-            </div>
-          ) : categories.data.length === 0 && !categories.error ? (
-            <Empty icon={<BookOpen size={40} />} title="No question banks yet" />
-          ) : (
-            <div className="grid gap-3 sm:grid-cols-2">
-              {categories.data.map((c) => (
-                <CategoryCard
-                  key={c._key}
-                  c={c}
-                  hidden={isAdmin && String(c.publish) !== 'true'}
-                  onClick={() => navigate(`/cat/${encodeURIComponent(c.source)}?title=${encodeURIComponent(c.title || '')}`)}
-                />
-              ))}
-            </div>
-          )}
-        </div>
 
         {!isNative && (
           <Link

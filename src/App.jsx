@@ -26,6 +26,12 @@ const Privacy = lazy(() => import('./pages/Privacy'));
 const Admin = lazy(() => import('./pages/admin/AdminRoutes'));
 const Download = lazy(() => import('./pages/Download'));
 const AppUpdates = lazy(() => import('./pages/AppUpdates'));
+const Mcqs = lazy(() => import('./pages/Mcqs'));
+const ComingSoon = lazy(() => import('./pages/ComingSoon'));
+const Flashcards = lazy(() => import('./pages/Flashcards'));
+const FlashDeck = lazy(() => import('./pages/FlashDeck'));
+const FlashStudy = lazy(() => import('./pages/FlashStudy'));
+const FlashGaps = lazy(() => import('./pages/FlashGaps'));
 
 function Splash() {
   return (
@@ -144,6 +150,12 @@ export default function App() {
           <Route path="/download" element={<Download />} />
           <Route path="/" element={guard(<Home />)} />
           <Route path="/setup" element={guard(<ProfileSetup />)} />
+          <Route path="/mcqs" element={guard(<Mcqs />)} />
+          <Route path="/soon/:key" element={guard(<ComingSoon />)} />
+          <Route path="/flashcards" element={guard(<Flashcards />)} />
+          <Route path="/flashcards/gaps" element={guard(<FlashGaps />)} />
+          <Route path="/flashcards/deck/:deckId" element={guard(<FlashDeck />)} />
+          <Route path="/flashcards/study/:deckId" element={guard(<FlashStudy />)} />
           <Route path="/cat/:source" element={guard(<Books />)} />
           <Route path="/book/:source" element={guard(<Exams />)} />
           <Route path="/quiz/:kind/:id" element={guard(<QuizDetail />)} />
