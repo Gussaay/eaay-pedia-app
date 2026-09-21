@@ -24,6 +24,18 @@ concurrency:
 env:
   SITE_URL: https://easy-pedia.web.app
   APK_NAME: easy-pedia-mcqs.apk
+  # Oldest installed app that may receive an over-the-air bundle.
+  #
+  # An OTA update only replaces HTML/CSS/JS. If the new web code calls a
+  # Capacitor plugin that the installed APK does not contain, the app crashes
+  # on launch and the user cannot recover without reinstalling — so bundles are
+  # withheld from APKs older than this.
+  #
+  # BUMP THIS to the versionCode of the current build whenever you add or
+  # remove a Capacitor plugin (anything in package.json under @capacitor/ or
+  # @capgo/). 21 is the build that introduced push notifications, the Capgo
+  # updater and the file opener.
+  MIN_NATIVE_BUILD: 21
 
 jobs:
   android:
@@ -34,6 +46,7 @@ jobs:
       version_code: ${{ steps.version.outputs.version_code }}
     env:
       HAS_KEYSTORE: ${{ secrets.KEYSTORE_BASE64 != '' }}
+      HAS_GOOGLE_SERVICES: ${{ secrets.GOOGLE_SERVICES_JSON != '' }}
     steps:
       - name: Checkout code
         uses: actions/checkout@v4
@@ -67,10 +80,37 @@ jobs:
       - name: Install dependencies
         run: npm ci
 
+      # Optional: lets the real console file be kept out of the repository.
+      # Without either this secret or the committed file, the google-services
+      # Gradle plugin is skipped and push notifications quietly never work.
+      # `secrets` cannot be used in a step-level `if`, so presence is decided in
+      # the job env (same pattern as HAS_KEYSTORE above) and the value is
+      # passed through the environment rather than pasted into the shell.
+      - name: Use google-services.json from secrets (if provided)
+        if: env.HAS_GOOGLE_SERVICES == 'true'
+        env:
+          GOOGLE_SERVICES_JSON: ${{ secrets.GOOGLE_SERVICES_JSON }}
+        run: |
+          printf '%s' "$GOOGLE_SERVICES_JSON" > android/app/google-services.json
+          echo "Wrote google-services.json from the repository secret."
+
       - name: Build web assets and sync Android
         run: |
           npm run build
           npx cap sync android
+
+      # A plugin that is installed in npm but missing from the Android project
+      # builds and runs fine right up until the feature is used. Failing here
+      # is how the IMCI app stopped shipping APKs with dead push support.
+      - name: Check the native plugins really synced
+        run: |
+          test -s android/app/google-services.json \
+            || { echo "::error::android/app/google-services.json is missing - push notifications will not work"; exit 1; }
+          for plugin in capacitor-push-notifications capgo-capacitor-updater capacitor-community-file-opener; do
+            grep -qi "$plugin" android/capacitor.settings.gradle \
+              || { echo "::error::$plugin is missing from the Android project"; exit 1; }
+          done
+          echo "All native plugins are present."
 
       - name: Set versionCode / versionName
         run: |
@@ -172,6 +212,36 @@ jobs:
       - name: Build web assets
         run: npm run build
 
+      # The over-the-air bundle: the whole built site, zipped and served from
+      # the site itself. Installed apps download this (a few hundred KB) and
+      # swap their web layer, so only a change to the native shell needs a new
+      # APK. Zipped before anything else is added to dist/, so the bundle never
+      # contains itself.
+      - name: Create the over-the-air bundle
+        run: |
+          VERSION="${{ needs.android.outputs.version }}"
+          ZIP="update-${VERSION}.zip"
+          (cd dist && zip -qr "../${ZIP}" .)
+          # Capgo verifies this before installing. Without it a half-downloaded
+          # zip is unpacked, the app fails to start, and the previous bundle is
+          # restored - which looks to the user like the update undid itself.
+          CHECKSUM=$(sha256sum "${ZIP}" | cut -d' ' -f1)
+          mkdir -p dist/latest
+          mv "${ZIP}" dist/latest/
+          cat > dist/latest/update.json <<EOF
+          {
+            "version": "${VERSION}",
+            "url": "${SITE_URL}/latest/${ZIP}",
+            "checksum": "${CHECKSUM}",
+            "minNativeBuild": ${MIN_NATIVE_BUILD},
+            "mandatory": false,
+            "notes": "$(git log -1 --pretty=%s | sed 's/"/\\"/g')"
+          }
+          EOF
+          cat dist/latest/update.json
+          echo "OTA_ZIP=${ZIP}" >> "$GITHUB_ENV"
+          echo "OTA_CHECKSUM=${CHECKSUM}" >> "$GITHUB_ENV"
+
       - name: Download build info
         uses: actions/download-artifact@v4
         with:
@@ -205,6 +275,67 @@ jobs:
           done
           echo "::error::native-version.json did not show the new version."
           exit 1
+
+      # Only once the files are provably live is the database told to point
+      # apps at them. The other order hands out a link to a 404.
+      - name: Verify the over-the-air bundle is live
+        run: |
+          for i in 1 2 3 4 5; do
+            LIVE=$(curl -fsSL "${SITE_URL}/latest/update.json?t=$(date +%s)" || echo "")
+            echo "$LIVE"
+            if echo "$LIVE" | grep -q "\"${{ needs.android.outputs.version }}\""; then
+              curl -fsSI "${SITE_URL}/latest/${OTA_ZIP}" | head -1
+              exit 0
+            fi
+            echo "Not live yet, waiting..."
+            sleep 15
+          done
+          echo "::error::update.json did not show the new version."
+          exit 1
+
+      # Commit message switches:
+      #   [force-update]  the update installs instead of asking
+      #   [hold]          publish the files but do not roll them out yet
+      #   [no-notify]     skip the "new version" push notification
+      - name: Record the release and roll it out
+        # Bookkeeping, not the release itself. If the service account cannot
+        # write the database, apps still update from /latest/update.json, so
+        # this must not fail a deploy that has already gone live.
+        continue-on-error: true
+        env:
+          FIREBASE_SERVICE_ACCOUNT: ${{ secrets.FIREBASE_SERVICE_ACCOUNT_EASY_PEDIA }}
+        run: |
+          MSG=$(git log -1 --pretty=%s)
+          EXTRA=""
+          echo "$MSG" | grep -qi '\[force-update\]' && EXTRA="$EXTRA --mandatory"
+          echo "$MSG" | grep -qi '\[hold\]' && EXTRA="$EXTRA --hold"
+          node scripts/publish-release.mjs \
+            --version "${{ needs.android.outputs.version }}" \
+            --version-code "${{ needs.android.outputs.version_code }}" \
+            --url "${SITE_URL}/latest/${OTA_ZIP}" \
+            --checksum "${OTA_CHECKSUM}" \
+            --min-native-build "${MIN_NATIVE_BUILD}" \
+            --apk-url "${SITE_URL}/download/${APK_NAME}" \
+            --notes "$MSG" \
+            $EXTRA
+
+      - name: Tell devices a new version is out
+        if: ${{ !contains(github.event.head_commit.message, '[no-notify]') && !contains(github.event.head_commit.message, '[hold]') }}
+        continue-on-error: true
+        env:
+          FIREBASE_SERVICE_ACCOUNT: ${{ secrets.FIREBASE_SERVICE_ACCOUNT_EASY_PEDIA }}
+        run: |
+          node scripts/send-push.mjs --release \
+            --version "${{ needs.android.outputs.version }}" \
+            --notes "$(git log -1 --pretty=%s)"
+
+      # Anything an admin queued in the Notification manager while this deploy
+      # was running goes out now rather than waiting for the next schedule.
+      - name: Send queued notifications
+        continue-on-error: true
+        env:
+          FIREBASE_SERVICE_ACCOUNT: ${{ secrets.FIREBASE_SERVICE_ACCOUNT_EASY_PEDIA }}
+        run: node scripts/send-push.mjs --outbox
 
   release:
     name: Publish GitHub Release

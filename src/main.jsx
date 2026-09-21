@@ -9,6 +9,7 @@ import App from './App';
 import { AuthProvider } from './hooks/useAuth';
 import { ToastProvider } from './components/ui';
 import { setWebUpdate } from './components/UpdatePrompt';
+import { startLiveUpdates } from './lib/liveUpdate';
 import ErrorBoundary from './components/ErrorBoundary';
 import './index.css';
 
@@ -18,6 +19,9 @@ if (Capacitor.isNativePlatform()) {
   // A service worker must not run inside the native WebView (it would keep
   // serving the old bundle after an app update). Remove any left-overs.
   navigator.serviceWorker?.getRegistrations?.().then((regs) => regs.forEach((r) => r.unregister()));
+  // Over-the-air updates. This also calls notifyAppReady(), which has to run
+  // on every launch or the bundle currently running is rolled back.
+  startLiveUpdates();
 } else {
   const updateSW = registerSW({
     immediate: true,

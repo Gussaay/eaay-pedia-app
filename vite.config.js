@@ -31,6 +31,11 @@ export default defineConfig({
         cleanupOutdatedCaches: true,
         maximumFileSizeToCacheInBytes: 6 * 1024 * 1024,
         globPatterns: ['**/*.{js,css,html,ico,png,svg,woff,woff2,ttf}'],
+        // firebase-messaging-sw.js is a service worker of its own, registered
+        // by Firebase for background push. Precaching it would make this
+        // worker serve a frozen copy from the cache, so changes to it would
+        // only reach browsers when the PWA worker itself happens to update.
+        globIgnores: ['firebase-messaging-sw.js'],
         runtimeCaching: [
           {
             // Quiz covers / explanation images from Firebase Storage.

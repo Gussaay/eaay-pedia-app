@@ -1,10 +1,12 @@
 import { lazy, Suspense, useEffect } from 'react';
 import { Navigate, Route, Routes, useLocation, useNavigate } from 'react-router-dom';
 import { App as CapApp } from '@capacitor/app';
-import { useAuth } from './hooks/useAuth';
+import { Ban } from 'lucide-react';
+import { logout, useAuth } from './hooks/useAuth';
 import { isNative } from './lib/native';
 import { runBackHandlers } from './lib/back';
-import { Spinner } from './components/ui';
+import { registerForPush, usePushEvents } from './lib/push';
+import { Spinner, useToast } from './components/ui';
 import UpdatePrompt from './components/UpdatePrompt';
 import SignIn from './pages/SignIn';
 import Home from './pages/Home';
@@ -23,6 +25,7 @@ const About = lazy(() => import('./pages/About'));
 const Privacy = lazy(() => import('./pages/Privacy'));
 const Admin = lazy(() => import('./pages/admin/AdminRoutes'));
 const Download = lazy(() => import('./pages/Download'));
+const AppUpdates = lazy(() => import('./pages/AppUpdates'));
 
 function Splash() {
   return (
@@ -44,9 +47,32 @@ function RequireAuth({ children }) {
 }
 
 function RequireAdmin({ children }) {
-  const { isAdmin } = useAuth();
+  const { isAdmin, profileLoading } = useAuth();
+  // Admin can come from the user record, which arrives a moment after sign-in.
+  // Redirecting before it has loaded would bounce a real admin back home.
+  if (profileLoading) return <Spinner />;
   if (!isAdmin) return <Navigate to="/" replace />;
   return children;
+}
+
+/** Shown instead of the app when an admin has blocked this account. */
+function Blocked() {
+  return (
+    <div className="min-h-screen flex flex-col items-center justify-center gap-4 bg-slate-50 px-6 text-center">
+      <Ban size={44} className="text-red-500" />
+      <h1 className="font-display text-2xl text-slate-900">This account is blocked</h1>
+      <p className="text-slate-600 max-w-sm">
+        Your account cannot be used at the moment. If you think this is a mistake, contact us and we
+        will look into it.
+      </p>
+      <button
+        onClick={() => logout()}
+        className="rounded-xl bg-slate-900 px-5 py-2.5 font-semibold text-white"
+      >
+        Sign out
+      </button>
+    </div>
+  );
 }
 
 /** Android hardware back: page handlers first, then history, then exit. */
@@ -66,13 +92,46 @@ function useNativeBackButton() {
   }, [navigate, location.pathname]);
 }
 
+/**
+ * Registers the device for push once someone is signed in, and decides what a
+ * message does when it arrives.
+ *
+ * Android draws its own tray notification while the app is closed, so the
+ * handler below only ever runs for messages that land while the user is
+ * looking at the app — hence a toast rather than another notification. A tap
+ * on a tray notification arrives here too, with `tapped` set, and should take
+ * the user where the message points.
+ */
+function usePushBridge() {
+  const { user } = useAuth();
+  const navigate = useNavigate();
+  const toast = useToast();
+
+  useEffect(() => {
+    if (!user?.uid) return;
+    // No `ask` here: on the web this only re-uses a permission already given.
+    // The prompt itself has to come from a click, on the App & updates screen.
+    registerForPush(user.uid);
+  }, [user?.uid]);
+
+  usePushEvents((event) => {
+    if (event.tapped) {
+      navigate(event.data?.url || event.data?.link || '/notifications');
+      return;
+    }
+    toast(event.title ? `${event.title} — ${event.body}`.trim() : event.body);
+  });
+}
+
 export default function App() {
-  const { authLoading } = useAuth();
+  const { authLoading, blocked } = useAuth();
   const location = useLocation();
   useNativeBackButton();
+  usePushBridge();
 
   // The public download page must not wait for (or require) sign-in.
   if (authLoading && location.pathname !== '/download') return <Splash />;
+  if (blocked) return <Blocked />;
 
   const guard = (el) => <RequireAuth>{el}</RequireAuth>;
 
@@ -93,6 +152,7 @@ export default function App() {
           <Route path="/performance" element={guard(<Performance />)} />
           <Route path="/profile" element={guard(<Profile />)} />
           <Route path="/notifications" element={guard(<Notifications />)} />
+          <Route path="/app-updates" element={guard(<AppUpdates />)} />
           <Route path="/contact" element={guard(<Contact />)} />
           <Route path="/about" element={guard(<About />)} />
           <Route path="/admin/*" element={guard(<RequireAdmin><Admin /></RequireAdmin>)} />

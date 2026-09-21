@@ -1,0 +1,48 @@
+name: Send queued notifications
+
+# Pushing to phones needs the Firebase service account, and that credential
+# must never ship inside the app — anyone could pull it out of an APK and
+# notify every user. So the admin Notification manager only writes a request to
+# `push_outbox` in the database, and this job, which holds the credential,
+# delivers it.
+#
+# It runs on a schedule because the free Firebase plan has no server that can
+# react to a database write. An admin who does not want to wait can run it
+# immediately from the Actions tab ("Run workflow").
+on:
+  schedule:
+    # Every 10 minutes. GitHub runs scheduled jobs on a best-effort basis and
+    # can be several minutes late when it is busy, so treat this as "within
+    # about a quarter of an hour", not a guarantee.
+    - cron: '*/10 * * * *'
+  workflow_dispatch:
+
+# Two runs sending the same queued message would deliver it twice.
+concurrency:
+  group: push-outbox
+  cancel-in-progress: false
+
+jobs:
+  send:
+    name: Deliver pending notifications
+    runs-on: ubuntu-latest
+    # Without the secret every scheduled run would fail and email the owner.
+    if: ${{ github.repository_owner == 'Gussaay' }}
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+
+      # Only the Admin SDK is needed here, so this skips installing the whole
+      # app's dependencies on every single run.
+      - name: Install the Firebase Admin SDK
+        run: npm install --no-save --no-audit --no-fund firebase-admin@^13.5.0
+
+      - name: Send
+        env:
+          FIREBASE_SERVICE_ACCOUNT: ${{ secrets.FIREBASE_SERVICE_ACCOUNT_EASY_PEDIA }}
+        run: node scripts/send-push.mjs --outbox

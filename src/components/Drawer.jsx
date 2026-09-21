@@ -1,5 +1,5 @@
 import { useNavigate } from 'react-router-dom';
-import { BarChart3, Info, LogOut, Megaphone, Shield, Share2, Smartphone, User, X } from 'lucide-react';
+import { ArrowUpCircle, BarChart3, Info, LogOut, Megaphone, Shield, Share2, Smartphone, User, X } from 'lucide-react';
 import { useAuth, logout } from '../hooks/useAuth';
 import { isNative, shareApp } from '../lib/native';
 import { APP_VERSION } from '../config';
@@ -15,6 +15,7 @@ export default function Drawer({ open, onClose }) {
   const items = [
     { icon: User, label: 'My profile', action: () => go('/profile') },
     { icon: BarChart3, label: 'My performance', action: () => go('/performance') },
+    { icon: ArrowUpCircle, label: 'App & updates', action: () => go('/app-updates') },
     { icon: Share2, label: 'Share the app', action: () => { onClose(); shareApp(); } },
     { icon: Megaphone, label: 'Official pages', action: () => go('/contact') },
     { icon: Info, label: 'About developer', action: () => go('/about') },

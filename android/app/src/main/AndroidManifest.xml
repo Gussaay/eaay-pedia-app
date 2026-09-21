@@ -27,9 +27,24 @@
             android:grantUriPermissions="true">
             <meta-data android:name="android.support.FILE_PROVIDER_PATHS" android:resource="@xml/file_paths" />
         </provider>
+
+        <!-- Android 8+ drops a notification whose channel it does not know.
+             The app creates a channel with this exact id on first launch
+             (src/lib/push.js), and the sender sets the same channel_id. -->
+        <meta-data
+            android:name="com.google.firebase.messaging.default_notification_channel_id"
+            android:value="default" />
     </application>
 
     <!-- Permissions -->
 
     <uses-permission android:name="android.permission.INTERNET" />
+
+    <!-- Android 13+ will not show any notification until the user agrees. -->
+    <uses-permission android:name="android.permission.POST_NOTIFICATIONS" />
+
+    <!-- Lets the app hand a downloaded APK straight to the installer, so an
+         update installs from inside the app instead of the Downloads folder.
+         Android still asks the user to allow it the first time. -->
+    <uses-permission android:name="android.permission.REQUEST_INSTALL_PACKAGES" />
 </manifest>

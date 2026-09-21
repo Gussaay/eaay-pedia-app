@@ -19,6 +19,14 @@ export const APK_URL_GITHUB =
   'https://github.com/Gussaay/eaay-pedia-app/releases/latest/download/easy-pedia-mcqs.apk';
 export const RELEASES_URL = 'https://github.com/Gussaay/eaay-pedia-app/releases';
 export const NATIVE_VERSION_URL = `${SITE_URL}/native-version.json`;
+// Manifest for over-the-air updates: the app replaces its own web bundle from
+// here, so only a change to the native shell needs a new APK.
+export const LIVE_UPDATE_URL = `${SITE_URL}/latest/update.json`;
+
+// Web push certificate: Firebase console -> Project settings -> Cloud
+// Messaging -> Web Push certificates -> "Key pair". Without it the website
+// cannot receive push; the Android app does not need it.
+export const FCM_VAPID_KEY = import.meta.env.VITE_FIREBASE_VAPID_KEY || '';
 
 export const GOOGLE_WEB_CLIENT_ID =
   '444201218220-ub2mt5dcl5557vp3f608gqltnvhfovlp.apps.googleusercontent.com';

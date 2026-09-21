@@ -1,0 +1,53 @@
+{
+  "//": [
+    "Rules for the nodes added by the update and notification features.",
+    "",
+    "WHY THIS MATTERS: the project's current rules are",
+    "  { \".read\": \"auth.uid != null\", \".write\": \"auth.uid != null\" }",
+    "so ANY signed-in user can write anywhere. With the new features that now",
+    "means any of your 1,400+ users could queue a push notification to",
+    "everyone, or point every installed app at a web bundle of their choosing.",
+    "That is worth closing.",
+    "",
+    "HOW TO APPLY: open the Firebase console -> Realtime Database -> Rules,",
+    "and merge the three blocks below into the rules you already have, keeping",
+    "your existing top-level \".read\" and \".write\". Child rules override the",
+    "parent, so the rest of the database keeps behaving exactly as it does now",
+    "and the old Android app is unaffected — it never touches these nodes.",
+    "",
+    "Merge the indexes from database.rules.indexes.json at the same time if you",
+    "have not already."
+  ],
+
+  "rules": {
+    "update": {
+      "//": "Everyone reads which version to run; only admins decide it.",
+      ".read": "auth.uid != null",
+      ".write": "auth.token.email === 'gussaay@gmail.com' || auth.token.email === 'malazmuzamil55@gmail.com' || root.child('quizusers').child(auth.uid).child('admin').val() === 'true'"
+    },
+
+    "push_outbox": {
+      "//": [
+        "Only admins may queue a push. Nobody needs to read the queue except",
+        "the GitHub Actions sender, which uses the service account and bypasses",
+        "rules entirely."
+      ],
+      ".read": "auth.token.email === 'gussaay@gmail.com' || auth.token.email === 'malazmuzamil55@gmail.com' || root.child('quizusers').child(auth.uid).child('admin').val() === 'true'",
+      ".write": "auth.token.email === 'gussaay@gmail.com' || auth.token.email === 'malazmuzamil55@gmail.com' || root.child('quizusers').child(auth.uid).child('admin').val() === 'true'"
+    },
+
+    "push_tokens": {
+      "//": [
+        "A device token is a way to send that person notifications, so each",
+        "user writes only their own, and nobody can read the whole list. The",
+        "admin panel's device count is the one thing this costs: it will show",
+        "zero unless you are signed in as an admin, hence the read rule."
+      ],
+      ".read": "auth.token.email === 'gussaay@gmail.com' || auth.token.email === 'malazmuzamil55@gmail.com' || root.child('quizusers').child(auth.uid).child('admin').val() === 'true'",
+      "$uid": {
+        ".read": "auth.uid === $uid",
+        ".write": "auth.uid === $uid"
+      }
+    }
+  }
+}

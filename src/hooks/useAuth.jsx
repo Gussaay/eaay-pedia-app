@@ -3,6 +3,7 @@ import { createContext, useContext, useEffect, useMemo, useState } from 'react';
 import { onAuthStateChanged, signOut } from 'firebase/auth';
 import { auth } from '../firebase';
 import { subscribe, updateAt } from '../lib/rtdb';
+import { forgetPushToken } from '../lib/push';
 import { APP_VERSION_NUMBER, isAdminEmail } from '../config';
 
 const AuthContext = createContext(null);
@@ -53,7 +54,12 @@ export function AuthProvider({ children }) {
       authLoading,
       profile,
       profileLoading,
-      isAdmin: isAdminEmail(user?.email),
+      // Admin comes from the hard-coded list, or from the flag the User
+      // manager sets — so access can be granted without a new release.
+      isAdmin: isAdminEmail(user?.email) || profile?.admin === 'true',
+      // Set by the User manager. The database rules are the real protection;
+      // this is what stops a blocked account using the app it already has.
+      blocked: profile?.blocked === 'true',
       // Same rule as MainPageActivity: prompt when any of these is missing.
       profileIncomplete:
         !!profile && !(profile.img && profile.name && profile.residency && profile.level),
@@ -70,4 +76,11 @@ export function useAuth() {
   return ctx;
 }
 
-export const logout = () => signOut(auth);
+/**
+ * Signing out also drops this device's push token, so the next person to use
+ * the phone does not receive notifications meant for the previous account.
+ */
+export const logout = async () => {
+  await forgetPushToken(auth.currentUser?.uid).catch(() => {});
+  return signOut(auth);
+};
