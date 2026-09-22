@@ -1,6 +1,24 @@
-import { useCallback, useEffect, useRef, useState } from 'react';
-import { Network } from '@capacitor/network';
+import { useCallback, useEffect, useRef, useState, useSyncExternalStore } from 'react';
 import { getList, readCache } from '../lib/rtdb';
+import { connectivityStore, reportRequestFailure } from '../lib/connectivity';
+
+// Firebase's get() can sit unresolved for a long time when the connection is
+// broken rather than absent. Without this the screen shows loading skeletons
+// for ever and never explains why, which is exactly what people reported.
+const STALL_MS = 12_000;
+
+function withStallWatch(promise) {
+  return new Promise((resolve, reject) => {
+    const timer = setTimeout(() => {
+      reportRequestFailure();
+      reject(Object.assign(new Error('The server did not respond. Check your connection.'), { stalled: true }));
+    }, STALL_MS);
+    promise.then(
+      (v) => { clearTimeout(timer); resolve(v); },
+      (e) => { clearTimeout(timer); reject(e); },
+    );
+  });
+}
 
 /**
  * Loads a list node once. Shows the cached copy immediately (stale-while-
@@ -30,7 +48,7 @@ export function useList(path, { filter, sort } = {}) {
     setLoading((l) => l || !readCache(path));
     try {
       setError(null);
-      setRaw(await getList(path));
+      setRaw(await withStallWatch(getList(path)));
     } catch (e) {
       setError(e);
     } finally {
@@ -51,7 +69,7 @@ export function useAsync(fn, deps) {
   const run = useCallback(async () => {
     setState((s) => ({ ...s, loading: true, error: null }));
     try {
-      setState({ data: await fn(), loading: false, error: null });
+      setState({ data: await withStallWatch(Promise.resolve().then(fn)), loading: false, error: null });
     } catch (error) {
       setState({ data: null, loading: false, error });
     }
@@ -64,14 +82,13 @@ export function useAsync(fn, deps) {
 }
 
 export function useOnline() {
-  const [online, setOnline] = useState(typeof navigator === 'undefined' ? true : navigator.onLine);
-  useEffect(() => {
-    let handle;
-    Network.addListener('networkStatusChange', (s) => setOnline(s.connected)).then((h) => {
-      handle = h;
-    });
-    Network.getStatus().then((s) => setOnline(s.connected)).catch(() => {});
-    return () => handle?.remove();
-  }, []);
-  return online;
+  // Deliberately the confirmed status, not navigator.onLine: a phone on Wi-Fi
+  // with no working connection reports itself as online, and the screens that
+  // call this use it to decide whether an action can succeed.
+  const { status } = useSyncExternalStore(
+    connectivityStore.subscribe,
+    connectivityStore.getSnapshot,
+    () => ({ status: 'online' }),
+  );
+  return status === 'online' || status === 'checking';
 }

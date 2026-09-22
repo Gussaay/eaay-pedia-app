@@ -11,7 +11,7 @@ import { num } from '../lib/rtdb';
 import { loadAllProgress } from '../lib/flashcardData';
 import { isDue, isMastered } from '../lib/flashcards';
 import BottomNav from '../components/BottomNav';
-import { AppBar, Empty, ErrorBox, OfflineBanner, Page, SkeletonList, Thumb } from '../components/ui';
+import { AppBar, Empty, ErrorBox, Page, SkeletonList, Thumb } from '../components/ui';
 
 /** Everything this person has answered, so per-deck counts need no extra read. */
 function useProgress() {
@@ -77,7 +77,6 @@ export function FlashCategoryBooks() {
   return (
     <div className="min-h-screen pb-28">
       <AppBar title={params.get('title') || source} subtitle="Choose a book" />
-      <OfflineBanner />
       <Page className="space-y-3">
         <ErrorBox error={!books.data.length && books.error} onRetry={books.reload} />
         {books.loading ? (
@@ -136,7 +135,6 @@ export function FlashBookDecks() {
   return (
     <div className="min-h-screen pb-28">
       <AppBar title={params.get('title') || source} subtitle="Choose a deck" />
-      <OfflineBanner />
       <Page className="space-y-4">
         <ErrorBox error={!decks.data.length && decks.error} onRetry={decks.reload} />
         {decks.loading ? (

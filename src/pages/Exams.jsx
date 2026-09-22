@@ -6,7 +6,7 @@ import { FileQuestion } from 'lucide-react';
 import { useList } from '../hooks/useData';
 import { num } from '../lib/rtdb';
 import { quizPath } from '../lib/quizSource';
-import { AppBar, Empty, ErrorBox, ListCard, OfflineBanner, Page, SkeletonList } from '../components/ui';
+import { AppBar, Empty, ErrorBox, ListCard, Page, SkeletonList } from '../components/ui';
 
 const countBadge = (n) =>
   n ? <span className="text-xs font-semibold bg-brand-50 text-brand-700 rounded-full px-2 py-1 shrink-0">{n} Qs</span> : null;
@@ -40,7 +40,6 @@ export default function Exams() {
   return (
     <div className="min-h-screen">
       <AppBar title={name || 'Quizzes'} subtitle={editMode ? 'Edit mode — tap a quiz to edit it' : undefined} />
-      <OfflineBanner />
       {isCollection && !editMode && (
         <div className="sticky top-14 z-20 bg-white border-b border-slate-100">
           <div className="max-w-3xl mx-auto flex">

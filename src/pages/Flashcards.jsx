@@ -11,7 +11,7 @@ import { num } from '../lib/rtdb';
 import { loadAllProgress, loadStats } from '../lib/flashcardData';
 import { isDue } from '../lib/flashcards';
 import BottomNav from '../components/BottomNav';
-import { AppBar, Button, Empty, ErrorBox, OfflineBanner, Page, Thumb } from '../components/ui';
+import { AppBar, Button, Empty, ErrorBox, Page, Thumb } from '../components/ui';
 
 function Stat({ icon: Icon, value, label, tint }) {
   return (
@@ -74,7 +74,6 @@ export default function Flashcards() {
   return (
     <div className="min-h-screen pb-28">
       <AppBar title="Flash Cards" />
-      <OfflineBanner />
       <Page className="space-y-4">
         <section className="rounded-3xl bg-gradient-to-br from-violet-700 via-violet-600 to-fuchsia-500 text-white p-5 shadow-lg shadow-violet-700/20">
           <p className="text-white/80 text-sm">

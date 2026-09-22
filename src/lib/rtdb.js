@@ -18,6 +18,7 @@ import {
 } from 'firebase/database';
 import { ref as sRef, uploadBytes, getDownloadURL } from 'firebase/storage';
 import { db, storage } from '../firebase';
+import { reportRequestFailure, reportRequestSuccess } from './connectivity';
 
 /** Android wrote numbers as String.valueOf((long) x). */
 export const str = (n) => String(Math.trunc(Number(n) || 0));
@@ -36,8 +37,25 @@ export function toList(snapshot) {
   return out;
 }
 
+/**
+ * Every read goes through here so the connection state is driven by what
+ * actually happens to real requests, rather than by what the device claims
+ * about its network. A read that works is the best possible proof of
+ * internet; one that fails is the earliest warning of trouble.
+ */
+async function track(promise) {
+  try {
+    const value = await promise;
+    reportRequestSuccess();
+    return value;
+  } catch (e) {
+    reportRequestFailure();
+    throw e;
+  }
+}
+
 export async function getList(path) {
-  const snap = await get(ref(db, path));
+  const snap = await track(get(ref(db, path)));
   const list = toList(snap);
   writeCache(path, list);
   return list;
@@ -67,7 +85,7 @@ async function getWholeNode(path) {
  */
 export async function getWhere(path, child, value) {
   try {
-    const snap = await get(query(ref(db, path), orderByChild(child), equalTo(value)));
+    const snap = await track(get(query(ref(db, path), orderByChild(child), equalTo(value))));
     return toList(snap);
   } catch (e) {
     if (!/index not defined/i.test(e?.message || '')) throw e;
@@ -82,12 +100,12 @@ export async function getWhere(path, child, value) {
 
 /** Newest `n` children by push key (no index needed), newest first. */
 export async function getLatest(path, n) {
-  const snap = await get(query(ref(db, path), limitToLast(n)));
+  const snap = await track(get(query(ref(db, path), limitToLast(n))));
   return toList(snap).reverse();
 }
 
 export async function getOne(path) {
-  const snap = await get(ref(db, path));
+  const snap = await track(get(ref(db, path)));
   return snap.exists() ? snap.val() : null;
 }
 

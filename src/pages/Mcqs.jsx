@@ -7,7 +7,7 @@ import { useList } from '../hooks/useData';
 import { num } from '../lib/rtdb';
 import BottomNav from '../components/BottomNav';
 import DailyQuiz, { useDailyQuiz } from '../components/DailyQuiz';
-import { AppBar, Empty, ErrorBox, OfflineBanner, Page, Thumb } from '../components/ui';
+import { AppBar, Empty, ErrorBox, Page, Thumb } from '../components/ui';
 
 function CategoryCard({ c, onClick, hidden }) {
   return (
@@ -48,7 +48,6 @@ export default function Mcqs() {
         title="MCQs"
         subtitle={totalQuestions ? `${totalQuestions.toLocaleString()} questions` : undefined}
       />
-      <OfflineBanner />
       <Page className="space-y-5">
         <DailyQuiz daily={daily} />
 

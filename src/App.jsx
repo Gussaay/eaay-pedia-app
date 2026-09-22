@@ -8,6 +8,7 @@ import { runBackHandlers } from './lib/back';
 import { registerForPush, usePushEvents } from './lib/push';
 import { Spinner, useToast } from './components/ui';
 import UpdatePrompt from './components/UpdatePrompt';
+import ConnectionNotice from './components/ConnectionNotice';
 import SignIn from './pages/SignIn';
 import Home from './pages/Home';
 
@@ -149,6 +150,9 @@ export default function App() {
 
   return (
     <>
+      {/* Above the routes so the bar sits at the top of the page rather than
+          below it, and never fights the sticky AppBar for the same spot. */}
+      <ConnectionNotice />
       <Suspense fallback={<Spinner />}>
         <Routes>
           <Route path="/login" element={<SignIn />} />

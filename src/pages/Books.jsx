@@ -2,7 +2,7 @@
 import { useNavigate, useParams, useSearchParams } from 'react-router-dom';
 import { Library } from 'lucide-react';
 import { useList } from '../hooks/useData';
-import { AppBar, Empty, ErrorBox, ListCard, OfflineBanner, Page, SkeletonList } from '../components/ui';
+import { AppBar, Empty, ErrorBox, ListCard, Page, SkeletonList } from '../components/ui';
 
 export default function Books() {
   const { source } = useParams();
@@ -17,7 +17,6 @@ export default function Books() {
   return (
     <div className="min-h-screen">
       <AppBar title={params.get('title') || 'Books'} subtitle={editMode ? 'Edit mode' : undefined} />
-      <OfflineBanner />
       <Page>
         <ErrorBox error={!books.data.length && books.error} onRetry={books.reload} />
         {books.loading ? (

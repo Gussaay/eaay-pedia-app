@@ -16,7 +16,7 @@ import { LINKS } from '../config';
 import Drawer from '../components/Drawer';
 import BottomNav from '../components/BottomNav';
 import DailyQuiz, { useDailyQuiz } from '../components/DailyQuiz';
-import { AppBar, Button, Modal, OfflineBanner, Page } from '../components/ui';
+import { AppBar, Button, Modal, Page } from '../components/ui';
 
 function greeting() {
   const h = new Date().getHours();
@@ -109,7 +109,6 @@ export default function Home() {
           </button>
         }
       />
-      <OfflineBanner />
       <Page className="space-y-5">
         <section className="relative overflow-hidden rounded-3xl bg-gradient-to-br from-brand-700 via-brand-600 to-sky-500 text-white p-5 shadow-lg shadow-brand-700/20">
           <span className="absolute -right-10 -top-10 h-40 w-40 rounded-full bg-white/10" />

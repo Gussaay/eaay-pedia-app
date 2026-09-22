@@ -10,6 +10,7 @@ import { AuthProvider } from './hooks/useAuth';
 import { ToastProvider } from './components/ui';
 import { setWebUpdate } from './components/UpdatePrompt';
 import { startLiveUpdates } from './lib/liveUpdate';
+import { startConnectivityWatch } from './lib/connectivity';
 import ErrorBoundary from './components/ErrorBoundary';
 import './index.css';
 
@@ -30,6 +31,10 @@ if (Capacitor.isNativePlatform()) {
     },
   });
 }
+
+// Watches for the connection dropping, so the app can say so instead of
+// failing silently behind a spinner.
+startConnectivityWatch();
 
 ReactDOM.createRoot(document.getElementById('root')).render(
   <React.StrictMode>

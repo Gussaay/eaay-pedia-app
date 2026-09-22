@@ -1,7 +1,6 @@
 import { createContext, useCallback, useContext, useEffect, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { ArrowLeft, ChevronRight, ImageOff, Loader2, WifiOff, X } from 'lucide-react';
-import { useOnline } from '../hooks/useData';
 
 // ---------------------------------------------------------------------------
 // Layout
@@ -36,16 +35,6 @@ export function Page({ children, className = '' }) {
     <main className={`max-w-3xl mx-auto w-full px-4 pt-4 pb-[max(1.5rem,env(safe-area-inset-bottom))] ${className}`}>
       {children}
     </main>
-  );
-}
-
-export function OfflineBanner() {
-  const online = useOnline();
-  if (online) return null;
-  return (
-    <div className="bg-amber-100 text-amber-900 text-sm px-4 py-2 flex items-center gap-2 justify-center">
-      <WifiOff size={16} /> You are offline — showing saved data.
-    </div>
   );
 }
 
