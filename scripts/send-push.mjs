@@ -14,8 +14,8 @@
 // Needs FIREBASE_SERVICE_ACCOUNT in the environment (the same secret the
 // Hosting deploy uses).
 import { initializeApp, cert } from 'firebase-admin/app';
-import { getDatabase } from 'firebase-admin/database';
 import { getMessaging } from 'firebase-admin/messaging';
+import { restDb } from './rtdb-rest.mjs';
 
 const DATABASE_URL = 'https://easy-pedia.firebaseio.com';
 const BATCH = 500;                      // FCM's limit for one multicast call
@@ -33,12 +33,15 @@ if (!raw) {
   console.error('FIREBASE_SERVICE_ACCOUNT is not set.');
   process.exit(1);
 }
-initializeApp({ credential: cert(JSON.parse(raw)), databaseURL: DATABASE_URL });
+const serviceAccount = JSON.parse(raw);
+// Messaging still goes through the Admin SDK (it is plain HTTPS and fails
+// fast); the database does not — see scripts/rtdb-rest.mjs for why.
+initializeApp({ credential: cert(serviceAccount) });
 
-const db = getDatabase();
+const db = restDb(DATABASE_URL, serviceAccount);
 const messaging = getMessaging();
 
-const readNode = async (path) => (await db.ref(path).get()).val() || {};
+const readNode = async (path) => (await db.get(path)) || {};
 
 /**
  * Every token, with the uid and database key it lives under, so tokens that
@@ -79,7 +82,7 @@ async function dropTokens(entries) {
   entries.forEach(({ uid, key }) => {
     updates[`push_tokens/${uid}/${key}`] = null;
   });
-  await db.ref().update(updates);
+  await db.updateRoot(updates);
   console.log(`Removed ${entries.length} token(s) that are no longer valid.`);
 }
 
@@ -148,7 +151,7 @@ async function runOutbox() {
         url: request.url,
         tag: `notif-${key}`,
       });
-      await db.ref(`push_outbox/${key}`).update({
+      await db.update(`push_outbox/${key}`, {
         status: 'sent',
         sentCount: sent,
         failureCount: failed,
@@ -159,7 +162,7 @@ async function runOutbox() {
       console.error(`  failed: ${e.message}`);
       // Recorded rather than retried forever: a request that keeps throwing
       // would block the queue on every scheduled run.
-      await db.ref(`push_outbox/${key}`).update({
+      await db.update(`push_outbox/${key}`, {
         status: 'failed',
         error: String(e.message).slice(0, 300),
         sentAt: Date.now(),
@@ -176,7 +179,7 @@ async function runOutbox() {
     stale.forEach(([key]) => {
       updates[`push_outbox/${key}`] = null;
     });
-    await db.ref().update(updates);
+    await db.updateRoot(updates);
     console.log(`Cleared ${stale.length} old record(s).`);
   }
 }

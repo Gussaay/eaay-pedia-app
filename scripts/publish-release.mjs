@@ -6,8 +6,7 @@
 //
 // A rollout the admin has paused is left paused: CI publishes the files and
 // records the build, but does not override a human decision to stop shipping.
-import { initializeApp, cert } from 'firebase-admin/app';
-import { getDatabase } from 'firebase-admin/database';
+import { restDb } from './rtdb-rest.mjs';
 
 const DATABASE_URL = 'https://easy-pedia.firebaseio.com';
 const KEEP_HISTORY = 15;
@@ -24,8 +23,7 @@ if (!raw) {
   console.error('FIREBASE_SERVICE_ACCOUNT is not set.');
   process.exit(1);
 }
-initializeApp({ credential: cert(JSON.parse(raw)), databaseURL: DATABASE_URL });
-const db = getDatabase();
+const db = restDb(DATABASE_URL, JSON.parse(raw));
 
 const version = value('version');
 const url = value('url');
@@ -52,8 +50,7 @@ const release = {
 };
 
 async function main() {
-  const liveSnap = await db.ref('update/live').get();
-  const live = liveSnap.val() || {};
+  const live = (await db.get('update/live')) || {};
   const paused = live.paused === true || live.paused === 'true';
 
   const updates = { [`update/history/${key}`]: release };
@@ -76,11 +73,10 @@ async function main() {
     console.log(`${version} is now the live update${flag('mandatory') ? ' (required)' : ''}.`);
   }
 
-  await db.ref().update(updates);
+  await db.updateRoot(updates);
 
   // Keep the history readable, but never delete the build that is live.
-  const historySnap = await db.ref('update/history').get();
-  const all = Object.entries(historySnap.val() || {}).sort(
+  const all = Object.entries((await db.get('update/history')) || {}).sort(
     (a, b) => (b[1]?.versionCode || 0) - (a[1]?.versionCode || 0),
   );
   const stale = all.slice(KEEP_HISTORY).filter(([k]) => k !== key && k !== String(live.version || '').replace(/\./g, '_'));
@@ -89,7 +85,7 @@ async function main() {
     stale.forEach(([k]) => {
       removals[`update/history/${k}`] = null;
     });
-    await db.ref().update(removals);
+    await db.updateRoot(removals);
     console.log(`Trimmed ${stale.length} old history record(s).`);
   }
 }
@@ -102,7 +98,7 @@ main()
     // plainly rather than failing with a bare "permission denied": the release
     // itself is fine either way, because the app falls back to the static
     // /latest/update.json when update/live is missing.
-    if (/permission|PERMISSION_DENIED|Unauthorized/i.test(e?.message || '')) {
+    if (e?.permission || /permission|PERMISSION_DENIED|Unauthorized/i.test(e?.message || '')) {
       console.error(
         '::warning::Could not write to the database. Over-the-air updates still work from ' +
           '/latest/update.json, but the Update manager will not show this build and cannot roll ' +

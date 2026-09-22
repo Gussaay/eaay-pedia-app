@@ -26,6 +26,8 @@ jobs:
   send:
     name: Deliver pending notifications
     runs-on: ubuntu-latest
+    # Scheduled every 10 minutes, so a run that hangs would pile up runners.
+    timeout-minutes: 8
     # Without the secret every scheduled run would fail and email the owner.
     if: ${{ github.repository_owner == 'Gussaay' }}
     steps:

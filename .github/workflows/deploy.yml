@@ -302,6 +302,11 @@ jobs:
         # write the database, apps still update from /latest/update.json, so
         # this must not fail a deploy that has already gone live.
         continue-on-error: true
+        # A backstop, not the fix: the scripts now talk to the database over
+        # REST, which answers 401 straight away. continue-on-error cannot
+        # rescue a step that hangs, and an earlier version of this step ran for
+        # over two hours retrying a rejected credential.
+        timeout-minutes: 3
         env:
           FIREBASE_SERVICE_ACCOUNT: ${{ secrets.FIREBASE_SERVICE_ACCOUNT_EASY_PEDIA }}
         run: |
@@ -322,6 +327,7 @@ jobs:
       - name: Tell devices a new version is out
         if: ${{ !contains(github.event.head_commit.message, '[no-notify]') && !contains(github.event.head_commit.message, '[hold]') }}
         continue-on-error: true
+        timeout-minutes: 5
         env:
           FIREBASE_SERVICE_ACCOUNT: ${{ secrets.FIREBASE_SERVICE_ACCOUNT_EASY_PEDIA }}
         run: |
@@ -333,6 +339,7 @@ jobs:
       # was running goes out now rather than waiting for the next schedule.
       - name: Send queued notifications
         continue-on-error: true
+        timeout-minutes: 5
         env:
           FIREBASE_SERVICE_ACCOUNT: ${{ secrets.FIREBASE_SERVICE_ACCOUNT_EASY_PEDIA }}
         run: node scripts/send-push.mjs --outbox
