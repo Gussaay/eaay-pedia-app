@@ -30,8 +30,17 @@ const RATING_BUTTONS = [
   { rating: 'easy', label: 'Easy', hint: 'Too simple', icon: ArrowRight, className: 'bg-sky-50 text-sky-700 hover:bg-sky-100 border-sky-200' },
 ];
 
-/** One face of the card. Both are the same size; the back starts turned away. */
-function Face({ children, back = false, className = '' }) {
+const FLIP_MS = 500;
+
+/**
+ * One face of the card. Both fill the same box; the back starts turned away.
+ *
+ * backface-visibility alone should hide whichever face points away, but some
+ * Android WebViews ignore it and then BOTH sides are readable at once, which
+ * defeats the whole thing. So visibility is also switched explicitly, halfway
+ * through the turn — the moment the card is edge-on and nothing is legible.
+ */
+function Face({ children, back = false, visible, className = '' }) {
   return (
     <div
       className={`absolute inset-0 overflow-y-auto rounded-3xl border p-6 ${className}`}
@@ -39,7 +48,17 @@ function Face({ children, back = false, className = '' }) {
         backfaceVisibility: 'hidden',
         WebkitBackfaceVisibility: 'hidden',
         transform: back ? 'rotateY(180deg)' : undefined,
+        opacity: visible ? 1 : 0,
+        // visibility as well as opacity: an invisible face is still in the
+        // text tree, so a screen reader would otherwise read the answer out
+        // while the question is showing.
+        visibility: visible ? 'visible' : 'hidden',
+        pointerEvents: visible ? undefined : 'none',
+        // No CSS transition on these two. A transition on `visibility` does
+        // not reliably settle, and the faces were left showing the wrong side
+        // for good; the swap is timed in the component instead.
       }}
+      aria-hidden={!visible}
     >
       {children}
     </div>
@@ -75,6 +94,9 @@ export default function FlashStudy() {
   const [queue, setQueue] = useState(null);
   const [at, setAt] = useState(0);
   const [flipped, setFlipped] = useState(false);
+  // Which face may be read. It changes halfway through the turn, when the card
+  // is edge-on, so the two are never legible at the same time.
+  const [faceShown, setFaceShown] = useState('front');
   const [graded, setGraded] = useState({});
   const [tally, setTally] = useState({ answered: 0, correct: 0 });
   const [done, setDone] = useState(false);
@@ -150,13 +172,22 @@ export default function FlashStudy() {
         if (rating === 'again') rest.push(card);
         return rest;
       });
-      // Turn the card back before the next one arrives, or the new card would
-      // appear already showing its answer.
-      setFlipped(false);
       setAt((i) => i + 1);
     },
     [card, data.data, graded],
   );
+
+  // A new card always arrives front side up, immediately — waiting for the
+  // half-turn would flash the next card's answer for a moment.
+  useEffect(() => {
+    setFlipped(false);
+    setFaceShown('front');
+  }, [card?._key]);
+
+  useEffect(() => {
+    const timer = setTimeout(() => setFaceShown(flipped ? 'back' : 'front'), FLIP_MS / 2);
+    return () => clearTimeout(timer);
+  }, [flipped]);
 
   // Whether the session is over has to be worked out during the render that
   // runs off the end of the queue, not in an effect afterwards: an effect runs
@@ -257,34 +288,37 @@ export default function FlashStudy() {
   }
 
   return (
-    <div className="min-h-screen pb-40">
+    // A fixed-height column rather than a scrolling page: the card is meant to
+    // sit in the middle of the screen with the rating row under it, and nothing
+    // else competing for attention. dvh so the mobile browser bar appearing
+    // does not crop the card.
+    <div className="flex flex-col overflow-hidden" style={{ height: '100dvh' }}>
       <AppBar
         title={data.data.deck?.title || 'Studying'}
         subtitle={`${Math.min(at + 1, queue.length)} of ${queue.length}`}
         onBack={() => leave(deckPath)}
       />
-      <div className="h-1 w-full bg-slate-200">
+      <div className="h-1 w-full shrink-0 bg-slate-200">
         <div className="h-full bg-violet-500 transition-all duration-300" style={{ width: `${percent}%` }} />
       </div>
 
-      <Page>
+      <div className="flex min-h-0 flex-1 items-center justify-center p-4">
         <button
           type="button"
           onClick={() => setFlipped((f) => !f)}
           aria-label={flipped ? 'Show the question' : 'Show the answer'}
-          className="block w-full text-left"
+          className="block h-full max-h-[32rem] w-full max-w-lg text-left"
           style={{ perspective: '1400px' }}
         >
           <div
-            className="relative"
+            className="relative h-full"
             style={{
-              height: 'min(60vh, 26rem)',
               transformStyle: 'preserve-3d',
-              transition: 'transform 500ms cubic-bezier(0.4, 0.0, 0.2, 1)',
+              transition: `transform ${FLIP_MS}ms cubic-bezier(0.4, 0.0, 0.2, 1)`,
               transform: flipped ? 'rotateY(180deg)' : 'rotateY(0deg)',
             }}
           >
-            <Face className="border-slate-200 bg-white shadow-sm">
+            <Face visible={faceShown === 'front'} className="border-slate-200 bg-white shadow-lg">
               <div className="flex h-full flex-col">
                 <p className="text-[11px] font-semibold uppercase tracking-wide text-slate-400">
                   {card.chapter || card.topic || 'Question'}
@@ -304,7 +338,7 @@ export default function FlashStudy() {
               </div>
             </Face>
 
-            <Face back className="border-violet-200 bg-violet-50 shadow-sm">
+            <Face back visible={faceShown === 'back'} className="border-violet-200 bg-violet-50 shadow-lg">
               <div className="flex h-full flex-col">
                 <p className="text-[11px] font-semibold uppercase tracking-wide text-violet-500">Answer</p>
                 <div className="flex flex-1 flex-col justify-center">
@@ -321,17 +355,13 @@ export default function FlashStudy() {
             </Face>
           </div>
         </button>
+      </div>
 
-        {!flipped && (
-          <p className="mt-4 text-center text-sm text-slate-400">
-            Answer it in your head first, then turn the card.
-          </p>
-        )}
-      </Page>
-
-      {flipped && (
-        <div className="fixed inset-x-0 bottom-0 z-30 border-t border-slate-200 bg-white/95 p-4 backdrop-blur pb-safe">
-          <p className="mb-2 text-center text-xs text-slate-400">How well did you know it?</p>
+      {/* In the flow rather than fixed, so it can never sit on top of the card. */}
+      <div className="shrink-0 border-t border-slate-200 bg-white p-4 pb-safe">
+        {flipped ? (
+          <>
+            <p className="mb-2 text-center text-xs text-slate-400">How well did you know it?</p>
           <div className="mx-auto flex max-w-3xl gap-2">
             {RATING_BUTTONS.map(({ rating, label, hint, icon: Icon, className }) => (
               <button
@@ -345,14 +375,20 @@ export default function FlashStudy() {
               </button>
             ))}
           </div>
-        </div>
-      )}
-
-      {tally.answered > 0 && !flipped && (
-        <p className="fixed inset-x-0 bottom-4 text-center text-xs text-slate-400">
-          {tally.correct} of {tally.answered} right so far
-        </p>
-      )}
+          </>
+        ) : (
+          // The same height either way, so the card does not jump up and down
+          // as it is turned over.
+          <div className="flex h-[4.9rem] flex-col items-center justify-center text-center">
+            <p className="text-sm text-slate-500">Answer it in your head, then tap the card.</p>
+            {tally.answered > 0 && (
+              <p className="mt-1 text-xs text-slate-400">
+                {tally.correct} of {tally.answered} right so far
+              </p>
+            )}
+          </div>
+        )}
+      </div>
     </div>
   );
 }
