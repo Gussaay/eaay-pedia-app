@@ -22,6 +22,7 @@ import { getOne } from '../lib/rtdb';
 import { loadCards, loadDeckProgress, loadStats, saveSession } from '../lib/flashcardData';
 import { buildSession, gradeCard } from '../lib/flashcards';
 import { useBackHandler } from '../lib/back';
+import { clearSpot, loadSpot, saveSpot } from '../lib/resume';
 import { AppBar, Button, Card, Empty, Page, SkeletonList, ZoomImage, useToast } from '../components/ui';
 
 const RATING_BUTTONS = [
@@ -72,6 +73,7 @@ export default function FlashStudy() {
   // "|" rather than a comma, because chapter names contain commas.
   const chapters = (params.get('chapters') || '').split('|').filter(Boolean);
   const limit = params.has('limit') ? Number(params.get('limit')) : 20;
+  const resuming = params.get('resume') === '1';
   const { user } = useAuth();
   const navigate = useNavigate();
   const toast = useToast();
@@ -105,6 +107,23 @@ export default function FlashStudy() {
   // cards appear and disappear underneath the person answering them.
   useEffect(() => {
     if (!data.data || queue) return;
+
+    // Coming back to a session the app was killed in the middle of. The queue
+    // is stored as card ids, so anything deleted since is simply dropped
+    // rather than crashing the session.
+    if (resuming) {
+      const spot = loadSpot('flash', deckId);
+      const byId = new Map(data.data.cards.map((c) => [c._key, c]));
+      const restored = (spot?.queue || []).map((key) => byId.get(key)).filter(Boolean);
+      if (restored.length) {
+        setQueue(restored);
+        setAt(Math.min(spot.done || 0, restored.length));
+        setGraded(spot.graded || {});
+        setTally(spot.tally || { answered: 0, correct: 0 });
+        return;
+      }
+    }
+
     setQueue(
       buildSession(data.data.cards, data.data.progress, {
         mode,
@@ -199,8 +218,24 @@ export default function FlashStudy() {
     if (finished && !done) {
       setDone(true);
       persist();
+      clearSpot('flash', deckId);
     }
-  }, [finished, done, persist]);
+  }, [finished, done, persist, deckId]);
+
+  // Written after every answer, synchronously, so a session survives the app
+  // being killed. The whole point is that it must already be saved before
+  // anything gets the chance to run cleanup code.
+  useEffect(() => {
+    if (!queue?.length || finished) return;
+    saveSpot('flash', deckId, {
+      queue: queue.map((c) => c._key),
+      done: at,
+      graded,
+      tally,
+      total: queue.length,
+      title: data.data?.deck?.title || '',
+    });
+  }, [queue, at, graded, tally, finished, deckId, data.data]);
 
   // Keyboard on the web: space flips, 1/2/3 rate.
   useEffect(() => {

@@ -5,6 +5,7 @@ import { useNavigate, useParams, useSearchParams } from 'react-router-dom';
 import { ArrowRight, Clock, Lightbulb, MessageSquarePlus, Pencil, X } from 'lucide-react';
 import { useAuth } from '../hooks/useAuth';
 import { useBackHandler } from '../lib/back';
+import { clearSpot, loadSpot, saveSpot } from '../lib/resume';
 import { getOne, getWhere, num, pushTo, removeAt, str, updateAt, newKey } from '../lib/rtdb';
 import {
   computeSessionResult,
@@ -67,6 +68,15 @@ export default function QuizPlay() {
         if (saved.length) {
           setSavedSession(saved[saved.length - 1]);
           setPhase('resume');
+          return;
+        }
+        // Nothing saved deliberately, but the app may have been killed
+        // mid-quiz. That copy lives on the phone, so it survives a crash and
+        // a lost connection alike.
+        const local = loadSpot('quiz', m.pkey);
+        if (local) {
+          setSavedSession({ ...local, local: true });
+          setPhase('resume');
         } else setPhase('setup');
       } catch (e) {
         if (!cancelled) setError(e);
@@ -105,11 +115,13 @@ export default function QuizPlay() {
     setCorrect(num(s.correct_ans));
     setSelected('');
     setPhase('playing');
-    await removeAt(`resume/${s._key}`).catch(() => {});
+    clearSpot('quiz', meta?.pkey);
+    if (s._key) await removeAt(`resume/${s._key}`).catch(() => {});
   };
 
   const startNew = async () => {
-    if (savedSession) await removeAt(`resume/${savedSession._key}`).catch(() => {});
+    if (savedSession?._key) await removeAt(`resume/${savedSession._key}`).catch(() => {});
+    clearSpot('quiz', meta?.pkey);
     setSavedSession(null);
     setPhase('setup');
   };
@@ -124,6 +136,7 @@ export default function QuizPlay() {
       }
       submittedRef.current = true;
       setPhase('submitting');
+      clearSpot('quiz', meta.pkey);
 
       const goToResults = (percentage, points, pending) =>
         navigate('/results', {
@@ -244,6 +257,30 @@ export default function QuizPlay() {
     }
   }, [remaining, mode, phase, endAt, finish, toast]);
 
+  /**
+   * Keeps a bookmark on the phone while a quiz is in progress.
+   *
+   * "Save for later" writes to the database, but only when the user taps it on
+   * the way out. An app that is swiped away or killed for memory never gets
+   * that chance, and the whole session was lost. This runs after every answer
+   * and is synchronous, so the last position is already stored.
+   *
+   * Exams are left out on purpose: they are timed, and resuming one later
+   * would either hand out extra time or expire the moment it reopened.
+   */
+  useEffect(() => {
+    if (phase !== 'playing' || mode === 'exam' || !meta?.pkey || !played) return;
+    saveSpot('quiz', meta.pkey, {
+      question: String(selected ? index + 1 : index),
+      tq: String(tq),
+      played: String(played),
+      correct_ans: String(correct),
+      done: played,
+      total: tq,
+      title: meta.title || '',
+    });
+  }, [phase, mode, meta, index, tq, played, correct, selected]);
+
   // ---------------------------------------------------------------- exit / save
   const saveForLater = async () => {
     const key = newKey('resume');
@@ -258,6 +295,7 @@ export default function QuizPlay() {
       correct_ans: str(correct),
       tq: str(tq),
     });
+    clearSpot('quiz', meta.pkey); // it is in the database now
     toast('Progress saved', 'success');
     navigate(-1);
   };

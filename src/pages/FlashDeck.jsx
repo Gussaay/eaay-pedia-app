@@ -7,12 +7,13 @@
 // rather than after.
 import { useMemo, useState } from 'react';
 import { useNavigate, useParams } from 'react-router-dom';
-import { AlertTriangle, BookOpen, Clock, Layers, Play, RotateCcw, Sparkles, Target } from 'lucide-react';
+import { BookOpen, Clock, History, Layers, Play, RotateCcw, Sparkles, Target, X } from 'lucide-react';
 import { useAuth } from '../hooks/useAuth';
 import { useAsync } from '../hooks/useData';
 import { getOne } from '../lib/rtdb';
 import { loadCards, loadDeckProgress, resetDeckProgress } from '../lib/flashcardData';
 import { buildSession, chaptersOf, deckSummary } from '../lib/flashcards';
+import { clearSpot, describeSpot, loadSpot } from '../lib/resume';
 import DangerConfirm from '../components/DangerConfirm';
 import { AppBar, Button, Card, Empty, ErrorBox, Page, Select, SkeletonList, Thumb, useToast } from '../components/ui';
 
@@ -63,6 +64,8 @@ export default function FlashDeck() {
   const [mode, setMode] = useState('due');
   const [size, setSize] = useState(20);
   const [chapter, setChapter] = useState(''); // '' = every chapter
+  // An unfinished session, if the app was closed in the middle of one.
+  const [spot, setSpot] = useState(() => loadSpot('flash', deckId));
 
   const data = useAsync(
     () =>
@@ -170,6 +173,35 @@ export default function FlashDeck() {
             tint="text-emerald-600"
           />
         </div>
+
+        {spot && summary.total > 0 && (
+          <Card className="border-violet-200 bg-violet-50/60 p-4">
+            <div className="flex items-start gap-3">
+              <History size={20} className="mt-0.5 shrink-0 text-violet-600" />
+              <div className="min-w-0 flex-1">
+                <p className="font-semibold text-slate-800">You left a session unfinished</p>
+                <p className="text-sm text-slate-600 mt-0.5">{describeSpot(spot)}</p>
+              </div>
+              <button
+                onClick={() => {
+                  clearSpot('flash', deckId);
+                  setSpot(null);
+                }}
+                aria-label="Forget it and start fresh"
+                title="Forget it"
+                className="shrink-0 rounded-lg p-1.5 text-slate-400 hover:bg-white hover:text-slate-700"
+              >
+                <X size={18} />
+              </button>
+            </div>
+            <Button
+              className="mt-3 w-full justify-center"
+              onClick={() => navigate(`/flashcards/study/${encodeURIComponent(deckId)}?resume=1`)}
+            >
+              <Play size={18} /> Carry on
+            </Button>
+          </Card>
+        )}
 
         {summary.total === 0 ? (
           <Empty icon={<Layers size={36} />} title="This deck has no cards yet" />
