@@ -14,7 +14,7 @@ import { getOne } from '../lib/rtdb';
 import { loadCards, loadDeckProgress, resetDeckProgress } from '../lib/flashcardData';
 import { buildSession, chaptersOf, deckSummary } from '../lib/flashcards';
 import DangerConfirm from '../components/DangerConfirm';
-import { AppBar, Button, Card, Empty, ErrorBox, Page, SkeletonList, Thumb, useToast } from '../components/ui';
+import { AppBar, Button, Card, Empty, ErrorBox, Page, Select, SkeletonList, Thumb, useToast } from '../components/ui';
 
 const MODES = [
   { key: 'due', label: 'Due', hint: 'What has come back round' },
@@ -62,7 +62,7 @@ export default function FlashDeck() {
 
   const [mode, setMode] = useState('due');
   const [size, setSize] = useState(20);
-  const [picked, setPicked] = useState([]); // empty = every chapter
+  const [chapter, setChapter] = useState(''); // '' = every chapter
 
   const data = useAsync(
     () =>
@@ -84,19 +84,16 @@ export default function FlashDeck() {
   // The real queue, rebuilt as the choices change, so the button can say how
   // many cards this will actually be.
   const queue = useMemo(
-    () => buildSession(cards, progress, { mode, limit: size, chapters: picked }),
-    [cards, progress, mode, size, picked],
+    () => buildSession(cards, progress, { mode, limit: size, chapters: chapter ? [chapter] : [] }),
+    [cards, progress, mode, size, chapter],
   );
-
-  const toggleChapter = (name) =>
-    setPicked((list) => (list.includes(name) ? list.filter((c) => c !== name) : [...list, name]));
 
   const start = () => {
     if (!queue.length) return;
     const params = new URLSearchParams({ mode, limit: String(size) });
-    // "|" rather than a comma: chapter names contain commas, such as
-    // "Infection, immunity and allergy".
-    if (picked.length) params.set('chapters', picked.join('|'));
+    // Still sent as the "chapters" list the session builder takes, so picking
+    // several again later needs no change to the study screen.
+    if (chapter) params.set('chapters', chapter);
     navigate(`/flashcards/study/${encodeURIComponent(deckId)}?${params}`);
   };
 
@@ -193,26 +190,19 @@ export default function FlashDeck() {
             </div>
 
             {hasChapters && (
-              <div>
-                <div className="flex items-baseline justify-between">
-                  <p className="text-sm font-semibold text-slate-700">Chapters</p>
-                  {picked.length > 0 && (
-                    <button onClick={() => setPicked([])} className="text-xs text-slate-400 hover:text-slate-600">
-                      Clear
-                    </button>
-                  )}
-                </div>
-                <div className="mt-2 flex flex-wrap gap-2">
-                  <Chip active={picked.length === 0} onClick={() => setPicked([])}>
-                    All chapters
-                  </Chip>
-                  {chapters.map((c) => (
-                    <Chip key={c.name} active={picked.includes(c.name)} onClick={() => toggleChapter(c.name)}>
-                      {c.name} <span className="opacity-60">{c.total}</span>
-                    </Chip>
-                  ))}
-                </div>
-              </div>
+              <Select
+                label="Chapter"
+                value={chapter}
+                onChange={(e) => setChapter(e.target.value)}
+                hint={`${chapters.length} chapters in this deck`}
+              >
+                <option value="">All chapters ({summary.total} cards)</option>
+                {chapters.map((c) => (
+                  <option key={c.name} value={c.name}>
+                    {c.name} ({c.total})
+                  </option>
+                ))}
+              </Select>
             )}
 
             <div>
@@ -236,7 +226,7 @@ export default function FlashDeck() {
               <p className="mt-2 text-center text-xs text-slate-400">
                 {queue.length ? (
                   <>
-                    {picked.length ? `${picked.length} chapter${picked.length === 1 ? '' : 's'} · ` : 'Whole deck · '}
+                    {chapter ? `${chapter} · ` : 'Whole deck · '}
                     {size === 0 ? 'no limit' : `up to ${size}`}
                   </>
                 ) : (

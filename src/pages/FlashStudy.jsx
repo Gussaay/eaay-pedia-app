@@ -1,16 +1,21 @@
-// A study session: one card at a time, reveal, rate, next.
+// A study session: a card, tap to flip it, rate how well you knew it.
 //
-// The answer is revealed below the question rather than by flipping a card
-// over. Explanations here run to several lines and a two-sided flip has to
-// give both faces the same height, which either crops the long side or leaves
-// a lot of white space on the short one.
+// The card really turns over. An earlier version put the answer underneath the
+// question instead, to cope with long text, but a flashcard you can see both
+// sides of at once is not a flashcard — you cannot help reading ahead, and the
+// recall is what makes it work. Faces are the same fixed height and scroll
+// inside if a card runs long.
+//
+// Leaving always REPLACES the history entry rather than pushing a new one.
+// Pushing meant back went deck -> study -> deck -> study for ever and never
+// reached the menu.
 //
 // Answers are held in memory and written once at the end — see
 // lib/flashcardData.js for why that matters to the bill. Leaving early still
 // saves what was answered, so nothing is lost.
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import { useNavigate, useParams, useSearchParams } from 'react-router-dom';
-import { ArrowRight, Check, Eye, Lightbulb, PartyPopper, RotateCcw, X } from 'lucide-react';
+import { ArrowRight, Check, Lightbulb, PartyPopper, RotateCw, X } from 'lucide-react';
 import { useAuth } from '../hooks/useAuth';
 import { useAsync } from '../hooks/useData';
 import { getOne } from '../lib/rtdb';
@@ -25,6 +30,22 @@ const RATING_BUTTONS = [
   { rating: 'easy', label: 'Easy', hint: 'Too simple', icon: ArrowRight, className: 'bg-sky-50 text-sky-700 hover:bg-sky-100 border-sky-200' },
 ];
 
+/** One face of the card. Both are the same size; the back starts turned away. */
+function Face({ children, back = false, className = '' }) {
+  return (
+    <div
+      className={`absolute inset-0 overflow-y-auto rounded-3xl border p-6 ${className}`}
+      style={{
+        backfaceVisibility: 'hidden',
+        WebkitBackfaceVisibility: 'hidden',
+        transform: back ? 'rotateY(180deg)' : undefined,
+      }}
+    >
+      {children}
+    </div>
+  );
+}
+
 export default function FlashStudy() {
   const { deckId } = useParams();
   const [params] = useSearchParams();
@@ -35,6 +56,10 @@ export default function FlashStudy() {
   const { user } = useAuth();
   const navigate = useNavigate();
   const toast = useToast();
+
+  const deckPath = `/flashcards/deck/${encodeURIComponent(deckId)}`;
+  // replace, never push — see the note at the top of this file.
+  const leave = useCallback((to) => navigate(to, { replace: true }), [navigate]);
 
   const data = useAsync(
     () =>
@@ -49,7 +74,7 @@ export default function FlashStudy() {
 
   const [queue, setQueue] = useState(null);
   const [at, setAt] = useState(0);
-  const [revealed, setRevealed] = useState(false);
+  const [flipped, setFlipped] = useState(false);
   const [graded, setGraded] = useState({});
   const [tally, setTally] = useState({ answered: 0, correct: 0 });
   const [done, setDone] = useState(false);
@@ -101,10 +126,8 @@ export default function FlashStudy() {
   // would be thrown away by the back button.
   useEffect(() => () => { persist(); }, [persist]);
 
-  // Android's hardware back returns to the deck, saving on the way out
-  // (the unmount effect above), rather than dropping out of the session.
   useBackHandler(() => {
-    navigate(`/flashcards/deck/${encodeURIComponent(deckId)}`);
+    leave(deckPath);
     return true;
   });
 
@@ -127,7 +150,9 @@ export default function FlashStudy() {
         if (rating === 'again') rest.push(card);
         return rest;
       });
-      setRevealed(false);
+      // Turn the card back before the next one arrives, or the new card would
+      // appear already showing its answer.
+      setFlipped(false);
       setAt((i) => i + 1);
     },
     [card, data.data, graded],
@@ -137,9 +162,6 @@ export default function FlashStudy() {
   // runs off the end of the queue, not in an effect afterwards: an effect runs
   // after the DOM is produced, so there would be one render with no card left
   // to show, and the card markup below would read `front` off null.
-  //
-  // It cannot be decided inside answer() either — "again" pushes the card back
-  // onto the queue, so the end only exists once that has happened.
   const finished = !!queue && queue.length > 0 && at >= queue.length;
 
   useEffect(() => {
@@ -149,22 +171,22 @@ export default function FlashStudy() {
     }
   }, [finished, done, persist]);
 
-  // Keyboard on the web: space reveals, 1/2/3 rate.
+  // Keyboard on the web: space flips, 1/2/3 rate.
   useEffect(() => {
     const onKey = (e) => {
-      if (done || !card) return;
+      if (finished || !card) return;
       if (e.code === 'Space' || e.code === 'Enter') {
         e.preventDefault();
-        if (!revealed) setRevealed(true);
+        setFlipped((f) => !f);
         return;
       }
-      if (!revealed) return;
+      if (!flipped) return;
       const index = { Digit1: 0, Digit2: 1, Digit3: 2 }[e.code];
       if (index !== undefined) answer(RATING_BUTTONS[index].rating);
     };
     window.addEventListener('keydown', onKey);
     return () => window.removeEventListener('keydown', onKey);
-  }, [revealed, card, answer, done]);
+  }, [flipped, card, answer, finished]);
 
   const percent = useMemo(
     () => (queue?.length ? Math.round((at / queue.length) * 100) : 0),
@@ -174,7 +196,7 @@ export default function FlashStudy() {
   if (data.loading || !queue) {
     return (
       <div className="min-h-screen">
-        <AppBar title="Studying" />
+        <AppBar title="Studying" onBack={() => leave(deckPath)} />
         <Page>
           <SkeletonList rows={3} />
         </Page>
@@ -185,13 +207,10 @@ export default function FlashStudy() {
   if (!queue.length) {
     return (
       <div className="min-h-screen">
-        <AppBar title="Studying" />
+        <AppBar title="Studying" onBack={() => leave(deckPath)} />
         <Page>
           <Empty icon={<PartyPopper size={40} />} title="Nothing to study here right now" />
-          <Button
-            className="mt-4 w-full justify-center"
-            onClick={() => navigate(`/flashcards/deck/${encodeURIComponent(deckId)}`)}
-          >
+          <Button className="mt-4 w-full justify-center" onClick={() => leave(deckPath)}>
             Back to the deck
           </Button>
         </Page>
@@ -226,17 +245,10 @@ export default function FlashStudy() {
               </div>
             </div>
           </Card>
-          <Button
-            className="w-full justify-center"
-            onClick={() => navigate(`/flashcards/deck/${encodeURIComponent(deckId)}`)}
-          >
+          <Button className="w-full justify-center" onClick={() => leave(deckPath)}>
             Back to the deck
           </Button>
-          <Button
-            variant="outline"
-            className="w-full justify-center"
-            onClick={() => navigate('/flashcards')}
-          >
+          <Button variant="outline" className="w-full justify-center" onClick={() => leave('/flashcards')}>
             All decks
           </Button>
         </Page>
@@ -249,50 +261,75 @@ export default function FlashStudy() {
       <AppBar
         title={data.data.deck?.title || 'Studying'}
         subtitle={`${Math.min(at + 1, queue.length)} of ${queue.length}`}
-        onBack={() => navigate(`/flashcards/deck/${encodeURIComponent(deckId)}`)}
+        onBack={() => leave(deckPath)}
       />
       <div className="h-1 w-full bg-slate-200">
         <div className="h-full bg-violet-500 transition-all duration-300" style={{ width: `${percent}%` }} />
       </div>
 
-      <Page className="space-y-3">
-        <Card className="p-6">
-          <p className="text-[11px] font-semibold uppercase tracking-wide text-slate-400">Question</p>
-          <p className="mt-2 text-lg leading-relaxed text-slate-900 whitespace-pre-line">{card.front}</p>
-          {card.img && <ZoomImage src={card.img} className="mt-4" />}
-
-          {!revealed && card.hint && (
-            <p className="mt-4 flex gap-2 rounded-xl bg-amber-50 p-3 text-sm text-amber-900">
-              <Lightbulb size={16} className="mt-0.5 shrink-0" /> {card.hint}
-            </p>
-          )}
-        </Card>
-
-        {revealed ? (
-          <Card className="p-6 border-violet-200 bg-violet-50/40">
-            <p className="text-[11px] font-semibold uppercase tracking-wide text-violet-500">Answer</p>
-            <p className="mt-2 text-lg leading-relaxed text-slate-900 whitespace-pre-line">{card.back}</p>
-            {card.back_img && <ZoomImage src={card.back_img} className="mt-4" />}
-            {card.note && (
-              <p className="mt-4 border-t border-violet-200 pt-3 text-sm leading-relaxed text-slate-600 whitespace-pre-line">
-                {card.note}
-              </p>
-            )}
-            {card.tags && <p className="mt-3 text-xs text-slate-400">{card.tags}</p>}
-          </Card>
-        ) : (
-          <button
-            onClick={() => setRevealed(true)}
-            className="w-full rounded-2xl border-2 border-dashed border-slate-300 bg-white py-10 text-slate-500 transition hover:border-violet-400 hover:text-violet-600"
+      <Page>
+        <button
+          type="button"
+          onClick={() => setFlipped((f) => !f)}
+          aria-label={flipped ? 'Show the question' : 'Show the answer'}
+          className="block w-full text-left"
+          style={{ perspective: '1400px' }}
+        >
+          <div
+            className="relative"
+            style={{
+              height: 'min(60vh, 26rem)',
+              transformStyle: 'preserve-3d',
+              transition: 'transform 500ms cubic-bezier(0.4, 0.0, 0.2, 1)',
+              transform: flipped ? 'rotateY(180deg)' : 'rotateY(0deg)',
+            }}
           >
-            <Eye size={26} className="mx-auto" />
-            <span className="mt-2 block font-semibold">Show the answer</span>
-            <span className="mt-0.5 block text-xs text-slate-400">or press space</span>
-          </button>
+            <Face className="border-slate-200 bg-white shadow-sm">
+              <div className="flex h-full flex-col">
+                <p className="text-[11px] font-semibold uppercase tracking-wide text-slate-400">
+                  {card.chapter || card.topic || 'Question'}
+                </p>
+                <div className="flex flex-1 flex-col justify-center">
+                  <p className="text-xl leading-relaxed text-slate-900 whitespace-pre-line">{card.front}</p>
+                  {card.img && <ZoomImage src={card.img} className="mt-4" />}
+                </div>
+                {card.hint && (
+                  <p className="mt-4 flex gap-2 rounded-xl bg-amber-50 p-3 text-sm text-amber-900">
+                    <Lightbulb size={16} className="mt-0.5 shrink-0" /> {card.hint}
+                  </p>
+                )}
+                <p className="mt-4 flex items-center justify-center gap-1.5 text-xs text-slate-400">
+                  <RotateCw size={13} /> Tap to turn the card over
+                </p>
+              </div>
+            </Face>
+
+            <Face back className="border-violet-200 bg-violet-50 shadow-sm">
+              <div className="flex h-full flex-col">
+                <p className="text-[11px] font-semibold uppercase tracking-wide text-violet-500">Answer</p>
+                <div className="flex flex-1 flex-col justify-center">
+                  <p className="text-xl leading-relaxed text-slate-900 whitespace-pre-line">{card.back}</p>
+                  {card.back_img && <ZoomImage src={card.back_img} className="mt-4" />}
+                  {card.note && (
+                    <p className="mt-4 border-t border-violet-200 pt-3 text-sm leading-relaxed text-slate-600 whitespace-pre-line">
+                      {card.note}
+                    </p>
+                  )}
+                </div>
+                {card.tags && <p className="mt-3 text-xs text-slate-400">{card.tags}</p>}
+              </div>
+            </Face>
+          </div>
+        </button>
+
+        {!flipped && (
+          <p className="mt-4 text-center text-sm text-slate-400">
+            Answer it in your head first, then turn the card.
+          </p>
         )}
       </Page>
 
-      {revealed && (
+      {flipped && (
         <div className="fixed inset-x-0 bottom-0 z-30 border-t border-slate-200 bg-white/95 p-4 backdrop-blur pb-safe">
           <p className="mb-2 text-center text-xs text-slate-400">How well did you know it?</p>
           <div className="mx-auto flex max-w-3xl gap-2">
@@ -311,9 +348,9 @@ export default function FlashStudy() {
         </div>
       )}
 
-      {tally.answered > 0 && !revealed && (
+      {tally.answered > 0 && !flipped && (
         <p className="fixed inset-x-0 bottom-4 text-center text-xs text-slate-400">
-          <RotateCcw size={12} className="inline" /> {tally.correct} of {tally.answered} right so far
+          {tally.correct} of {tally.answered} right so far
         </p>
       )}
     </div>
