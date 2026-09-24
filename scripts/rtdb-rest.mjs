@@ -16,6 +16,36 @@ import { cert } from 'firebase-admin/app';
 const TIMEOUT_MS = 20_000;
 
 /**
+ * A 401 has two quite different causes, and the fix for one does nothing for
+ * the other: either the service account is missing the database role, or it
+ * belongs to a different Firebase project altogether. The default database of
+ * a project is reachable at <project-id>.firebaseio.com, so comparing the two
+ * names tells them apart — but only once the request has actually been
+ * refused, so a project using a non-default database instance never sees a
+ * false alarm.
+ */
+function explain401(status, databaseURL, serviceAccount) {
+  const instance = new URL(databaseURL).hostname.split('.')[0];
+  const project = serviceAccount?.project_id || '(none in the JSON)';
+
+  if (project !== instance) {
+    return (
+      `The database refused the service account (HTTP ${status}). It was issued by the ` +
+      `Firebase project "${project}", but ${databaseURL} belongs to "${instance}". Create ` +
+      'a service account in the right project and replace the FIREBASE_SERVICE_ACCOUNT ' +
+      'secret with it.'
+    );
+  }
+  return (
+    `The database refused the service account (HTTP ${status}). Grant it the "Firebase ` +
+    'Realtime Database Admin" role: Google Cloud console -> IAM -> the service account ' +
+    `this workflow uses (${serviceAccount?.client_email || 'see the secret'}) -> Grant ` +
+    'access. Database rules do not apply here — a service account authenticates with a ' +
+    'Google OAuth token, which rules cannot grant.'
+  );
+}
+
+/**
  * @param databaseURL e.g. https://easy-pedia.firebaseio.com
  * @param serviceAccount the parsed service account JSON
  */
@@ -41,11 +71,7 @@ export function restDb(databaseURL, serviceAccount) {
     });
 
     if (res.status === 401 || res.status === 403) {
-      const error = new Error(
-        `The database refused the service account (HTTP ${res.status}). Grant it the ` +
-          '"Firebase Realtime Database Admin" role: Google Cloud console -> IAM -> the ' +
-          'service account this workflow uses -> Grant access.',
-      );
+      const error = new Error(explain401(res.status, databaseURL, serviceAccount));
       error.permission = true;
       throw error;
     }
