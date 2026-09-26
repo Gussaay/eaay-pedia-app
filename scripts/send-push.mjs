@@ -92,6 +92,11 @@ async function send(targets, { title, body, url, tag }) {
   let sent = 0;
   let failed = 0;
   const dead = [];
+  // A token FCM rejects as dead is deleted below and needs no explanation. Any
+  // other failure does: "2 failed" on its own gives nobody anything to act on,
+  // and the usual cause — tokens minted against a different sender id — looks
+  // identical to a working setup until you read the code.
+  const reasons = new Map();
 
   for (let i = 0; i < targets.length; i += BATCH) {
     const slice = targets.slice(i, i + BATCH);
@@ -115,15 +120,33 @@ async function send(targets, { title, body, url, tag }) {
     failed += response.failureCount;
 
     response.responses.forEach((r, idx) => {
-      const code = r.error?.code || '';
+      if (r.success) return;
+      const code = r.error?.code || 'unknown';
       if (
         code.includes('registration-token-not-registered') ||
         code.includes('invalid-registration-token') ||
         code.includes('invalid-argument')
       ) {
         dead.push(slice[idx]);
+        return;
       }
+      const key = `${code}: ${r.error?.message || 'no message'}`;
+      reasons.set(key, (reasons.get(key) || 0) + 1);
     });
+  }
+
+  if (reasons.size) {
+    console.log('Failures that were not dead tokens:');
+    for (const [reason, count] of reasons) console.log(`  ${count}x ${reason}`);
+    // Almost always this: the app was built with a google-services.json from a
+    // different Firebase project, so its tokens belong to another sender.
+    if ([...reasons.keys()].some((r) => /sender|entity was not found|mismatch/i.test(r))) {
+      console.log(
+        '::warning::These tokens were issued by a different Firebase sender. Check that the ' +
+          'installed app was built with this project\'s google-services.json, then have the ' +
+          'device re-register.',
+      );
+    }
   }
 
   await dropTokens(dead);
