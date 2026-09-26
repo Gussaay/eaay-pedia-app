@@ -11,7 +11,7 @@
 // Validation runs through the app's own parser (src/lib/flashcardImport.js)
 // whenever the script can find it, because that is the exact code the import
 // screen will run. Anything else is a guess at what it does.
-import { readFileSync, writeFileSync, mkdirSync } from 'node:fs';
+import { readFileSync, writeFileSync, mkdirSync, existsSync } from 'node:fs';
 import { dirname, resolve, basename } from 'node:path';
 import { fileURLToPath, pathToFileURL } from 'node:url';
 
@@ -145,9 +145,27 @@ cards.forEach((card, i) => {
 // ---------------------------------------------------------------------------
 // Second opinion from the app's real parser
 // ---------------------------------------------------------------------------
+// The skill may be installed per-project or in ~/.claude/skills, so the app is
+// found by walking up from wherever the command was run and from the script
+// itself, rather than by a fixed relative path.
+function findAppParser() {
+  for (const start of [process.cwd(), HERE]) {
+    let dir = resolve(start);
+    for (let up = 0; up < 8; up += 1) {
+      const candidate = resolve(dir, 'src/lib/flashcardImport.js');
+      if (existsSync(candidate)) return candidate;
+      const parent = dirname(dir);
+      if (parent === dir) break;
+      dir = parent;
+    }
+  }
+  return null;
+}
+
 let parserNote = 'app parser not found, so only this script checked the cards';
 try {
-  const parserPath = resolve(HERE, '../../../../src/lib/flashcardImport.js');
+  const parserPath = findAppParser();
+  if (!parserPath) throw new Error('not found');
   const { parseCardRows, importableCards } = await import(pathToFileURL(parserPath).href);
   const rows = cards.map((c) => ({
     front: c.front || '',

@@ -87,8 +87,12 @@ quality up; the script merges several files in the order given.
 
 ### 3. Build the file
 
+Run `scripts/build_flashcards.mjs` from this skill's own directory — it is installed both
+inside the app repo (`.claude/skills/…`) and for all projects (`~/.claude/skills/…`), so use
+whichever path this copy came from:
+
 ```bash
-node .claude/skills/make-flashcards/scripts/build_flashcards.mjs \
+node <skill-dir>/scripts/build_flashcards.mjs \
   --in batch1.json batch2.json \
   --out "C:/Users/Lenovo/Downloads/deck-name" --split
 ```
@@ -96,9 +100,12 @@ node .claude/skills/make-flashcards/scripts/build_flashcards.mjs \
 `--split` also writes one CSV per chapter, which is what you want when the deck is big
 enough that the admin may prefer to upload it in parts. `--quiet` suppresses the report.
 
-The script validates through `src/lib/flashcardImport.js` — the app's real parser — when it
-can find it, so the report matches what the upload preview will say. It exits non-zero on
-anything that would fail, so a broken file never reaches the user.
+The script validates through `src/lib/flashcardImport.js` — the app's real parser — which it
+finds by walking up from wherever you ran it. Working inside the app repo therefore gives
+the strongest check, because the report matches what the upload preview will say. Outside
+the repo it says so in the report and falls back to its own checks, which are good but not
+identical. It exits non-zero on anything that would fail, so a broken file never reaches
+the user.
 
 ### 4. Read the report before handing over
 
