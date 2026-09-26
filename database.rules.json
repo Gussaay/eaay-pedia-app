@@ -1,0 +1,111 @@
+// Realtime Database rules for easy-pedia.
+//
+// This is the WHOLE ruleset. A rules deploy replaces everything, so anything
+// missing here is gone from the live database — which is why the top-level
+// defaults and every .indexOn are repeated below rather than assumed.
+//
+// The shape is: a permissive default that matches how the old Sketchware app
+// has always worked, with tighter rules on the specific nodes that can hurt
+// someone. A child rule overrides its parent, so each block below is a
+// restriction carved out of the default.
+{
+  "rules": {
+    // The original rule, kept as-is. Every node without its own rule below
+    // behaves exactly as it does today, so the old Android app is unaffected.
+    ".read": "auth.uid != null",
+    ".write": "auth.uid != null",
+
+    // ---------------------------------------------------------------- indexes
+    // Without these the query still works, but Firebase downloads the whole
+    // node and filters in the browser. quizqq is the big one.
+    "quizqq": {
+      ".indexOn": ["key", "category1", "category2"]
+    },
+    "resume": {
+      ".indexOn": ["uid"]
+    },
+    "feedback": {
+      ".indexOn": ["key"]
+    },
+
+    // ------------------------------------------------------- updates & pushes
+    // Everyone reads which version to run; only admins decide it. Without this,
+    // any signed-in user could point every installed app at a bundle of their
+    // choosing.
+    "update": {
+      ".read": "auth.uid != null",
+      ".write": "auth.token.email === 'gussaay@gmail.com' || auth.token.email === 'malazmuzamil55@gmail.com' || root.child('quizusers').child(auth.uid).child('admin').val() === 'true'"
+    },
+
+    // Only admins may queue a push. Nobody needs to read the queue except the
+    // GitHub Actions sender, which uses the service account and bypasses rules
+    // entirely.
+    "push_outbox": {
+      ".read": "auth.token.email === 'gussaay@gmail.com' || auth.token.email === 'malazmuzamil55@gmail.com' || root.child('quizusers').child(auth.uid).child('admin').val() === 'true'",
+      ".write": "auth.token.email === 'gussaay@gmail.com' || auth.token.email === 'malazmuzamil55@gmail.com' || root.child('quizusers').child(auth.uid).child('admin').val() === 'true'"
+    },
+
+    // A device token is a way to send that person notifications, so each user
+    // writes only their own and nobody can read the whole list. The admin
+    // panel's device count is what the parent .read is for.
+    "push_tokens": {
+      ".read": "auth.token.email === 'gussaay@gmail.com' || auth.token.email === 'malazmuzamil55@gmail.com' || root.child('quizusers').child(auth.uid).child('admin').val() === 'true'",
+      "$uid": {
+        ".read": "auth.uid === $uid",
+        ".write": "auth.uid === $uid"
+      }
+    },
+
+    // ------------------------------------------------------------- flashcards
+    // The catalogue: everyone browses, only admins write.
+    "flashcategory": {
+      ".read": "auth.uid != null",
+      ".write": "auth.token.email === 'gussaay@gmail.com' || auth.token.email === 'malazmuzamil55@gmail.com' || root.child('quizusers').child(auth.uid).child('admin').val() === 'true'"
+    },
+    "flashbooks": {
+      ".read": "auth.uid != null",
+      ".write": "auth.token.email === 'gussaay@gmail.com' || auth.token.email === 'malazmuzamil55@gmail.com' || root.child('quizusers').child(auth.uid).child('admin').val() === 'true'"
+    },
+    "flashdecks": {
+      ".read": "auth.uid != null",
+      ".write": "auth.token.email === 'gussaay@gmail.com' || auth.token.email === 'malazmuzamil55@gmail.com' || root.child('quizusers').child(auth.uid).child('admin').val() === 'true'"
+    },
+
+    // The cards themselves. Deliberately NOT under `flashcards`, which the old
+    // Android app already uses for per-topic scores. No .indexOn is needed: a
+    // deck is always read whole, by its id.
+    "flashcard_items": {
+      ".read": "auth.uid != null",
+      ".write": "auth.token.email === 'gussaay@gmail.com' || auth.token.email === 'malazmuzamil55@gmail.com' || root.child('quizusers').child(auth.uid).child('admin').val() === 'true'"
+    },
+
+    // Which box each card is in, and the streak totals. Private to each person,
+    // and only ever read or written under their own uid by the app.
+    "flashprogress": {
+      "$uid": {
+        ".read": "auth.uid === $uid",
+        ".write": "auth.uid === $uid"
+      }
+    },
+    "flashstats": {
+      "$uid": {
+        ".read": "auth.uid === $uid",
+        ".write": "auth.uid === $uid"
+      }
+    },
+
+    // ---------------------------------------------------------------- interest
+    // Who asked to be told when a coming-soon section opens. Readable by any
+    // signed-in user because the page shows the running count and whether you
+    // are already on the list; it holds nothing but user ids and timestamps.
+    // Each person may only add their own entry.
+    "interest": {
+      "$section": {
+        ".read": "auth.uid != null",
+        "$uid": {
+          ".write": "auth.uid === $uid"
+        }
+      }
+    }
+  }
+}

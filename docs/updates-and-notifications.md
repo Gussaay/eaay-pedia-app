@@ -80,11 +80,18 @@ console — see `android/app/GOOGLE-SERVICES-README.md`.
 
 ### 3. Tighten the database rules
 
-Your rules currently let **any signed-in user write anywhere**, which now means
-any of your users could queue a push to everyone or redirect every app to a
-bundle of their choosing. `database.rules.admin.json` has three blocks to merge
-into your existing rules; they only touch the new nodes, so the old Android app
-is unaffected.
+Until this is deployed the rules let **any signed-in user write anywhere**, which
+now means any of your users could queue a push to everyone or redirect every app
+to a bundle of their choosing.
+
+```bash
+firebase deploy --only database --project easy-pedia
+```
+
+`database.rules.json` is the complete ruleset, not a fragment — a rules deploy
+replaces everything, so it repeats the permissive top-level default and every
+`.indexOn` alongside the new restrictions. Only the new nodes are restricted, so
+the old Android app is unaffected.
 
 ### 4. SHA-1 for Google sign-in
 

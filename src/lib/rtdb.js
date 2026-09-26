@@ -62,7 +62,7 @@ export async function getList(path) {
 }
 
 // Whole-node snapshots kept in memory when a node has no ".indexOn" rule
-// (see database.rules.indexes.json). Cleared whenever this app writes under the node.
+// (see database.rules.json). Cleared whenever this app writes under the node.
 const nodeMemo = new Map();
 const MEMO_TTL = 10 * 60 * 1000;
 const topNode = (path) => path.split('/')[0];
@@ -91,7 +91,7 @@ export async function getWhere(path, child, value) {
     if (!/index not defined/i.test(e?.message || '')) throw e;
     if (!getWhere.warned?.has(`${path}/${child}`)) {
       (getWhere.warned ||= new Set()).add(`${path}/${child}`);
-      console.warn(`[rtdb] No index for ${path}.${child}; downloading the whole node. Add the indexes from database.rules.indexes.json to fix.`);
+      console.warn(`[rtdb] No index for ${path}.${child}; downloading the whole node. Deploy database.rules.json to fix.`);
     }
     const all = await getWholeNode(path);
     return all.filter((item) => item[child] === value);

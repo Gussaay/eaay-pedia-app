@@ -82,12 +82,24 @@ do), so offline support is built in `src/lib/offline.js` (IndexedDB) and
 
 ## ⚠️ Things to do in the Firebase console
 
-1. **Add database indexes.** Without `.indexOn` rules the Firebase JS SDK rejects
-   filtered reads ("Index not defined"). The app falls back to downloading the whole
-   `quizqq` node (the entire question bank) and filtering locally — which works, but
-   is slow on mobile data. Merge the `.indexOn` entries from
-   `database.rules.indexes.json` into your existing rules (do not deploy that file as
-   is — a rules deploy replaces all rules).
+1. **Deploy the database rules.** `database.rules.json` is the whole ruleset — the
+   permissive default the app has always used, plus the `.indexOn` entries, plus
+   tighter rules on the nodes that can hurt someone (`update`, `push_outbox`,
+   `push_tokens`, the flashcard nodes and `interest`). Deploy it with:
+
+   ```bash
+   firebase deploy --only database --project easy-pedia
+   ```
+
+   Two things this fixes. Without `.indexOn`, filtered reads fall back to
+   downloading the whole `quizqq` node — the entire question bank — and filtering
+   locally, which is slow on mobile data. And without the tighter rules, any
+   signed-in user can queue a push notification to everyone or point every
+   installed app at an update of their choosing.
+
+   CI deploys Hosting only, so rules are never deployed behind your back. A rules
+   deploy replaces everything at once; the console keeps a history if you need to
+   roll back.
 2. **Firebase Storage returns HTTP 402 (billing required)** for the default
    `easy-pedia.appspot.com` bucket, so existing images (category covers, quiz covers,
    explanation images, avatars) do not load — in the old Android app either — and
