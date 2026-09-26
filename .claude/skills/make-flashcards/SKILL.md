@@ -107,6 +107,13 @@ the repo it says so in the report and falls back to its own checks, which are go
 identical. It exits non-zero on anything that would fail, so a broken file never reaches
 the user.
 
+**If the script cannot run** — no Node in the environment, or no way to execute anything at
+all — write the CSV directly instead. The format is fully specified above; the script saves
+effort and catches mistakes, it is not the only way to produce the file. Quote every field,
+escape inner quotes by doubling them, and start the file with a UTF-8 BOM so Excel does not
+mangle non-ASCII text. Then do the checks in step 4 by eye: duplicate fronts, chapter names
+that differ only in case, and backs long enough to be two cards.
+
 ### 4. Read the report before handing over
 
 It prints the chapter tally and a list of non-blocking warnings. Both are worth a look:
