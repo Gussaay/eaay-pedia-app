@@ -2,9 +2,10 @@
 // or "exam" (timed, answers revealed only in the result) mode.
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import { useNavigate, useParams, useSearchParams } from 'react-router-dom';
-import { ArrowRight, Clock, Lightbulb, MessageSquarePlus, Pencil, X } from 'lucide-react';
+import { ArrowLeft, ArrowRight, Clock, Lightbulb, MessageSquarePlus, Pencil, X } from 'lucide-react';
 import { useAuth } from '../hooks/useAuth';
 import { useBackHandler } from '../lib/back';
+import { useSwipe } from '../hooks/useSwipe';
 import { clearSpot, loadSpot, saveSpot } from '../lib/resume';
 import { getOne, getWhere, num, pushTo, removeAt, str, updateAt, newKey } from '../lib/rtdb';
 import {
@@ -40,6 +41,12 @@ export default function QuizPlay() {
   const [played, setPlayed] = useState(0);
   const [correct, setCorrect] = useState(0);
   const [selected, setSelected] = useState('');
+  // What was chosen for each question, so swiping back can show an earlier
+  // answer without `played` and `correct` — which are running totals — being
+  // counted a second time on the way forward again.
+  const [answers, setAnswers] = useState({});
+  const [startIndex, setStartIndex] = useState(0); // first question of this session
+  const [maxIndex, setMaxIndex] = useState(0); // furthest reached, so far
   const [endAt, setEndAt] = useState(null);
   const [now, setNow] = useState(Date.now());
 
@@ -95,6 +102,9 @@ export default function QuizPlay() {
   // ---------------------------------------------------------------- session
   const beginSession = (start, count) => {
     setIndex(start);
+    setStartIndex(start);
+    setMaxIndex(start);
+    setAnswers({});
     setTq(count);
     setPlayed(0);
     setCorrect(0);
@@ -110,6 +120,12 @@ export default function QuizPlay() {
   const resume = async () => {
     const s = savedSession;
     setIndex(num(s.question));
+    // A resumed session has no record of the earlier answers, so swiping back
+    // starts from where the reader picked up rather than pretending it can
+    // show questions answered before the app closed.
+    setStartIndex(num(s.question));
+    setMaxIndex(num(s.question));
+    setAnswers({});
     setTq(num(s.tq));
     setPlayed(num(s.played));
     setCorrect(num(s.correct_ans));
@@ -218,15 +234,21 @@ export default function QuizPlay() {
 
   // ---------------------------------------------------------------- answering
   const choose = (k) => {
-    if (phase !== 'playing' || selected) return;
+    // `answers[index]` blocks a second attempt in exam mode, where nothing is
+    // ever put in `selected`; `selected` blocks it in review mode.
+    if (phase !== 'playing' || selected || answers[index]) return;
     const ok = isCorrect(current, k);
     const nextPlayed = played + 1;
     const nextCorrect = correct + (ok ? 1 : 0);
     setPlayed(nextPlayed);
     setCorrect(nextCorrect);
+    setAnswers((a) => ({ ...a, [index]: k }));
     if (mode === 'exam') {
       if (nextPlayed >= tq) finish({ played: nextPlayed, correct: nextCorrect });
-      else setIndex((i) => i + 1);
+      else {
+        setIndex((i) => i + 1);
+        setMaxIndex((m) => Math.max(m, index + 1));
+      }
     } else {
       setSelected(k);
     }
@@ -240,7 +262,41 @@ export default function QuizPlay() {
     }
     setSelected('');
     setIndex((i) => i + 1);
+    setMaxIndex((m) => Math.max(m, index + 1));
     window.scrollTo({ top: 0 });
+  };
+
+  // ------------------------------------------------- moving between questions
+  const reviewing = index < maxIndex;
+
+  /** Jump to an already-visited question without touching the running totals. */
+  const goTo = (i) => {
+    if (i < startIndex || i > maxIndex || i >= questions.length) return;
+    setShowExp(false);
+    setIndex(i);
+    setSelected(mode === 'review' ? answers[i] || '' : '');
+    window.scrollTo({ top: 0 });
+  };
+
+  const goBack = () => goTo(index - 1); // goTo refuses to pass the session start
+
+  /**
+   * Forward means "the next question" while looking back over earlier ones, and
+   * "advance the quiz" at the frontier — where it still needs an answer first,
+   * exactly as the Next button does.
+   *
+   * The answer check uses `answers`, not `selected`, because exam mode never
+   * fills `selected`. Testing `selected` would let a swipe skip an unanswered
+   * exam question without counting it, and the session would then run off the
+   * end of the list rather than finishing.
+   */
+  const goForward = () => {
+    if (reviewing) {
+      goTo(index + 1);
+      return;
+    }
+    if (!answers[index]) return;
+    next();
   };
 
   // ---------------------------------------------------------------- timer
@@ -271,7 +327,10 @@ export default function QuizPlay() {
   useEffect(() => {
     if (phase !== 'playing' || mode === 'exam' || !meta?.pkey || !played) return;
     saveSpot('quiz', meta.pkey, {
-      question: String(selected ? index + 1 : index),
+      // The bookmark follows the furthest question reached, not the one on
+      // screen. Swiping back to reread an earlier answer is not losing progress,
+      // and resuming there would make the reader answer everything twice.
+      question: String(answers[maxIndex] ? maxIndex + 1 : maxIndex),
       tq: String(tq),
       played: String(played),
       correct_ans: String(correct),
@@ -279,7 +338,7 @@ export default function QuizPlay() {
       total: tq,
       title: meta.title || '',
     });
-  }, [phase, mode, meta, index, tq, played, correct, selected]);
+  }, [phase, mode, meta, maxIndex, answers, tq, played, correct]);
 
   // ---------------------------------------------------------------- exit / save
   const saveForLater = async () => {
@@ -289,7 +348,7 @@ export default function QuizPlay() {
       key: meta.pkey,
       category: meta.chapter,
       resume_key: key,
-      question: str(selected ? index + 1 : index),
+      question: str(answers[maxIndex] ? maxIndex + 1 : maxIndex),
       points: str(correct),
       played: str(played),
       correct_ans: str(correct),
@@ -316,7 +375,8 @@ export default function QuizPlay() {
     return false;
   });
 
-  // Keyboard shortcuts on desktop: 1-5 / a-e to answer, Enter or → for next.
+  // Keyboard shortcuts on desktop: 1-5 / a-e to answer, Enter or → for next,
+  // ← to look back. The arrow keys mirror the swipe gestures on a phone.
   useEffect(() => {
     if (phase !== 'playing') return undefined;
     const onKey = (e) => {
@@ -325,10 +385,19 @@ export default function QuizPlay() {
       const byNum = { 1: 'a', 2: 'b', 3: 'c', 4: 'd', 5: 'e' }[k];
       const opt = byNum || (options.includes(k) ? k : null);
       if (opt && options.includes(opt)) choose(opt);
-      else if ((k === 'enter' || k === 'arrowright') && selected) next();
+      else if (k === 'arrowleft') goBack();
+      else if (k === 'arrowright' || k === 'enter') goForward();
     };
     window.addEventListener('keydown', onKey);
     return () => window.removeEventListener('keydown', onKey);
+  });
+
+  // Swipe left for the next question, right to look back at the last one.
+  const deckRef = useRef(null);
+  useSwipe(deckRef, {
+    onForward: goForward,
+    onBack: goBack,
+    enabled: phase === 'playing' && !showExp && !editing && !exitAsk,
   });
 
   // ---------------------------------------------------------------- render
@@ -388,7 +457,7 @@ export default function QuizPlay() {
   const progress = Math.round((played / Math.max(tq, 1)) * 100);
 
   return (
-    <div className="min-h-screen pb-28">
+    <div className="min-h-screen pb-28" ref={deckRef}>
       <AppBar
         title={title}
         subtitle={`Question ${Math.min(played + (selected ? 0 : 1), tq)} of ${tq}`}
@@ -424,31 +493,50 @@ export default function QuizPlay() {
                 <span className="rounded-full bg-emerald-50 text-emerald-800 px-2.5 py-1 ml-auto">Score: {correct}/{played}</span>
               )}
             </div>
+            {reviewing && (
+              <div className="flex items-center gap-2 rounded-xl bg-amber-50 text-amber-900 px-3 py-2 text-sm">
+                <ArrowLeft size={16} className="shrink-0" />
+                Looking back at an answered question — swipe left to return to the quiz.
+              </div>
+            )}
             <Card className="p-5">
               <p className="text-lg text-slate-900 whitespace-pre-line leading-relaxed">{current.question}</p>
-              <ZoomImage src={current.question_img} className="mt-3" />
+              <div data-no-swipe>
+                <ZoomImage src={current.question_img} className="mt-3" />
+              </div>
             </Card>
             <div className="space-y-2.5">
               {options.map((k) => {
                 const reveal = mode === 'review' && !!selected;
                 const isAns = reveal && k === answer;
                 const isWrong = reveal && k === selected && k !== answer;
+                // In an exam nothing is revealed, but a reader swiping back
+                // still needs to see which option they picked.
+                const isChosen = !reveal && k === answers[index];
                 return (
                   <button
                     key={`${index}-${k}`}
                     onClick={() => choose(k)}
-                    disabled={!!selected}
+                    disabled={!!selected || !!answers[index]}
                     className={`w-full text-left flex gap-3 items-start rounded-2xl border-2 p-4 transition active:scale-[0.99] ${
                       isAns
                         ? 'border-emerald-500 bg-emerald-50'
                         : isWrong
                           ? 'border-red-500 bg-red-50'
-                          : 'border-slate-200 bg-white hover:border-brand-400'
+                          : isChosen
+                            ? 'border-brand-500 bg-brand-50'
+                            : 'border-slate-200 bg-white hover:border-brand-400'
                     }`}
                   >
                     <span
                       className={`h-7 w-7 shrink-0 rounded-full flex items-center justify-center text-sm font-bold uppercase ${
-                        isAns ? 'bg-emerald-500 text-white' : isWrong ? 'bg-red-500 text-white' : 'bg-brand-50 text-brand-700'
+                        isAns
+                          ? 'bg-emerald-500 text-white'
+                          : isWrong
+                            ? 'bg-red-500 text-white'
+                            : isChosen
+                              ? 'bg-brand-500 text-white'
+                              : 'bg-brand-50 text-brand-700'
                       }`}
                     >
                       {k}
@@ -468,11 +556,16 @@ export default function QuizPlay() {
             <div className={`hidden sm:flex items-center font-semibold ${selected === answer ? 'text-emerald-600' : 'text-red-600'}`}>
               {selected === answer ? 'Correct!' : `Wrong — answer is ${answer.toUpperCase()}`}
             </div>
+            {index > startIndex && (
+              <Button variant="outline" onClick={goBack} aria-label="Previous question">
+                <ArrowLeft size={18} />
+              </Button>
+            )}
             <Button variant="secondary" className="flex-1" onClick={() => setShowExp(true)}>
               <Lightbulb size={18} /> Explanation
             </Button>
-            <Button className="flex-1" onClick={next}>
-              {played >= tq ? 'Finish' : 'Next'} <ArrowRight size={18} />
+            <Button className="flex-1" onClick={goForward}>
+              {!reviewing && played >= tq ? 'Finish' : 'Next'} <ArrowRight size={18} />
             </Button>
           </div>
         </div>
@@ -485,8 +578,8 @@ export default function QuizPlay() {
           selected={selected}
           answer={answer}
           onClose={() => setShowExp(false)}
-          onNext={next}
-          isLast={played >= tq}
+          onNext={goForward}
+          isLast={!reviewing && played >= tq}
         />
       )}
 
