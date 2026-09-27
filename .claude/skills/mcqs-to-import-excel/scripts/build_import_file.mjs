@@ -117,8 +117,17 @@ rows.forEach((r, i) => {
   if (new Set(texts).size !== texts.length) problems.push(`${where}: two options are identical`);
 
   // Options written as "a) text" in the source would show as "a) a) text" in the app.
+  //
+  // An abbreviated genus is the trap here: "E. coli", "S. aureus" and
+  // "C. difficile" all look like a letter, a full stop and a space. A bracket
+  // or dash never appears that way, so those always mean a label; a full stop
+  // or colon only does when what follows is not a lowercase species name.
   filled.forEach((k) => {
-    if (/^[a-e]\s*[).:-]\s+/i.test(r[k])) warnings.push(`${where}: option ${k} still has an "a)" style label`);
+    // Deliberately not /i: the lookahead has to stay case-sensitive, or it
+    // rejects every capital too and the check never fires at all.
+    if (/^(?:[a-eA-E]\s*[)-]\s+|[a-eA-E]\s*[.:]\s+(?![a-z]))/.test(r[k])) {
+      warnings.push(`${where}: option ${k} still has an "a)" style label`);
+    }
   });
 
   const fp = norm(r.question);
