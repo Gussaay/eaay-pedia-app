@@ -324,25 +324,21 @@ jobs:
             --notes "$MSG" \
             $EXTRA
 
-      - name: Tell devices a new version is out
+      # This workflow no longer talks to FCM. It writes the request to
+      # `push_outbox` and the deliverPush Cloud Function sends it, within a
+      # second or two, holding the credential inside Firebase where it belongs.
+      # Anything an admin queued in the Notification manager goes out the same
+      # way, the moment they queue it, so there is nothing to drain here.
+      - name: Queue the "new version" notification
         if: ${{ !contains(github.event.head_commit.message, '[no-notify]') && !contains(github.event.head_commit.message, '[hold]') }}
         continue-on-error: true
-        timeout-minutes: 5
+        timeout-minutes: 3
         env:
           FIREBASE_SERVICE_ACCOUNT: ${{ secrets.FIREBASE_SERVICE_ACCOUNT_EASY_PEDIA }}
         run: |
-          node scripts/send-push.mjs --release \
+          node scripts/send-push.mjs --queue-release \
             --version "${{ needs.android.outputs.version }}" \
             --notes "$(git log -1 --pretty=%s)"
-
-      # Anything an admin queued in the Notification manager while this deploy
-      # was running goes out now rather than waiting for the next schedule.
-      - name: Send queued notifications
-        continue-on-error: true
-        timeout-minutes: 5
-        env:
-          FIREBASE_SERVICE_ACCOUNT: ${{ secrets.FIREBASE_SERVICE_ACCOUNT_EASY_PEDIA }}
-        run: node scripts/send-push.mjs --outbox
 
   release:
     name: Publish GitHub Release

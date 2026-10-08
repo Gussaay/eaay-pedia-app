@@ -1,11 +1,11 @@
 // QuizdetailActivity: quiz info, your score, leaderboard, start buttons.
 import { useEffect, useState } from 'react';
 import { useNavigate, useParams, useSearchParams } from 'react-router-dom';
-import { BookOpenCheck, CheckCircle2, DownloadCloud, Timer, Trophy } from 'lucide-react';
+import { BookOpenCheck, CheckCircle2, DownloadCloud, PlayCircle, RotateCcw, Timer, Trophy } from 'lucide-react';
 import { useAuth } from '../hooks/useAuth';
 import { useAsync, useOnline } from '../hooks/useData';
 import { incrementString, str, updateAt } from '../lib/rtdb';
-import { downloadQuiz, loadLeaderboard, loadQuestions, loadQuizMeta, playPath } from '../lib/quizSource';
+import { downloadQuiz, findSavedSession, loadLeaderboard, loadQuestions, loadQuizMeta, playPath } from '../lib/quizSource';
 import { getQuiz, quizKey, removeQuiz } from '../lib/offline';
 import { AppBar, Avatar, Button, Card, ErrorBox, Page, Spinner, Thumb, useToast } from '../components/ui';
 
@@ -21,6 +21,7 @@ export default function QuizDetail() {
   const [countError, setCountError] = useState(null);
   const [leaders, setLeaders] = useState(null);
   const [saved, setSaved] = useState(null); // offline copy, if any
+  const [paused, setPaused] = useState(null); // a session left half-finished
   const [downloading, setDownloading] = useState(false);
   const online = useOnline();
   const toast = useToast();
@@ -40,7 +41,10 @@ export default function QuizDetail() {
       .then(setLeaders)
       .catch(() => setLeaders([]));
     getQuiz(meta.data).then(setSaved).catch(() => setSaved(null));
-  }, [meta.data]);
+    findSavedSession(user.uid, meta.data.pkey)
+      .then(setPaused)
+      .catch(() => setPaused(null));
+  }, [meta.data, user.uid]);
 
   if (meta.loading) return <><AppBar title="Loading…" /><Spinner /></>;
   if (meta.error)
@@ -55,7 +59,7 @@ export default function QuizDetail() {
   const score = profile?.[q.pkey];
   const trials = profile?.[`${q.pkey}_trial`];
 
-  const start = (mode) => {
+  const start = (mode, extraParams = {}) => {
     // Usage statistics + keep the stored question count in sync (as Android did).
     const statKey = q.bysystem ? q.id : q.pkey;
     incrementString(`statistics/${statKey}/${mode}`).catch(() => {});
@@ -64,7 +68,7 @@ export default function QuizDetail() {
       if (q.bysystem) updateAt(`chapters/${q.id}`, { [`${q.type}number`]: str(count) }).catch(() => {});
       else updateAt(`allquiz/${q.id}`, { number: str(count) }).catch(() => {});
     }
-    navigate(playPath(kind, id, mode, extra));
+    navigate(playPath(kind, id, mode, { ...extra, ...extraParams }));
   };
 
   return (
@@ -100,6 +104,29 @@ export default function QuizDetail() {
               </p>
             </div>
           </div>
+          {paused && (
+            <div className="mt-5 rounded-2xl border-2 border-amber-200 bg-amber-50 p-4">
+              <p className="font-semibold text-amber-900">You have a paused session here</p>
+              <p className="text-sm text-amber-800 mt-0.5">
+                You solved {paused.played || 0} of {paused.tq || 0} questions
+                {paused.local ? ' on this device' : ''}.
+              </p>
+              <div className="grid grid-cols-2 gap-3 mt-3">
+                <Button onClick={() => start('review', { resume: '1' })}>
+                  <PlayCircle size={18} /> Restore session
+                </Button>
+                <Button
+                  variant="outline"
+                  onClick={() => {
+                    setPaused(null);
+                    start('review', { fresh: '1' });
+                  }}
+                >
+                  <RotateCcw size={18} /> Start new
+                </Button>
+              </div>
+            </div>
+          )}
           <div className="grid gap-3 mt-5">
             <Button className="!py-3" disabled={!count} onClick={() => start('review')}>
               <BookOpenCheck size={20} /> Start with Review mode

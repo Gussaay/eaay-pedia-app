@@ -8,10 +8,12 @@ import { newKey, updatePaths } from '../lib/rtdb';
 import {
   TEMPLATE_HEADERS,
   buildCardRecord,
+  fieldForHeader,
   importableCards,
   parseCardRows,
   templateCsv,
 } from '../lib/flashcardImport';
+import { looksLikeMcqSheet, pickSheet } from '../lib/sheetPick';
 import { Button, Modal, Toggle, useToast } from './ui';
 
 function downloadTemplate() {
@@ -41,13 +43,33 @@ export default function ImportCardsModal({ deckId, existingCards = [], onClose, 
       // Loaded here only, so the sheet library stays out of the main bundle.
       const XLSX = await import('xlsx');
       const wb = XLSX.read(await file.arrayBuffer(), { type: 'array' });
-      const sheet = wb.Sheets[wb.SheetNames[0]];
-      if (!sheet) throw new Error('The file has no sheets.');
-      const rows = XLSX.utils.sheet_to_json(sheet, { defval: '', raw: false });
-      if (!rows.length) throw new Error('The first sheet has no rows.');
-      const result = parseCardRows(rows, { existingCards });
+      if (!wb.SheetNames.length) throw new Error('The file has no sheets.');
+      // A workbook may hold the cards beside the questions and the summary for
+      // the same subject, so the sheet is chosen by its COLUMNS rather than by
+      // being first.
+      const sheets = wb.SheetNames.map((name) => ({
+        name,
+        rows: XLSX.utils.sheet_to_json(wb.Sheets[name], { defval: '', raw: false }),
+      }));
+      const { best, usable } = pickSheet(sheets, {
+        fieldFor: fieldForHeader,
+        required: ['front', 'back'],
+        disqualify: looksLikeMcqSheet,
+      });
+      if (!best)
+        throw new Error(
+          sheets.length > 1
+            ? `No sheet of cards found. Looked at: ${sheets.map((s) => s.name).join(', ')}.`
+            : 'No cards found. Check the column names.',
+        );
+      const result = parseCardRows(best.rows, { existingCards });
       if (!result.items.length) throw new Error('No cards found. Check the column names.');
-      setParsed({ ...result, fileName: file.name, sheet: wb.SheetNames[0] });
+      setParsed({
+        ...result,
+        fileName: file.name,
+        sheet: best.name,
+        otherSheets: usable.filter((s) => s.name !== best.name).map((s) => s.name),
+      });
     } catch (err) {
       setError(err.message || String(err));
       setParsed(null);
@@ -152,6 +174,11 @@ export default function ImportCardsModal({ deckId, existingCards = [], onClose, 
           <p className="flex items-center gap-2 text-sm text-slate-500">
             <FileSpreadsheet size={16} /> {parsed.fileName} · sheet “{parsed.sheet}”
           </p>
+          {parsed.otherSheets?.length > 0 && (
+            <p className="text-xs text-slate-400 mt-1">
+              This workbook also has {parsed.otherSheets.join(', ')}. Cards were read from “{parsed.sheet}”.
+            </p>
+          )}
 
           <div className="mt-3 grid grid-cols-3 gap-2 text-center">
             <div className="rounded-xl bg-emerald-50 p-3">

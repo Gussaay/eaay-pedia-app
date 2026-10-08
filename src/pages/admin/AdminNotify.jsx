@@ -6,10 +6,11 @@
 //   all_notification/<key>   the message itself. Both this app and the old
 //                            Android app already read this node, so it shows
 //                            up in everyone's Notifications list either way.
-//   push_outbox/<key>        a request to push it to phones. A GitHub Actions
-//                            job holds the Firebase service account and does
-//                            the actual sending, because pushing needs server
-//                            credentials that must never sit inside an app.
+//   push_outbox/<key>        a request to push it to phones. The deliverPush
+//                            Cloud Function (functions/index.js) triggers on
+//                            this write and does the actual sending, because
+//                            pushing needs server credentials that must never
+//                            sit inside an app. It takes a second or two.
 //
 // The split matters: the announcement is saved even if push delivery is
 // delayed or fails, so nothing is ever lost.

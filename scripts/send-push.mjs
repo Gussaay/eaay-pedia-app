@@ -1,15 +1,23 @@
-// Sends push notifications. Run by GitHub Actions, never by the app.
+// Push notifications from the command line.
 //
-// Pushing to FCM needs the Firebase service account, which must never be
-// shipped inside an app — anyone could extract it and notify every user. So
-// the admin panel only writes a request to `push_outbox`, and this script,
-// holding the credential in CI, does the sending.
+// THE NORMAL SENDER IS NOW THE CLOUD FUNCTION (functions/index.js): it triggers
+// on the write to `push_outbox` and delivers within a second or two. Nothing in
+// CI sends notifications any more — the deploy only queues a request, exactly
+// as the admin panel does.
+//
+//   node scripts/send-push.mjs --queue-release --version 6.1.23 --notes "..."
+//       Queues the "new version is out" notice. The function delivers it.
+//       This is what the deploy runs.
+//
+// The two sending modes below remain as a manual fallback, for a day when the
+// function is broken or not deployed. They are safe to run: --outbox only picks
+// up requests still marked pending, which the function clears as it goes.
 //
 //   node scripts/send-push.mjs --outbox
-//       Delivers everything queued by the Notification manager.
+//       Delivers everything still queued, from here instead of the function.
 //
 //   node scripts/send-push.mjs --release --version 6.1.23 --notes "..."
-//       Tells people a new version is out. Run after a deploy.
+//       Sends the release notice directly, without queueing it.
 //
 // Needs FIREBASE_SERVICE_ACCOUNT in the environment (the same secret the
 // Hosting deploy uses).
@@ -208,13 +216,50 @@ async function runOutbox() {
 }
 
 // ---------------------------------------------------------------------------
-// Mode: announce a release
+// Mode: queue a release announcement for the function to deliver
 // ---------------------------------------------------------------------------
-async function runRelease() {
+/** The wording, shared by the queue and the direct send. */
+function releaseMessage() {
   const version = value('version');
-  if (!version) throw new Error('--release needs --version');
+  if (!version) throw new Error('--version is required');
   const notes = value('notes') || '';
   const kind = value('kind') || 'live'; // 'live' = over the air, 'apk' = full install
+  return {
+    version,
+    title: kind === 'apk' ? `Easy Pedia MCQs ${version} is out` : `Easy Pedia MCQs updated to ${version}`,
+    body:
+      notes ||
+      (kind === 'apk'
+        ? 'Open the app to install the new version.'
+        : 'Open the app — the update installs itself.'),
+    url: '/app-updates',
+  };
+}
+
+async function runQueueRelease() {
+  const { version, title, body, url } = releaseMessage();
+  // A key of its own, not a notification key: this is a push request with no
+  // matching entry in the in-app Notifications list.
+  const key = `release-${version.replace(/[.#$/[\]]/g, '-')}-${Date.now()}`;
+  await db.update(`push_outbox/${key}`, {
+    title,
+    body,
+    url,
+    // The function skips devices already on this version.
+    target: 'release',
+    version,
+    status: 'pending',
+    createdAt: Date.now(),
+  });
+  console.log(`Queued "${title}" as push_outbox/${key}.`);
+  console.log('The deliverPush function sends it; watch it with: firebase functions:log');
+}
+
+// ---------------------------------------------------------------------------
+// Mode: announce a release from here, without the function
+// ---------------------------------------------------------------------------
+async function runRelease() {
+  const { version, title, body, url } = releaseMessage();
 
   const tokens = await allTokens();
   // Devices already on this version would get a notification about an update
@@ -225,13 +270,9 @@ async function runRelease() {
   console.log(`${targets.length} of ${tokens.length} device(s) are not on ${version}.`);
 
   const { sent, failed } = await send(targets, {
-    title: kind === 'apk' ? `Easy Pedia MCQs ${version} is out` : `Easy Pedia MCQs updated to ${version}`,
-    body:
-      notes ||
-      (kind === 'apk'
-        ? 'Open the app to install the new version.'
-        : 'Open the app — the update installs itself.'),
-    url: '/app-updates',
+    title,
+    body,
+    url,
     // One tag for all update notices, so a user who misses three releases
     // finds one notification rather than three.
     tag: 'app-update',
@@ -239,9 +280,15 @@ async function runRelease() {
   console.log(`Delivered to ${sent} device(s), ${failed} failed.`);
 }
 
-const mode = flag('outbox') ? runOutbox : flag('release') ? runRelease : null;
+const mode = flag('queue-release')
+  ? runQueueRelease
+  : flag('outbox')
+    ? runOutbox
+    : flag('release')
+      ? runRelease
+      : null;
 if (!mode) {
-  console.error('Use --outbox or --release --version <v>.');
+  console.error('Use --queue-release --version <v>, or the fallbacks --outbox / --release --version <v>.');
   process.exit(1);
 }
 

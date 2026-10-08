@@ -3,6 +3,7 @@ import assert from 'node:assert/strict';
 import {
   visibleOptions, isCorrect, planSession, examDurationMs, formatDuration,
   computeSessionResult, rating, answerStats, matchesChapter,
+  planDeck, historyCounts, tallyAnswers, encodeDeck, decodeDeck, encodeAnswers, decodeAnswers,
 } from './quiz.js';
 
 test('visibleOptions hides empty options and E for smsb', () => {
@@ -70,4 +71,51 @@ test('answerStats', () => {
 test('matchesChapter', () => {
   assert.equal(matchesChapter({ category1: 'Cardio', type: 'part1' }, 'Cardio', 'part1'), true);
   assert.equal(matchesChapter({ category2: 'Cardio', type: 'part2' }, 'Cardio', 'part1'), false);
+});
+
+// ---------------------------------------------------------------- decks
+const bank = [
+  { _key: 'q1', answer: 'a' },
+  { _key: 'q2', answer: 'b' },
+  { _key: 'q3', answer: 'c' },
+  { _key: 'q4', answer: 'd' },
+];
+
+test('planDeck turns the slice options into positions', () => {
+  assert.deepEqual(planDeck(bank, 'all').deck, [0, 1, 2, 3]);
+  assert.deepEqual(planDeck(bank, 'count', '2').deck, [0, 1]);
+  assert.deepEqual(planDeck(bank, 'from', '3').deck, [2, 3]);
+  assert.equal(planDeck(bank, 'from', '9').error, 'Choose a smaller number');
+});
+
+test('planDeck picks out the unanswered and the wrongly answered', () => {
+  const history = { q1: 1, q2: 0, q3: 0 };
+  assert.deepEqual(planDeck(bank, 'unseen', null, history).deck, [3]);
+  assert.deepEqual(planDeck(bank, 'wrong', null, history).deck, [1, 2]);
+});
+
+test('planDeck explains itself when a filter leaves nothing to play', () => {
+  const all = { q1: 1, q2: 1, q3: 1, q4: 1 };
+  assert.match(planDeck(bank, 'unseen', null, all).error, /answered every question/);
+  assert.match(planDeck(bank, 'wrong', null, all).error, /no wrong answers/);
+});
+
+test('historyCounts splits the bank three ways', () => {
+  assert.deepEqual(historyCounts(bank, { q1: 1, q2: '0' }), { total: 4, unseen: 2, wrong: 1, right: 1 });
+});
+
+test('tallyAnswers counts the answers themselves, so a changed answer re-counts', () => {
+  const deck = [0, 1, 2];
+  assert.deepEqual(tallyAnswers(deck, bank, { 0: 'a', 1: 'a' }), { played: 2, correct: 1 });
+  // The same question answered again in exam mode, this time correctly.
+  assert.deepEqual(tallyAnswers(deck, bank, { 0: 'a', 1: 'b' }), { played: 2, correct: 2 });
+});
+
+test('a deck and its answers survive a round trip through the database', () => {
+  const deck = [3, 7, 11];
+  const answers = { 0: 'a', 2: 'e' };
+  assert.deepEqual(decodeDeck(encodeDeck(deck)), deck);
+  assert.deepEqual(decodeAnswers(encodeAnswers(answers)), answers);
+  assert.deepEqual(decodeDeck(''), []);
+  assert.deepEqual(decodeAnswers(''), {});
 });

@@ -8,6 +8,7 @@
 import { get, query, ref, orderByChild, startAt } from 'firebase/database';
 import { db } from '../firebase';
 import { getOne, getWhere, toList, num } from './rtdb';
+import { listSpots, loadSpot } from './resume';
 import { matchesChapter } from './quiz';
 import { getQuiz, saveQuiz } from './offline';
 
@@ -159,6 +160,63 @@ export async function loadLeaderboard(pkey, limit = 50) {
     .map((u) => ({ uid: u._key, name: u.name, img: u.img, points: num(u[pkey]) }))
     .sort((a, b) => b.points - a.points)
     .slice(0, limit);
+}
+
+/**
+ * A paused session for this quiz, or null.
+ *
+ * There are two places one can be: the `resume` node, written when the reader
+ * taps "Save for later", and the bookmark on the device, written after every
+ * answer so that an app killed mid-quiz still knows where it was. The database
+ * copy wins, because it is the deliberate one and it also arrives on a second
+ * device.
+ */
+export async function findSavedSession(uid, pkey) {
+  if (!uid || !pkey) return null;
+  const rows = (await getWhere('resume', 'uid', uid).catch(() => [])).filter((r) => r.key === pkey);
+  if (rows.length) return rows[rows.length - 1];
+  const local = loadSpot('quiz', pkey);
+  return local ? { ...local, local: true } : null;
+}
+
+/**
+ * Every quiz left half-finished, newest first, ready to be offered on the home
+ * page. Each one carries the route that reopens it, because a pkey alone is not
+ * enough to rebuild the URL of a chapter quiz.
+ *
+ * The deliberate "Save for later" records win over the device's own bookmarks:
+ * they are the ones that also arrive on a second phone.
+ */
+export async function listPausedSessions(uid) {
+  const out = new Map();
+  listSpots()
+    .filter((s) => s.kind === 'quiz' && s.path)
+    .forEach((s) =>
+      out.set(s.id, {
+        pkey: s.id,
+        title: s.title || 'Quiz',
+        played: num(s.played),
+        tq: num(s.tq),
+        path: s.path,
+        newPath: s.newPath,
+        at: s.at || 0,
+      }),
+    );
+  const rows = await getWhere('resume', 'uid', uid).catch(() => []);
+  rows
+    .filter((r) => r.path)
+    .forEach((r) =>
+      out.set(r.key, {
+        pkey: r.key,
+        title: r.title || out.get(r.key)?.title || 'Quiz',
+        played: num(r.played),
+        tq: num(r.tq),
+        path: r.path,
+        newPath: r.newPath,
+        at: out.get(r.key)?.at || 0,
+      }),
+    );
+  return [...out.values()].sort((a, b) => b.at - a.at);
 }
 
 /** Route helpers so every screen builds the same URLs. */

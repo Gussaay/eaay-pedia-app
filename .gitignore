@@ -24,3 +24,6 @@ android/.gradle
 # Local signing secrets (never commit)
 keystore-secrets.txt
 *.jks
+
+# Scratch payloads and undo manifests from scripts/upload-decks.mjs
+.tmp/

@@ -5,11 +5,12 @@
 // right section in one tap, not to list everything.
 import { useMemo, useState } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
-import { Bell, ChevronRight, CloudUpload, Mail, Menu, MessageCircle, Send, ShieldCheck, Smartphone } from 'lucide-react';
+import { Bell, ChevronRight, CloudUpload, Mail, Menu, MessageCircle, PlayCircle, RotateCcw, Send, ShieldCheck, Smartphone } from 'lucide-react';
 import { useAuth } from '../hooks/useAuth';
 import { useAsync, useList } from '../hooks/useData';
 import { getLatest, num } from '../lib/rtdb';
 import { isNative, openUrl } from '../lib/native';
+import { listPausedSessions } from '../lib/quizSource';
 import { usePendingSync, useSyncPendingResults } from '../lib/sync';
 import { SECTIONS } from '../lib/sections';
 import { LINKS } from '../config';
@@ -70,6 +71,7 @@ export default function Home() {
   const quizzes = useList('allquiz');
   const daily = useDailyQuiz();
   const recentNotifications = useAsync(() => getLatest('all_notification', 10), []);
+  const pausedQuizzes = useAsync(() => listPausedSessions(user.uid), [user.uid]);
   const latestNotification = (recentNotifications.data || []).find((n) => n.title || n.message);
   const hasNewNotification = !!latestNotification && latestNotification[user.uid] !== 'seen';
 
@@ -142,6 +144,32 @@ export default function Home() {
             </div>
           </div>
         </section>
+
+        {/* A quiz left half-finished is the most likely thing to be wanted
+            next, so it is offered here rather than only inside the quiz. */}
+        {(pausedQuizzes.data || []).length > 0 && (
+          <section>
+            <h2 className="font-display text-slate-800 text-xl mb-3">Carry on where you stopped</h2>
+            <div className="space-y-3">
+              {pausedQuizzes.data.slice(0, 3).map((p) => (
+                <div key={p.pkey} className="rounded-2xl border border-amber-200 bg-amber-50 p-4">
+                  <p className="font-semibold text-amber-900 truncate">{p.title}</p>
+                  <p className="text-sm text-amber-800 mt-0.5">
+                    Paused after {p.played} of {p.tq} questions
+                  </p>
+                  <div className="grid grid-cols-2 gap-3 mt-3">
+                    <Button onClick={() => navigate(p.path)}>
+                      <PlayCircle size={18} /> Restore session
+                    </Button>
+                    <Button variant="outline" onClick={() => navigate(p.newPath)}>
+                      <RotateCcw size={18} /> Start new
+                    </Button>
+                  </div>
+                </div>
+              ))}
+            </div>
+          </section>
+        )}
 
         {pendingResults > 0 && (
           <div className="w-full rounded-2xl bg-amber-50 text-amber-900 text-sm font-semibold p-3 flex items-center gap-2">

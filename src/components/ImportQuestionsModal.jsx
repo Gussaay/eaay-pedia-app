@@ -7,10 +7,12 @@ import { newKey, str, updatePaths } from '../lib/rtdb';
 import {
   TEMPLATE_HEADERS,
   buildRecord,
+  fieldForHeader,
   importableItems,
   parseRows,
   templateCsv,
 } from '../lib/questionImport';
+import { pickSheet } from '../lib/sheetPick';
 import { Button, Modal, Toggle, useToast } from './ui';
 
 function downloadTemplate() {
@@ -41,13 +43,31 @@ export default function ImportQuestionsModal({ quiz, childKey, existingQuestions
       const XLSX = await import('xlsx');
       const data = await file.arrayBuffer();
       const wb = XLSX.read(data, { type: 'array' });
-      const sheet = wb.Sheets[wb.SheetNames[0]];
-      if (!sheet) throw new Error('The file has no sheets.');
-      const rows = XLSX.utils.sheet_to_json(sheet, { defval: '', raw: false });
-      if (!rows.length) throw new Error('The first sheet has no rows.');
-      const result = parseRows(rows, { existingQuestions });
+      if (!wb.SheetNames.length) throw new Error('The file has no sheets.');
+      // The questions may share a workbook with that subject's flashcards and
+      // summary, so the sheet is chosen by its COLUMNS rather than by position.
+      const sheets = wb.SheetNames.map((name) => ({
+        name,
+        rows: XLSX.utils.sheet_to_json(wb.Sheets[name], { defval: '', raw: false }),
+      }));
+      const { best, usable } = pickSheet(sheets, {
+        fieldFor: fieldForHeader,
+        required: ['question', 'answer'],
+      });
+      if (!best)
+        throw new Error(
+          sheets.length > 1
+            ? `No sheet of questions found. Looked at: ${sheets.map((s) => s.name).join(', ')}.`
+            : 'No questions found. Check the column names.',
+        );
+      const result = parseRows(best.rows, { existingQuestions });
       if (!result.items.length) throw new Error('No questions found. Check the column names.');
-      setParsed({ ...result, fileName: file.name, sheet: wb.SheetNames[0] });
+      setParsed({
+        ...result,
+        fileName: file.name,
+        sheet: best.name,
+        otherSheets: usable.filter((s) => s.name !== best.name).map((s) => s.name),
+      });
     } catch (err) {
       setError(err.message || String(err));
       setParsed(null);
@@ -121,7 +141,9 @@ export default function ImportQuestionsModal({ quiz, childKey, existingQuestions
       {parsed && (
         <div>
           <div className="flex flex-wrap items-center gap-2 text-sm">
-            <span className="rounded-full bg-slate-100 px-2.5 py-1 text-slate-700">{parsed.fileName}</span>
+            <span className="rounded-full bg-slate-100 px-2.5 py-1 text-slate-700">
+              {parsed.fileName} · sheet “{parsed.sheet}”
+            </span>
             <span className="rounded-full bg-emerald-50 px-2.5 py-1 text-emerald-700 font-semibold">
               {toImport.length} ready
             </span>

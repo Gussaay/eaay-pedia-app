@@ -94,6 +94,31 @@
       }
     },
 
+    // ------------------------------------------------------- quiz progress
+    // Which questions you have answered and whether you got them right, plus
+    // the per-quiz and per-topic totals the performance dashboard reads. All
+    // three are private: nobody else needs them, and they say a lot about how
+    // someone is doing. The leaderboard still lives in `quizlead`, which is
+    // deliberately readable by everyone.
+    "quizhistory": {
+      "$uid": {
+        ".read": "auth.uid === $uid",
+        ".write": "auth.uid === $uid"
+      }
+    },
+    "quizstats": {
+      "$uid": {
+        ".read": "auth.uid === $uid",
+        ".write": "auth.uid === $uid"
+      }
+    },
+    "quizcats": {
+      "$uid": {
+        ".read": "auth.uid === $uid",
+        ".write": "auth.uid === $uid"
+      }
+    },
+
     // ---------------------------------------------------------------- interest
     // Who asked to be told when a coming-soon section opens. Readable by any
     // signed-in user because the page shows the running count and whether you
