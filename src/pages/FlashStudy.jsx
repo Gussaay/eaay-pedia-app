@@ -25,6 +25,7 @@ import { buildSession, gradeCard } from '../lib/flashcards';
 import { useBackHandler } from '../lib/back';
 import { MNEMONIC, hasVisualBack, isPictureBack } from '../lib/mnemonics';
 import MnemonicVisual from '../components/MnemonicVisual';
+import ShareMnemonicButton from '../components/ShareMnemonic';
 import { clearSpot, loadSpot, saveSpot } from '../lib/resume';
 import { AppBar, Button, Card, Empty, Page, SkeletonList, ZoomImage, useToast } from '../components/ui';
 
@@ -451,7 +452,10 @@ export default function FlashStudy() {
             {picture ? (
               <Face back visible={faceShown === 'back'} className="!p-3 border-teal-200 bg-white shadow-lg">
                 {drawn ? (
-                  <MnemonicVisual visual={card.visual} />
+                  <div className="relative h-full">
+                    <MnemonicVisual visual={card.visual} />
+                    <ShareMnemonicButton card={card} className="absolute right-2 top-2" />
+                  </div>
                 ) : (
                   <PictureBack src={card.back_img} caption={card.front} />
                 )}

@@ -161,6 +161,7 @@ function Ladder({ rungs = [], tone }) {
           key={i}
           style={{
             width: `${100 - (i * 30) / Math.max(1, rungs.length - 1)}%`,
+            boxSizing: 'border-box',
             background: soft(tone, 0.85 - (i * 0.6) / Math.max(1, rungs.length - 1)),
             borderRadius: 10,
             padding: '6px 10px',
