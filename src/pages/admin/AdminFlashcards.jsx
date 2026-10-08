@@ -21,8 +21,11 @@ import { useAsync, useList } from '../../hooks/useData';
 import { getOne, newKey, num, pushTo, removeAt, updateAt, updatePaths } from '../../lib/rtdb';
 import { deleteDeck, loadCards } from '../../lib/flashcardData';
 import { chapterOf, chaptersOf } from '../../lib/flashcards';
+import { MNEMONIC, isMnemonicCategory } from '../../lib/mnemonics';
+import MnemonicVisual, { readVisual } from '../../components/MnemonicVisual';
 import ImageField from '../../components/ImageField';
 import ImportCardsModal from '../../components/ImportCardsModal';
+import ImportDecksModal from '../../components/ImportDecksModal';
 import DangerConfirm from '../../components/DangerConfirm';
 import {
   AppBar,
@@ -92,6 +95,9 @@ export function FlashCategories() {
         source: form.source.trim(),
         img: form.img || '',
         publish: form.publish,
+        // null removes the field, so switching it off really turns a
+        // category back into ordinary flashcards.
+        kind: form.mnemonic ? MNEMONIC : null,
       };
       if (form._key) await updateAt(`flashcategory/${form._key}`, record);
       else await pushTo('flashcategory', record);
@@ -110,7 +116,7 @@ export function FlashCategories() {
       <AppBar title="Flashcards" subtitle="Categories — tap one to open its books" />
       <Page className="space-y-3">
         <ErrorBox error={list.error} onRetry={list.reload} />
-        <AddButton onClick={() => setForm({ title: '', source: '', img: '', publish: true })}>
+        <AddButton onClick={() => setForm({ title: '', source: '', img: '', publish: true, mnemonic: false })}>
           Add new category
         </AddButton>
 
@@ -126,7 +132,7 @@ export function FlashCategories() {
               key={c._key}
               img={c.img}
               title={c.title}
-              subtitle={`source: ${c.source} · ${plural(booksUnder(c.source), 'book')}${isPublished(c) ? '' : ' · hidden'}`}
+              subtitle={`source: ${c.source} · ${plural(booksUnder(c.source), 'book')}${isMnemonicCategory(c) ? ' · mnemonics' : ''}${isPublished(c) ? '' : ' · hidden'}`}
               onClick={() =>
                 navigate(
                   `/admin/flashcards/category/${encodeURIComponent(c.source)}?title=${encodeURIComponent(c.title || '')}`,
@@ -141,6 +147,7 @@ export function FlashCategories() {
                       source: c.source || '',
                       img: c.img || '',
                       publish: isPublished(c),
+                      mnemonic: isMnemonicCategory(c),
                     })
                   }
                   onDelete={() => setConfirm(c)}
@@ -184,6 +191,11 @@ export function FlashCategories() {
               label="Published — visible to everyone"
               checked={form.publish}
               onChange={(publish) => setForm({ ...form, publish })}
+            />
+            <Toggle
+              label="Mnemonics — show under Mnemonics instead of Flash Cards"
+              checked={form.mnemonic}
+              onChange={(mnemonic) => setForm({ ...form, mnemonic })}
             />
           </>
         )}
@@ -388,6 +400,7 @@ export function FlashBookDecks() {
   const [form, setForm] = useState(null);
   const [confirm, setConfirm] = useState(null);
   const [busy, setBusy] = useState(false);
+  const [importing, setImporting] = useState(false);
 
   // Offered in the System box, so the same spelling is reused rather than
   // "Cardiology" and "cardiology" splitting one system into two on the gaps
@@ -431,6 +444,9 @@ export function FlashBookDecks() {
       <AppBar title={params.get('title') || source} subtitle="Decks — tap one to open its cards" />
       <Page className="space-y-3">
         <AddButton onClick={() => setForm({ ...BLANK_DECK })}>Add new deck</AddButton>
+        <Button variant="outline" className="w-full" onClick={() => setImporting(true)}>
+          <Upload size={18} /> Upload decks from a file
+        </Button>
 
         {list.loading ? (
           <SkeletonList />
@@ -517,6 +533,18 @@ export function FlashBookDecks() {
         )}
       </Modal>
 
+      {importing && (
+        <ImportDecksModal
+          source={source}
+          existingDecks={list.data}
+          onClose={() => setImporting(false)}
+          onImported={() => {
+            list.reload();
+            allDecks.reload();
+          }}
+        />
+      )}
+
       <DangerConfirm
         open={!!confirm}
         busy={busy}
@@ -550,7 +578,89 @@ export function FlashBookDecks() {
 // ---------------------------------------------------------------------------
 // Level 4: cards inside a deck
 // ---------------------------------------------------------------------------
-const BLANK_CARD = { front: '', back: '', hint: '', note: '', img: '', back_img: '', tags: '', chapter: '' };
+const BLANK_CARD = { front: '', back: '', hint: '', note: '', img: '', back_img: '', tags: '', chapter: '', visualText: '' };
+
+/** A drawn back as editable text, and back again. Empty text means no drawing. */
+const visualToText = (v) => {
+  const parsed = readVisual(v);
+  return parsed ? JSON.stringify(parsed, null, 2) : '';
+};
+const parseVisualText = (text) => {
+  if (!String(text || '').trim()) return { value: null, error: '' };
+  try {
+    const value = JSON.parse(text);
+    if (!value || typeof value !== 'object' || Array.isArray(value)) return { value: null, error: 'Expected { … }' };
+    return { value, error: '' };
+  } catch (e) {
+    return { value: null, error: e.message };
+  }
+};
+
+/** Starting point offered when a drawn back is added to a card from scratch. */
+const VISUAL_TEMPLATE = {
+  title: 'Drug name',
+  tag: 'What it is for',
+  emoji: '💊',
+  answer: 'The plain answer',
+  hook: '[K]ey letters in [brackets] light up',
+  diagram: { type: 'facts', items: [{ icon: '✅', text: 'First point' }, { icon: '⚠️', text: 'Second point' }] },
+  trap: 'Optional exam trap',
+};
+
+/**
+ * The drawn back of a mnemonic card: its description as text, with a live
+ * preview of how it will look. Mnemonic decks show it open; other decks offer
+ * it behind a button, since most flashcards have a written answer instead.
+ */
+function VisualBackEditor({ text, onChange, mnemonicDeck }) {
+  const [open, setOpen] = useState(!!text || mnemonicDeck);
+  const parsed = parseVisualText(text);
+  if (!open) {
+    return (
+      <Button variant="outline" className="mb-3" onClick={() => setOpen(true)}>
+        Add a drawn back (mnemonic)
+      </Button>
+    );
+  }
+  return (
+    <div className="mb-3 rounded-2xl border border-teal-200 bg-teal-50/40 p-3">
+      <div className="flex items-center justify-between gap-2">
+        <span className="text-sm font-semibold text-slate-700">Drawn back (mnemonic)</span>
+        {!text && (
+          <button
+            type="button"
+            className="text-sm font-semibold text-teal-700"
+            onClick={() => onChange(JSON.stringify(VISUAL_TEMPLATE, null, 2))}
+          >
+            Start from a template
+          </button>
+        )}
+      </div>
+      <p className="mt-1 text-xs text-slate-500">
+        Drawn by the app instead of an uploaded picture. Diagram types: acrostic, flow, arrows, ladder, compare,
+        track, facts. Wrap key letters in [brackets] to light them up.
+      </p>
+      <div className="mt-2 grid gap-3 md:grid-cols-2">
+        <textarea
+          className="min-h-[18rem] w-full rounded-xl border border-slate-300 bg-white p-2 font-mono text-xs"
+          value={text}
+          onChange={(e) => onChange(e.target.value)}
+          spellCheck={false}
+          aria-label="Drawn back description"
+        />
+        <div className="h-[30rem] rounded-2xl border border-slate-200 bg-white p-2">
+          {parsed.error ? (
+            <p className="p-3 text-sm text-red-600">Not valid yet: {parsed.error}</p>
+          ) : parsed.value ? (
+            <MnemonicVisual visual={parsed.value} />
+          ) : (
+            <p className="p-3 text-sm text-slate-400">The preview appears here.</p>
+          )}
+        </div>
+      </div>
+    </div>
+  );
+}
 
 export function FlashDeckCards() {
   const { deckId } = useParams();
@@ -585,7 +695,9 @@ export function FlashDeckCards() {
 
   const saveCard = async () => {
     if (!form.front.trim()) return toast('The front of the card is empty', 'error');
-    if (!form.back.trim() && !form.back_img) return toast('The back of the card is empty', 'error');
+    const drawn = parseVisualText(form.visualText);
+    if (drawn.error) return toast(`The drawn back is not valid: ${drawn.error}`, 'error');
+    if (!form.back.trim() && !form.back_img && !drawn.value) return toast('The back of the card is empty', 'error');
     setBusy(true);
     try {
       const key = form._key || newKey(`flashcard_items/${deckId}`);
@@ -599,6 +711,8 @@ export function FlashDeckCards() {
           note: form.note.trim(),
           img: form.img || '',
           back_img: form.back_img || '',
+          // Kept as an object; null removes it when the drawing is cleared.
+          visual: drawn.value,
           tags: form.tags.trim(),
           chapter: form.chapter.trim(),
         },
@@ -679,7 +793,9 @@ export function FlashDeckCards() {
                 </span>
                 <div className="min-w-0 flex-1">
                   <p className="font-medium text-slate-800 line-clamp-2">{card.front}</p>
-                  <p className="mt-1 text-sm text-slate-500 line-clamp-2">{card.back}</p>
+                  <p className="mt-1 text-sm text-slate-500 line-clamp-2">
+                    {card.back || (card.visual ? `✏️ Drawn: ${readVisual(card.visual)?.answer || readVisual(card.visual)?.title || ''}` : '')}
+                  </p>
                   <p className="mt-1.5 text-xs text-slate-400">
                     {[chapterOf(card), card.tags].filter(Boolean).join(' · ')}
                   </p>
@@ -691,6 +807,7 @@ export function FlashDeckCards() {
                       ...card,
                       chapter: chapterOf(card),
                       order: num(card.order) || i + 1,
+                      visualText: visualToText(card.visual),
                     })
                   }
                   onDelete={() => setConfirm({ card })}
@@ -762,6 +879,11 @@ export function FlashDeckCards() {
             />
             <ImageField label="Front image" folder="flashcards" value={form.img} onChange={(img) => setForm((f) => ({ ...f, img }))} />
             <ImageField label="Back image" folder="flashcards" value={form.back_img} onChange={(img) => setForm((f) => ({ ...f, back_img: img }))} />
+            <VisualBackEditor
+              text={form.visualText}
+              onChange={(visualText) => setForm((f) => ({ ...f, visualText }))}
+              mnemonicDeck={deck?.kind === MNEMONIC}
+            />
             <Input
               label="Chapter (optional)"
               value={form.chapter}

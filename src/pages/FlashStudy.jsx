@@ -14,14 +14,17 @@
 // lib/flashcardData.js for why that matters to the bill. Leaving early still
 // saves what was answered, so nothing is lost.
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
+import { createPortal } from 'react-dom';
 import { useNavigate, useParams, useSearchParams } from 'react-router-dom';
-import { ArrowRight, Check, Lightbulb, PartyPopper, RotateCw, X } from 'lucide-react';
+import { ArrowRight, Check, Lightbulb, Maximize2, PartyPopper, RotateCw, X } from 'lucide-react';
 import { useAuth } from '../hooks/useAuth';
 import { useAsync } from '../hooks/useData';
 import { getOne } from '../lib/rtdb';
 import { loadCards, loadDeckProgress, loadStats, saveSession } from '../lib/flashcardData';
 import { buildSession, gradeCard } from '../lib/flashcards';
 import { useBackHandler } from '../lib/back';
+import { MNEMONIC, hasVisualBack, isPictureBack } from '../lib/mnemonics';
+import MnemonicVisual from '../components/MnemonicVisual';
 import { clearSpot, loadSpot, saveSpot } from '../lib/resume';
 import { AppBar, Button, Card, Empty, Page, SkeletonList, ZoomImage, useToast } from '../components/ui';
 
@@ -62,6 +65,70 @@ function Face({ children, back = false, visible, className = '' }) {
       aria-hidden={!visible}
     >
       {children}
+    </div>
+  );
+}
+
+/**
+ * The back of a mnemonic card: the picture, as large as the face allows.
+ *
+ * Tapping the picture still turns the card back over, like tapping anywhere
+ * else on it. The corner button opens it full screen for pinch-zoom instead.
+ * That viewer is portalled to <body>: inside the turning card, `fixed` would
+ * be fixed to the card (a transformed ancestor), not to the screen.
+ */
+function PictureBack({ src, caption }) {
+  const [open, setOpen] = useState(false);
+  const [broken, setBroken] = useState(false);
+  useBackHandler(() => {
+    if (!open) return false;
+    setOpen(false);
+    return true;
+  });
+  return (
+    <div className="relative flex h-full flex-col">
+      {broken ? (
+        <p className="m-auto text-sm text-slate-400">The picture could not be loaded. Check your connection.</p>
+      ) : (
+        <img
+          src={src}
+          alt={caption || 'Mnemonic'}
+          onError={() => setBroken(true)}
+          className="min-h-0 w-full flex-1 rounded-2xl object-contain"
+        />
+      )}
+      {!broken && (
+        <span
+          role="button"
+          tabIndex={0}
+          aria-label="Open the picture full screen"
+          onClick={(e) => {
+            e.stopPropagation();
+            setOpen(true);
+          }}
+          onKeyDown={(e) => {
+            if (e.key === 'Enter') {
+              e.stopPropagation();
+              setOpen(true);
+            }
+          }}
+          className="absolute right-1 top-1 rounded-full bg-white/90 p-2 text-slate-700 shadow"
+        >
+          <Maximize2 size={18} />
+        </span>
+      )}
+      {open &&
+        createPortal(
+          <div className="fixed inset-0 z-[70] flex flex-col bg-black/95" onClick={() => setOpen(false)}>
+            <button className="self-end p-4 text-white" aria-label="Close">
+              <X size={28} />
+            </button>
+            <div className="flex flex-1 items-center justify-center overflow-auto p-2 touch-pinch-zoom">
+              <img src={src} alt="" className="h-auto w-full max-w-none" onClick={(e) => e.stopPropagation()} />
+            </div>
+          </div>,
+          document.body,
+        )}
     </div>
   );
 }
@@ -254,6 +321,14 @@ export default function FlashStudy() {
     return () => window.removeEventListener('keydown', onKey);
   }, [flipped, card, answer, finished]);
 
+  // Mnemonic decks read as mnemonics: the prompt on the front, the picture on
+  // the back. A card with only a picture on its back gets that layout in any
+  // deck, since an empty "Answer" heading above a picture says nothing.
+  const drawn = hasVisualBack(card);
+  const picture = drawn || isPictureBack(card);
+  const mnemonic = data.data?.deck?.kind === MNEMONIC || picture;
+  const home = mnemonic ? '/mnemonics' : '/flashcards';
+
   const percent = useMemo(
     () => (queue?.length ? Math.round((at / queue.length) * 100) : 0),
     [at, queue],
@@ -314,8 +389,8 @@ export default function FlashStudy() {
           <Button className="w-full justify-center" onClick={() => leave(deckPath)}>
             Back to the deck
           </Button>
-          <Button variant="outline" className="w-full justify-center" onClick={() => leave('/flashcards')}>
-            All decks
+          <Button variant="outline" className="w-full justify-center" onClick={() => leave(home)}>
+            {mnemonic ? 'All mnemonics' : 'All decks'}
           </Button>
         </Page>
       </div>
@@ -342,7 +417,7 @@ export default function FlashStudy() {
           type="button"
           onClick={() => setFlipped((f) => !f)}
           aria-label={flipped ? 'Show the question' : 'Show the answer'}
-          className="block h-full max-h-[32rem] w-full max-w-lg text-left"
+          className={`block h-full w-full max-w-lg text-left ${picture ? 'max-h-[40rem]' : 'max-h-[32rem]'}`}
           style={{ perspective: '1400px' }}
         >
           <div
@@ -356,7 +431,7 @@ export default function FlashStudy() {
             <Face visible={faceShown === 'front'} className="border-slate-200 bg-white shadow-lg">
               <div className="flex h-full flex-col">
                 <p className="text-[11px] font-semibold uppercase tracking-wide text-slate-400">
-                  {card.chapter || card.topic || 'Question'}
+                  {card.chapter || card.topic || (mnemonic ? 'Mnemonic' : 'Question')}
                 </p>
                 <div className="flex flex-1 flex-col justify-center">
                   <p className="text-xl leading-relaxed text-slate-900 whitespace-pre-line">{card.front}</p>
@@ -373,6 +448,15 @@ export default function FlashStudy() {
               </div>
             </Face>
 
+            {picture ? (
+              <Face back visible={faceShown === 'back'} className="!p-3 border-teal-200 bg-white shadow-lg">
+                {drawn ? (
+                  <MnemonicVisual visual={card.visual} />
+                ) : (
+                  <PictureBack src={card.back_img} caption={card.front} />
+                )}
+              </Face>
+            ) : (
             <Face back visible={faceShown === 'back'} className="border-violet-200 bg-violet-50 shadow-lg">
               <div className="flex h-full flex-col">
                 <p className="text-[11px] font-semibold uppercase tracking-wide text-violet-500">Answer</p>
@@ -388,6 +472,7 @@ export default function FlashStudy() {
                 {card.tags && <p className="mt-3 text-xs text-slate-400">{card.tags}</p>}
               </div>
             </Face>
+            )}
           </div>
         </button>
       </div>
@@ -415,7 +500,9 @@ export default function FlashStudy() {
           // The same height either way, so the card does not jump up and down
           // as it is turned over.
           <div className="flex h-[4.9rem] flex-col items-center justify-center text-center">
-            <p className="text-sm text-slate-500">Answer it in your head, then tap the card.</p>
+            <p className="text-sm text-slate-500">
+              {mnemonic ? 'Recall the mnemonic, then tap the card.' : 'Answer it in your head, then tap the card.'}
+            </p>
             {tally.answered > 0 && (
               <p className="mt-1 text-xs text-slate-400">
                 {tally.correct} of {tally.answered} right so far

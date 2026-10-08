@@ -5,7 +5,7 @@
 // the interest count is what decides which one gets built next. `live: false`
 // is the only switch — a section goes live by flipping it and adding the
 // route.
-import { BookOpen, GraduationCap, Layers, Stethoscope, Siren } from 'lucide-react';
+import { BookOpen, GraduationCap, Layers, Lightbulb, Stethoscope, Siren } from 'lucide-react';
 
 export const SECTIONS = [
   {
@@ -29,6 +29,16 @@ export const SECTIONS = [
     live: true,
     tint: 'bg-violet-50 text-violet-700',
     ring: 'group-hover:ring-violet-200',
+  },
+  {
+    key: 'mnemonics',
+    title: 'Mnemonics',
+    tagline: 'Picture cards that stick',
+    to: '/mnemonics',
+    icon: Lightbulb,
+    live: true,
+    tint: 'bg-teal-50 text-teal-700',
+    ring: 'group-hover:ring-teal-200',
   },
   {
     key: 'osce',

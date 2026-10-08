@@ -10,6 +10,7 @@ import { useAsync, useList } from '../hooks/useData';
 import { num } from '../lib/rtdb';
 import { loadAllProgress, loadStats } from '../lib/flashcardData';
 import { isDue } from '../lib/flashcards';
+import { isMnemonicCategory, mnemonicBookSources } from '../lib/mnemonics';
 import BottomNav from '../components/BottomNav';
 import { AppBar, Button, Empty, ErrorBox, Page, Thumb } from '../components/ui';
 
@@ -27,23 +28,36 @@ export default function Flashcards() {
   const { user, isAdmin } = useAuth();
   const navigate = useNavigate();
 
-  const categories = useList('flashcategory', {
+  // Mnemonic categories have their own section, so they are left out here.
+  const allCategories = useList('flashcategory', {
     filter: (c) => isAdmin || String(c.publish) !== 'false',
   });
+  const categories = {
+    ...allCategories,
+    data: allCategories.data.filter((c) => !isMnemonicCategory(c)),
+  };
   const books = useList('flashbooks');
   const decks = useList('flashdecks');
   const progress = useAsync(() => loadAllProgress(user?.uid), [user?.uid]);
   const stats = useAsync(() => loadStats(user?.uid), [user?.uid]);
 
+  const mnemonicSources = useMemo(
+    () => mnemonicBookSources(allCategories.data, books.data),
+    [allCategories.data, books.data],
+  );
+
   // Due counts come from progress already in memory — the whole of this user's
   // progress arrives in one read, so nothing extra is fetched per category.
+  // Mnemonic decks are counted on the Mnemonics page instead.
   const dueByDeck = useMemo(() => {
+    const mnemonicDecks = new Set(decks.data.filter((d) => mnemonicSources.has(d.source)).map((d) => d._key));
     const out = {};
     Object.entries(progress.data || {}).forEach(([deckId, cards]) => {
+      if (mnemonicDecks.has(deckId)) return;
       out[deckId] = Object.values(cards || {}).filter((p) => isDue(p)).length;
     });
     return out;
-  }, [progress.data]);
+  }, [progress.data, decks.data, mnemonicSources]);
 
   const totalDue = Object.values(dueByDeck).reduce((s, n) => s + n, 0);
 
