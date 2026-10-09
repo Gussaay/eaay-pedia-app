@@ -40,6 +40,9 @@ const FlashDeck = lazy(() => import('./pages/FlashDeck'));
 const FlashStudy = lazy(() => import('./pages/FlashStudy'));
 const FlashGaps = lazy(() => import('./pages/FlashGaps'));
 const Mnemonics = lazy(() => import('./pages/Mnemonics'));
+const MnemonicExam = lazy(() => import('./pages/MnemonicExam'));
+const MnemonicPaper = lazy(() => import('./pages/MnemonicPaper'));
+const MnemonicSet = lazy(() => import('./pages/MnemonicSet'));
 
 function Splash() {
   return (
@@ -170,6 +173,10 @@ export default function App() {
           <Route path="/flashcards/deck/:deckId" element={guard(<FlashDeck />)} />
           <Route path="/flashcards/study/:deckId" element={guard(<FlashStudy />)} />
           <Route path="/mnemonics" element={guard(<Mnemonics />)} />
+          <Route path="/mnemonics/exam/:source" element={guard(<MnemonicExam />)} />
+          <Route path="/mnemonics/paper/:source" element={guard(<MnemonicPaper />)} />
+          <Route path="/mnemonics/set" element={guard(<MnemonicSet />)} />
+          <Route path="/mnemonics/study" element={guard(<FlashStudy />)} />
           <Route path="/cat/:source" element={guard(<Books />)} />
           <Route path="/book/:source" element={guard(<Exams />)} />
           <Route path="/quiz/:kind/:id" element={guard(<QuizDetail />)} />

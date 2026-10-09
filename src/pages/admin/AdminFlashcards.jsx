@@ -578,7 +578,7 @@ export function FlashBookDecks() {
 // ---------------------------------------------------------------------------
 // Level 4: cards inside a deck
 // ---------------------------------------------------------------------------
-const BLANK_CARD = { front: '', back: '', hint: '', note: '', img: '', back_img: '', tags: '', chapter: '', visualText: '' };
+const BLANK_CARD = { front: '', back: '', hint: '', note: '', img: '', back_img: '', tags: '', chapter: '', source: '', visualText: '' };
 
 /** A drawn back as editable text, and back again. Empty text means no drawing. */
 const visualToText = (v) => {
@@ -715,6 +715,7 @@ export function FlashDeckCards() {
           visual: drawn.value,
           tags: form.tags.trim(),
           chapter: form.chapter.trim(),
+          source: String(form.source || '').trim(),
         },
       };
       // The deck list shows the count without reading the cards, so it has to
@@ -885,11 +886,21 @@ export function FlashDeckCards() {
               mnemonicDeck={deck?.kind === MNEMONIC}
             />
             <Input
-              label="Chapter (optional)"
+              label={deck?.kind === MNEMONIC ? 'Basic science section' : 'Chapter (optional)'}
               value={form.chapter}
               onChange={(e) => setForm((f) => ({ ...f, chapter: e.target.value }))}
-              hint="Groups cards inside this deck, so a session can be limited to chosen chapters."
+              hint={
+                deck?.kind === MNEMONIC
+                  ? 'Anatomy, Physiology, Biochemistry, Pharmacology, Microbiology, Immunology, Genetics, Statistics — or Clinical.'
+                  : 'Groups cards inside this deck, so a session can be limited to chosen chapters.'
+              }
               list="deck-chapters"
+            />
+            <Input
+              label="Source (optional)"
+              value={form.source || ''}
+              onChange={(e) => setForm((f) => ({ ...f, source: e.target.value }))}
+              hint="Where this card comes from, e.g. TAS 2025 paper or Survival guide book. Mnemonics can be browsed by source."
             />
             <datalist id="deck-chapters">
               {deckChapters.map((c) => (

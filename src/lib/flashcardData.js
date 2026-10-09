@@ -76,14 +76,19 @@ export const loadStats = (uid) =>
  * disagreeing with the cards.
  *
  * `graded` is { cardId: progress } as produced by gradeCard().
+ *
+ * A session can mix decks (a mnemonic set drawn from several chapters); then
+ * `deckOf` maps each card to its own deck, so its progress lands where that
+ * deck will look for it.
  */
-export async function saveSession({ uid, deckId, deck, graded, answered, correct, stats }) {
-  if (!uid || !deckId) return;
+export async function saveSession({ uid, deckId, deckOf, deck, graded, answered, correct, stats }) {
+  if (!uid || (!deckId && !deckOf)) return;
   const day = today();
   const updates = {};
 
   Object.entries(graded).forEach(([cardId, progress]) => {
-    updates[`flashprogress/${uid}/${deckId}/${cardId}`] = progress;
+    const home = deckOf?.[cardId] || deckId;
+    if (home) updates[`flashprogress/${uid}/${home}/${cardId}`] = progress;
   });
 
   const system = safeKey(deck?.system);

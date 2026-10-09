@@ -8,8 +8,12 @@
 //   {
 //     "category": { "title", "source", "icon" },   icon = a name in subject-icons.mjs
 //     "book":     { "title", "source", "icon" },
-//     "decks": [ { "title", "icon", "cards": [ { "front", "visual" } ] } ]
+//     "decks": [ { "title", "icon", "cards": [ { "front", "visual", "chapter", "source" } ] } ]
 //   }
+//
+// Each deck is a clinical chapter. A card's `chapter` is its basic-science
+// section (Pharmacology, Physiology… or Clinical) and `source` is where it
+// comes from; the app browses a paper by chapter, by section and by source.
 //
 // `visual` is the drawn back (see src/components/MnemonicVisual.jsx). If the
 // category already exists (same source) it is reused, so a second book can be
@@ -146,7 +150,10 @@ decks.forEach((d, i) => {
       hint: '',
       note: '',
       tags: '',
-      chapter: '',
+      // The basic-science section (Pharmacology, Physiology… or Clinical) and
+      // where the card comes from: both are ways of browsing a paper.
+      chapter: c.chapter || '',
+      source: c.source || '',
     };
   });
 });

@@ -1,6 +1,17 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
-import { isMnemonicCategory, isPictureBack, mnemonicBookSources } from './mnemonics.js';
+import {
+  filterSet,
+  flattenProgress,
+  isMnemonicCategory,
+  isPictureBack,
+  mnemonicBookSources,
+  sectionOf,
+  setKey,
+  setQuery,
+  setTitle,
+  tallyBy,
+} from './mnemonics.js';
 
 test('a category is a mnemonic category only when kind says so', () => {
   assert.equal(isMnemonicCategory({ kind: 'mnemonic' }), true);
@@ -29,4 +40,49 @@ test('a picture back needs an image and no answer text', () => {
   assert.equal(isPictureBack({ back: 'Answer', back_img: 'x.png' }), false);
   assert.equal(isPictureBack({ back: '', back_img: '' }), false);
   assert.equal(isPictureBack(null), false);
+});
+
+const CARDS = [
+  { _key: 'a', deck: 'cardio', chapter: 'Pharmacology', source: 'TAS 2025 paper' },
+  { _key: 'b', deck: 'cardio', chapter: '', source: 'Survival guide book' },
+  { _key: 'c', deck: 'neuro', chapter: 'Pharmacology', source: 'PasTest TAS question bank' },
+  { _key: 'd', deck: 'neuro', chapter: 'Anatomy', source: 'TAS 2025 paper' },
+];
+
+test('a card with no section counts as Clinical', () => {
+  assert.equal(sectionOf({ chapter: '' }), 'Clinical');
+  assert.equal(sectionOf({ chapter: ' Physiology ' }), 'Physiology');
+});
+
+test('a set narrows by chapter, section and source together', () => {
+  assert.deepEqual(filterSet(CARDS, { deck: 'cardio' }).map((c) => c._key), ['a', 'b']);
+  assert.deepEqual(filterSet(CARDS, { section: 'Pharmacology' }).map((c) => c._key), ['a', 'c']);
+  assert.deepEqual(filterSet(CARDS, { source: 'TAS 2025 paper' }).map((c) => c._key), ['a', 'd']);
+  assert.deepEqual(filterSet(CARDS, { deck: 'neuro', section: 'Pharmacology' }).map((c) => c._key), ['c']);
+  assert.equal(filterSet(CARDS, {}).length, 4);
+  assert.deepEqual(filterSet(CARDS, { section: 'Clinical' }).map((c) => c._key), ['b']);
+});
+
+test('tallies follow the given order, then size', () => {
+  const t = tallyBy(CARDS, sectionOf, ['Clinical', 'Anatomy', 'Pharmacology']);
+  assert.deepEqual(t.map((x) => x.name), ['Clinical', 'Anatomy', 'Pharmacology']);
+  assert.equal(t.find((x) => x.name === 'Pharmacology').total, 2);
+});
+
+test('set titles read naturally', () => {
+  assert.equal(setTitle({ deckTitle: 'Cardiology' }), 'Cardiology');
+  assert.equal(setTitle({ deckTitle: 'Cardiology', section: 'Pharmacology' }), 'Cardiology · Pharmacology');
+  assert.equal(setTitle({ section: 'Pharmacology' }), 'Pharmacology — all chapters');
+  assert.equal(setTitle({ source: 'TAS 2025 paper' }), 'TAS 2025 paper');
+});
+
+test('set queries leave out empty filters and keys stay stable', () => {
+  assert.equal(setQuery({ book: 'tas', deck: '', section: 'Anatomy' }), 'book=tas&section=Anatomy');
+  assert.equal(setKey({ book: 'tas', section: 'Anatomy' }), 'tas||Anatomy|');
+  assert.notEqual(setKey({ book: 'tas', deck: 'x' }), setKey({ book: 'tas', source: 'x' }));
+});
+
+test('progress from several decks merges by card', () => {
+  const merged = flattenProgress({ cardio: { a: { box: 1 } }, neuro: { c: { box: 2 } }, other: { z: {} } }, ['cardio', 'neuro']);
+  assert.deepEqual(Object.keys(merged).sort(), ['a', 'c']);
 });

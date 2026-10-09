@@ -20,10 +20,21 @@ import { ArrowRight, Check, Lightbulb, Maximize2, PartyPopper, RotateCw, X } fro
 import { useAuth } from '../hooks/useAuth';
 import { useAsync } from '../hooks/useData';
 import { getOne } from '../lib/rtdb';
-import { loadCards, loadDeckProgress, loadStats, saveSession } from '../lib/flashcardData';
+import { loadAllProgress, loadCards, loadDeckProgress, loadStats, saveSession } from '../lib/flashcardData';
+import { loadBook } from '../lib/mnemonicData';
 import { buildSession, gradeCard } from '../lib/flashcards';
 import { useBackHandler } from '../lib/back';
-import { MNEMONIC, hasVisualBack, isPictureBack } from '../lib/mnemonics';
+import {
+  MNEMONIC,
+  filterSet,
+  flattenProgress,
+  hasVisualBack,
+  isPictureBack,
+  sectionOf,
+  setKey,
+  setQuery,
+  setTitle,
+} from '../lib/mnemonics';
 import MnemonicVisual from '../components/MnemonicVisual';
 import ShareMnemonicButton from '../components/ShareMnemonic';
 import { clearSpot, loadSpot, saveSpot } from '../lib/resume';
@@ -146,19 +157,49 @@ export default function FlashStudy() {
   const navigate = useNavigate();
   const toast = useToast();
 
-  const deckPath = `/flashcards/deck/${encodeURIComponent(deckId)}`;
+  // Two ways in: one deck (/flashcards/study/:deckId), or a mnemonic set
+  // (/mnemonics/study?book=…&deck=…&section=…&source=…) — a slice of a book
+  // that can span several chapter decks.
+  const setMode = !deckId;
+  const filters = {
+    book: params.get('book') || '',
+    deck: params.get('deck') || '',
+    section: params.get('section') || '',
+    source: params.get('source') || '',
+  };
+  const spotKind = setMode ? 'mset' : 'flash';
+  const spotId = setMode ? setKey(filters) : deckId;
+
+  const deckPath = setMode
+    ? `/mnemonics/set?${setQuery(filters)}`
+    : `/flashcards/deck/${encodeURIComponent(deckId)}`;
   // replace, never push — see the note at the top of this file.
   const leave = useCallback((to) => navigate(to, { replace: true }), [navigate]);
 
   const data = useAsync(
     () =>
-      Promise.all([
-        getOne(`flashdecks/${deckId}`),
-        loadCards(deckId),
-        loadDeckProgress(user?.uid, deckId),
-        loadStats(user?.uid),
-      ]).then(([deck, cards, progress, stats]) => ({ deck, cards, progress, stats })),
-    [deckId, user?.uid],
+      setMode
+        ? Promise.all([loadBook(filters.book), loadAllProgress(user?.uid), loadStats(user?.uid)]).then(
+            ([book, allProgress, stats]) => {
+              const cards = filterSet(book.cards, filters);
+              const deckTitle = book.decks.find((d) => d._key === filters.deck)?.title || '';
+              return {
+                deck: { title: setTitle({ deckTitle, section: filters.section, source: filters.source }), kind: MNEMONIC, system: 'Mnemonics' },
+                cards,
+                progress: flattenProgress(allProgress, book.decks.map((d) => d._key)),
+                stats,
+                // Each card's progress is saved back under its own chapter deck.
+                deckOf: Object.fromEntries(cards.map((c) => [c._key, c.deck])),
+              };
+            },
+          )
+        : Promise.all([
+            getOne(`flashdecks/${deckId}`),
+            loadCards(deckId),
+            loadDeckProgress(user?.uid, deckId),
+            loadStats(user?.uid),
+          ]).then(([deck, cards, progress, stats]) => ({ deck, cards, progress, stats })),
+    [deckId, spotId, user?.uid],
   );
 
   const [queue, setQueue] = useState(null);
@@ -180,7 +221,7 @@ export default function FlashStudy() {
     // is stored as card ids, so anything deleted since is simply dropped
     // rather than crashing the session.
     if (resuming) {
-      const spot = loadSpot('flash', deckId);
+      const spot = loadSpot(spotKind, spotId);
       const byId = new Map(data.data.cards.map((c) => [c._key, c]));
       const restored = (spot?.queue || []).map((key) => byId.get(key)).filter(Boolean);
       if (restored.length) {
@@ -218,7 +259,8 @@ export default function FlashStudy() {
     try {
       await saveSession({
         uid: user.uid,
-        deckId,
+        deckId: setMode ? undefined : deckId,
+        deckOf: data.data?.deckOf,
         deck: data.data?.deck,
         graded: answers,
         answered: tallyRef.current.answered,
@@ -229,7 +271,7 @@ export default function FlashStudy() {
       savedRef.current = false;
       toast(e.message || 'Could not save your progress', 'error');
     }
-  }, [user?.uid, deckId, data.data, toast]);
+  }, [user?.uid, deckId, setMode, data.data, toast]);
 
   // Leaving in the middle still saves. Without this, twenty answered cards
   // would be thrown away by the back button.
@@ -286,16 +328,16 @@ export default function FlashStudy() {
     if (finished && !done) {
       setDone(true);
       persist();
-      clearSpot('flash', deckId);
+      clearSpot(spotKind, spotId);
     }
-  }, [finished, done, persist, deckId]);
+  }, [finished, done, persist, spotKind, spotId]);
 
   // Written after every answer, synchronously, so a session survives the app
   // being killed. The whole point is that it must already be saved before
   // anything gets the chance to run cleanup code.
   useEffect(() => {
     if (!queue?.length || finished) return;
-    saveSpot('flash', deckId, {
+    saveSpot(spotKind, spotId, {
       queue: queue.map((c) => c._key),
       done: at,
       graded,
@@ -303,7 +345,7 @@ export default function FlashStudy() {
       total: queue.length,
       title: data.data?.deck?.title || '',
     });
-  }, [queue, at, graded, tally, finished, deckId, data.data]);
+  }, [queue, at, graded, tally, finished, spotKind, spotId, data.data]);
 
   // Keyboard on the web: space flips, 1/2/3 rate.
   useEffect(() => {
@@ -432,7 +474,9 @@ export default function FlashStudy() {
             <Face visible={faceShown === 'front'} className="border-slate-200 bg-white shadow-lg">
               <div className="flex h-full flex-col">
                 <p className="text-[11px] font-semibold uppercase tracking-wide text-slate-400">
-                  {card.chapter || card.topic || (mnemonic ? 'Mnemonic' : 'Question')}
+                  {setMode && card.deckTitle
+                    ? `${card.deckTitle} · ${sectionOf(card)}`
+                    : card.chapter || card.topic || (mnemonic ? 'Mnemonic' : 'Question')}
                 </p>
                 <div className="flex flex-1 flex-col justify-center">
                   <p className="text-xl leading-relaxed text-slate-900 whitespace-pre-line">{card.front}</p>
@@ -453,7 +497,7 @@ export default function FlashStudy() {
               <Face back visible={faceShown === 'back'} className="!p-3 border-teal-200 bg-white shadow-lg">
                 {drawn ? (
                   <div className="relative h-full">
-                    <MnemonicVisual visual={card.visual} />
+                    <MnemonicVisual visual={card.visual} source={card.source} />
                     <ShareMnemonicButton card={card} className="absolute right-2 top-2" />
                   </div>
                 ) : (

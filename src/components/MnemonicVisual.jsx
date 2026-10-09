@@ -270,7 +270,8 @@ export function readVisual(value) {
   }
 }
 
-export default function MnemonicVisual({ visual }) {
+/** `source` (optional) is where the mnemonic comes from, shown at the foot. */
+export default function MnemonicVisual({ visual, source }) {
   const v = readVisual(visual);
   if (!v) return null;
   const tone = v.tone || '#0F7B6C';
@@ -327,6 +328,9 @@ export default function MnemonicVisual({ visual }) {
           </p>
         ) : null}
       </div>
+      {source ? (
+        <p style={{ margin: 0, flexShrink: 0, padding: '6px 16px 10px', fontSize: 11, color: muted }}>Source: {source}</p>
+      ) : null}
     </div>
   );
 }

@@ -44,7 +44,7 @@ export function ShareFrame({ card, frameRef }) {
         </div>
       ) : null}
       <div style={{ height: 640, padding: 12 }}>
-        <MnemonicVisual visual={card.visual} />
+        <MnemonicVisual visual={card.visual} source={card.source} />
       </div>
       <div style={{ display: 'flex', justifyContent: 'space-between', padding: '10px 20px 14px', fontSize: 13, color: '#5b6b75' }}>
         <span>Learn more on {APP_NAME}</span>

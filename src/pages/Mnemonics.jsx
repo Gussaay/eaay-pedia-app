@@ -1,10 +1,10 @@
 // Mnemonics home: what is due, and the mnemonic categories.
 //
-// A mnemonic is a flashcard with a picture on the back (see lib/mnemonics.js),
-// so past this page everything is the flashcard screens: the category opens
-// the same book and deck lists, and a deck is studied on the same card that
-// turns over. Only the list here is different — it shows mnemonic categories
-// and nothing else.
+// Mnemonics are organised exam → paper → chapter: this page lists the exams
+// (mnemonic categories, e.g. MRCPCH), the exam page shows its papers (books,
+// e.g. Theory and Science), and a paper can be browsed by chapter, by basic
+// science section or by source (see MnemonicPaper.jsx). Studying uses the
+// flashcard engine: the same card that turns over and the same progress.
 import { useMemo } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { ChevronRight, Lightbulb, Play } from 'lucide-react';
@@ -94,7 +94,7 @@ export default function Mnemonics() {
         <ErrorBox error={!allCategories.data.length && allCategories.error} onRetry={allCategories.reload} />
 
         <div>
-          <h2 className="font-display text-slate-800 text-xl mb-3">Subjects</h2>
+          <h2 className="font-display text-slate-800 text-xl mb-3">Exams</h2>
           {allCategories.loading ? (
             <div className="grid gap-3 sm:grid-cols-2">
               {[0, 1].map((i) => (
@@ -115,9 +115,7 @@ export default function Mnemonics() {
                   <button
                     key={c._key}
                     onClick={() =>
-                      navigate(
-                        `/flashcards/cat/${encodeURIComponent(c.source)}?title=${encodeURIComponent(c.title || '')}`,
-                      )
+                      navigate(`/mnemonics/exam/${encodeURIComponent(c.source)}?title=${encodeURIComponent(c.title || '')}`)
                     }
                     className="group text-left bg-white rounded-2xl border border-slate-100 shadow-sm hover:shadow-lg hover:-translate-y-0.5 active:scale-[0.98] transition overflow-hidden flex"
                   >
@@ -126,7 +124,7 @@ export default function Mnemonics() {
                       <div className="min-w-0 flex-1">
                         <p className="font-display text-slate-900 leading-snug line-clamp-2">{c.title}</p>
                         <p className="text-xs text-slate-500 mt-1">
-                          {counts.books} book{counts.books === 1 ? '' : 's'} · {counts.cards} mnemonic
+                          {counts.books} paper{counts.books === 1 ? '' : 's'} · {counts.cards} mnemonic
                           {counts.cards === 1 ? '' : 's'}
                         </p>
                         {counts.due > 0 && (
