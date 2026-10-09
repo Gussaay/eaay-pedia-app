@@ -8,7 +8,7 @@
 // section) just rewrites that query.
 import { useMemo, useState } from 'react';
 import { useNavigate, useSearchParams } from 'react-router-dom';
-import { BookOpen, Clock, History, Lightbulb, Play, Sparkles, Target, X } from 'lucide-react';
+import { BookOpen, ChevronRight, Clock, History, LayoutGrid, Lightbulb, Play, Sparkles, Target, X } from 'lucide-react';
 import { useAuth } from '../hooks/useAuth';
 import { useAsync } from '../hooks/useData';
 import { loadAllProgress } from '../lib/flashcardData';
@@ -153,6 +153,22 @@ export default function MnemonicSet() {
           <Tile icon={Target} value={summary.accuracy === null ? '—' : `${summary.accuracy}%`} label="accuracy" tint="text-emerald-600" />
         </div>
 
+        {summary.total > 0 && (
+          <button
+            onClick={() => navigate(`/mnemonics/gallery?${setQuery(filters)}`)}
+            className="group flex w-full items-center gap-3 rounded-2xl border border-teal-100 bg-white p-4 text-left shadow-sm transition hover:shadow-md active:scale-[0.99]"
+          >
+            <span className="flex h-11 w-11 shrink-0 items-center justify-center rounded-xl bg-teal-50 text-teal-700">
+              <LayoutGrid size={22} />
+            </span>
+            <span className="min-w-0 flex-1">
+              <span className="block font-semibold text-slate-800">Learn first: browse the gallery</span>
+              <span className="block text-sm text-slate-500">See every picture until it sticks, then test yourself below.</span>
+            </span>
+            <ChevronRight size={20} className="shrink-0 text-slate-300 group-hover:text-teal-500" />
+          </button>
+        )}
+
         {spot && summary.total > 0 && (
           <Card className="border-teal-200 bg-teal-50/60 p-4">
             <div className="flex items-start gap-3">
@@ -210,7 +226,7 @@ export default function MnemonicSet() {
             )}
 
             <div>
-              <p className="text-sm font-semibold text-slate-700">What to study</p>
+              <p className="text-sm font-semibold text-slate-700">Test yourself: flip cards</p>
               <div className="mt-2 flex flex-wrap gap-2">
                 {MODES.map((m) => (
                   <Chip key={m.key} active={mode === m.key} onClick={() => setMode(m.key)}>

@@ -106,9 +106,93 @@ export function setQuery({ book = '', deck = '', section = '', source = '' } = {
 export const setKey = (filters = {}) =>
   ['book', 'deck', 'section', 'source'].map((k) => filters[k] || '').join('|');
 
+/**
+ * Splits an ordered list into runs that share a heading (a chapter's topics,
+ * or the chapters of a mixed set), keeping each run's start index so a tap
+ * can still open the right card in the full list.
+ */
+export function groupByHeading(items = [], headingOf = () => '') {
+  const groups = [];
+  items.forEach((item, i) => {
+    const heading = String(headingOf(item) || '').trim();
+    const last = groups[groups.length - 1];
+    if (last && last.heading === heading) last.cards.push(item);
+    else groups.push({ heading, start: i, cards: [item] });
+  });
+  return groups;
+}
+
 /** One progress map for many decks: { cardId: progress }. */
 export function flattenProgress(byDeck = {}, deckIds = []) {
   const out = {};
   deckIds.forEach((id) => Object.assign(out, byDeck?.[id] || {}));
   return out;
+}
+
+// ---------------------------------------------------------------------------
+// Finding look-alikes
+//
+// Used to warn before a duplicate mnemonic is added, and to suggest which
+// flashcards a mnemonic covers. Plain word overlap is enough for that: the
+// same topic is nearly always named with the same key words.
+// ---------------------------------------------------------------------------
+const STOP = new Set(
+  'the and for with from that this which what are was were has have had its into than then them they their there these those when where while who whom why how not but can may also any all one two three most more less each other such use used uses using does did done been being very only over under after before about between within without against during per via what\'s which?'.split(' '),
+);
+
+/** The meaningful words of a text, lower-cased, for comparing topics. */
+export function topicWords(text) {
+  return new Set(
+    String(text || '')
+      .toLowerCase()
+      .replace(/\[|\]/g, '')
+      .split(/[^a-z0-9]+/)
+      .filter((w) => w.length >= 3 && !STOP.has(w)),
+  );
+}
+
+/** 0…1: how much of the smaller text's vocabulary the other shares. */
+export function overlap(a, b) {
+  const A = a instanceof Set ? a : topicWords(a);
+  const B = b instanceof Set ? b : topicWords(b);
+  if (!A.size || !B.size) return 0;
+  let shared = 0;
+  A.forEach((w) => {
+    if (B.has(w)) shared += 1;
+  });
+  return shared / Math.min(A.size, B.size);
+}
+
+/**
+ * The items most like `text`, best first: [{ item, score }]. `textOf` picks
+ * what to compare on each item. Needs at least two shared words, so two
+ * cards that only share "causes" are not called duplicates.
+ */
+export function findSimilar(text, items = [], textOf = (x) => x, { min = 0.5, limit = 5 } = {}) {
+  const A = topicWords(text);
+  if (A.size < 2) return [];
+  return items
+    .map((item) => {
+      const B = topicWords(textOf(item));
+      let shared = 0;
+      A.forEach((w) => {
+        if (B.has(w)) shared += 1;
+      });
+      return { item, score: shared >= 2 ? overlap(A, B) : 0 };
+    })
+    .filter((x) => x.score >= min)
+    .sort((a, b) => b.score - a.score)
+    .slice(0, limit);
+}
+
+/** Everything a drawn mnemonic says, as one string, for comparing. */
+export function mnemonicText(card) {
+  const v = card?.visual && typeof card.visual === 'object' ? card.visual : (() => {
+    try {
+      return JSON.parse(card?.visual || 'null') || {};
+    } catch {
+      return {};
+    }
+  })();
+  return [card?.front, v.title, v.tag, v.answer, v.hook].filter(Boolean).join(' ');
 }

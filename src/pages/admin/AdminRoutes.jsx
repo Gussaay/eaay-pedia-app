@@ -1,5 +1,5 @@
 import { Route, Routes, useNavigate } from 'react-router-dom';
-import { ArrowUpCircle, BellRing, BookPlus, Eye, FolderTree, Layers, PencilLine, Users } from 'lucide-react';
+import { ArrowUpCircle, BellRing, BookPlus, Eye, FolderTree, Layers, Lightbulb, PencilLine, Users } from 'lucide-react';
 import { AppBar, Page } from '../../components/ui';
 import { Categories, CategoryBooks, BookQuizzes } from './AdminCatalog';
 import { QuizEditor, QuestionEditorPage } from './AdminQuiz';
@@ -10,6 +10,7 @@ import {
   FlashBookDecks,
   FlashDeckCards,
 } from './AdminFlashcards';
+import { MnemonicAdminEdit, MnemonicAdminHome, MnemonicAdminPaper } from './AdminMnemonics';
 import AdminUpdates from './AdminUpdates';
 import AdminUsers from './AdminUsers';
 import AdminNotify from './AdminNotify';
@@ -22,6 +23,7 @@ function AdminHome() {
     { icon: Eye, title: 'Preview quizzes', desc: 'Quizzes saved in preview (not published)', to: '/admin/previews' },
     { icon: FolderTree, title: 'Chapters / systems', desc: 'Edit chapters used by "By system" quizzes', to: '/admin/chapters' },
     { icon: Layers, title: 'Flashcards', desc: 'Categories → books → decks → cards', to: '/admin/flashcards' },
+    { icon: Lightbulb, title: 'Mnemonics', desc: 'Exams → papers → chapters, illustrations and flashcard links', to: '/admin/mnemonics' },
     { icon: ArrowUpCircle, title: 'Update manager', desc: 'Roll out, pause or roll back app updates', to: '/admin/updates' },
     { icon: Users, title: 'User manager', desc: 'Accounts, activity, admin access and blocking', to: '/admin/users' },
     { icon: BellRing, title: 'Notification manager', desc: 'Announcements and push notifications', to: '/admin/notifications' },
@@ -62,6 +64,9 @@ export default function AdminRoutes() {
       <Route path="flashcards/category/:source" element={<FlashCategoryBooks />} />
       <Route path="flashcards/book/:source" element={<FlashBookDecks />} />
       <Route path="flashcards/deck/:deckId" element={<FlashDeckCards />} />
+      <Route path="mnemonics" element={<MnemonicAdminHome />} />
+      <Route path="mnemonics/paper/:source" element={<MnemonicAdminPaper />} />
+      <Route path="mnemonics/edit" element={<MnemonicAdminEdit />} />
       <Route path="updates" element={<AdminUpdates />} />
       <Route path="users" element={<AdminUsers />} />
       <Route path="notifications" element={<AdminNotify />} />

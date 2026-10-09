@@ -27,7 +27,13 @@
 // `answer` (optional) is the plain answer to the card's question, shown under
 // the title so the picture never has to carry the whole fact on its own.
 
+import { useLayoutEffect, useRef } from 'react';
+
 const ink = '#17232b';
+
+// The smallest a card's content is shrunk to make it fit the face before it
+// scrolls instead. Below this the small print stops being comfortable.
+const MIN_FIT = 0.72;
 const muted = '#5b6b75';
 
 /** "[VI]sual fields [G]one" -> text with the bracketed parts highlighted. */
@@ -273,23 +279,78 @@ export function readVisual(value) {
 /** `source` (optional) is where the mnemonic comes from, shown at the foot. */
 export default function MnemonicVisual({ visual, source }) {
   const v = readVisual(visual);
+  const outer = useRef(null);
+  const inner = useRef(null);
+
+  // Shrink a long card to fit its face, so the whole picture is seen at once
+  // — a mnemonic is remembered as one image, not read by scrolling. CSS zoom
+  // (not a transform) so the text re-flows at the smaller size.
+  useLayoutEffect(() => {
+    const box = outer.current;
+    const body = inner.current;
+    if (!box || !body) return undefined;
+    const fit = () => {
+      // Measured at natural height (no min-height), then stretched back to
+      // fill the face at whatever zoom was needed. Text re-flows as the zoom
+      // changes, so the largest zoom that fits is found by halving.
+      const have = box.clientHeight;
+      body.style.minHeight = '0';
+      const fits = (z) => {
+        body.style.zoom = String(z);
+        return body.getBoundingClientRect().height <= have - 2;
+      };
+      let z = 1;
+      if (have && !fits(1)) {
+        let lo = MIN_FIT;
+        let hi = 1;
+        if (fits(lo)) {
+          for (let i = 0; i < 6; i += 1) {
+            const mid = (lo + hi) / 2;
+            if (fits(mid)) lo = mid;
+            else hi = mid;
+          }
+        }
+        // Re-flow is not perfectly smooth, so confirm the pick and step down
+        // until it really fits.
+        z = Math.floor(lo * 100) / 100;
+        while (z > MIN_FIT && !fits(z)) z = Math.max(MIN_FIT, z - 0.02);
+      }
+      body.style.zoom = String(z);
+      body.style.minHeight = `${100 / z}%`;
+    };
+    fit();
+    // System emoji and late layout can shift sizes without a font event, so
+    // check again shortly after.
+    const timers = [setTimeout(fit, 250), setTimeout(fit, 1200)];
+    // Web fonts and emoji can arrive after the first layout and change it.
+    const fonts = typeof document !== 'undefined' ? document.fonts : null;
+    fonts?.addEventListener?.('loadingdone', fit);
+    const watch = typeof ResizeObserver === 'undefined' ? null : new ResizeObserver(fit);
+    watch?.observe(box);
+    return () => {
+      timers.forEach(clearTimeout);
+      fonts?.removeEventListener?.('loadingdone', fit);
+      watch?.disconnect();
+    };
+  }, [visual, source]);
+
   if (!v) return null;
   const tone = v.tone || '#0F7B6C';
   const Diagram = DIAGRAMS[v.diagram?.type];
   return (
     <div
+      ref={outer}
       style={{
         height: '100%',
-        display: 'flex',
-        flexDirection: 'column',
         borderRadius: 20,
-        // Scrolls rather than clips if a card ever runs long on a small phone.
+        // Scrolls rather than clips if a card is still too long at MIN_FIT.
         overflowY: 'auto',
         overflowX: 'hidden',
         background: '#fff',
         fontFamily: 'system-ui, -apple-system, "Segoe UI", Roboto, sans-serif',
       }}
     >
+      <div ref={inner} style={{ minHeight: '100%', display: 'flex', flexDirection: 'column' }}>
       <div
         style={{
           flexShrink: 0,
@@ -331,6 +392,7 @@ export default function MnemonicVisual({ visual, source }) {
       {source ? (
         <p style={{ margin: 0, flexShrink: 0, padding: '6px 16px 10px', fontSize: 11, color: muted }}>Source: {source}</p>
       ) : null}
+      </div>
     </div>
   );
 }

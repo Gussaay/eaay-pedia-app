@@ -16,12 +16,12 @@
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import { createPortal } from 'react-dom';
 import { useNavigate, useParams, useSearchParams } from 'react-router-dom';
-import { ArrowRight, Check, Lightbulb, Maximize2, PartyPopper, RotateCw, X } from 'lucide-react';
+import { ArrowRight, Check, Lightbulb, Maximize2, PartyPopper, RotateCw, Target, X } from 'lucide-react';
 import { useAuth } from '../hooks/useAuth';
 import { useAsync } from '../hooks/useData';
 import { getOne } from '../lib/rtdb';
 import { loadAllProgress, loadCards, loadDeckProgress, loadStats, saveSession } from '../lib/flashcardData';
-import { loadBook } from '../lib/mnemonicData';
+import { loadBook, loadByRefs, loadDeckLinks } from '../lib/mnemonicData';
 import { buildSession, gradeCard } from '../lib/flashcards';
 import { useBackHandler } from '../lib/back';
 import {
@@ -35,7 +35,9 @@ import {
   setQuery,
   setTitle,
 } from '../lib/mnemonics';
+import { linksOf, mnemonicFor, refOf, testPath } from '../lib/mnemonicLinks';
 import MnemonicVisual from '../components/MnemonicVisual';
+import MnemonicPeek from '../components/MnemonicPeek';
 import ShareMnemonicButton from '../components/ShareMnemonic';
 import { clearSpot, loadSpot, saveSpot } from '../lib/resume';
 import { AppBar, Button, Card, Empty, Page, SkeletonList, ZoomImage, useToast } from '../components/ui';
@@ -44,6 +46,13 @@ const RATING_BUTTONS = [
   { rating: 'again', label: 'Again', hint: 'Show it later today', icon: X, className: 'bg-red-50 text-red-700 hover:bg-red-100 border-red-200' },
   { rating: 'good', label: 'Good', hint: 'I knew it', icon: Check, className: 'bg-emerald-50 text-emerald-700 hover:bg-emerald-100 border-emerald-200' },
   { rating: 'easy', label: 'Easy', hint: 'Too simple', icon: ArrowRight, className: 'bg-sky-50 text-sky-700 hover:bg-sky-100 border-sky-200' },
+];
+
+// A mnemonic is not a fact to grade but a hook to keep: either it came back
+// to you or it needs another look. Still the same spaced repetition underneath.
+const MNEMONIC_BUTTONS = [
+  { rating: 'again', label: 'Show me again', hint: 'The hook did not come', icon: RotateCw, className: 'bg-amber-50 text-amber-800 hover:bg-amber-100 border-amber-200' },
+  { rating: 'good', label: 'I remember it', hint: 'The hook came back', icon: Check, className: 'bg-teal-50 text-teal-700 hover:bg-teal-100 border-teal-200' },
 ];
 
 const FLIP_MS = 500;
@@ -157,28 +166,35 @@ export default function FlashStudy() {
   const navigate = useNavigate();
   const toast = useToast();
 
-  // Two ways in: one deck (/flashcards/study/:deckId), or a mnemonic set
+  // Three ways in: one deck (/flashcards/study/:deckId); a mnemonic set
   // (/mnemonics/study?book=…&deck=…&section=…&source=…) — a slice of a book
-  // that can span several chapter decks.
-  const setMode = !deckId;
+  // that can span several chapter decks; or the flashcards behind some
+  // mnemonics (/flashcards/linked?m=<deck~card>,…) to test what they cover.
+  const linkedMode = !deckId && params.has('m');
+  const setMode = !deckId && !linkedMode;
+  const mnemonicRefs = (params.get('m') || '').split(',').filter(Boolean);
   const filters = {
     book: params.get('book') || '',
     deck: params.get('deck') || '',
     section: params.get('section') || '',
     source: params.get('source') || '',
   };
-  const spotKind = setMode ? 'mset' : 'flash';
-  const spotId = setMode ? setKey(filters) : deckId;
+  const spotKind = linkedMode ? 'flink' : setMode ? 'mset' : 'flash';
+  const spotId = linkedMode ? mnemonicRefs.join(',') : setMode ? setKey(filters) : deckId;
 
-  const deckPath = setMode
-    ? `/mnemonics/set?${setQuery(filters)}`
-    : `/flashcards/deck/${encodeURIComponent(deckId)}`;
+  const deckPath = linkedMode
+    ? params.get('back') || '/mnemonics'
+    : setMode
+      ? `/mnemonics/set?${setQuery(filters)}`
+      : `/flashcards/deck/${encodeURIComponent(deckId)}`;
   // replace, never push — see the note at the top of this file.
   const leave = useCallback((to) => navigate(to, { replace: true }), [navigate]);
 
   const data = useAsync(
     () =>
-      setMode
+      linkedMode
+        ? loadLinked(mnemonicRefs, user?.uid)
+        : setMode
         ? Promise.all([loadBook(filters.book), loadAllProgress(user?.uid), loadStats(user?.uid)]).then(
             ([book, allProgress, stats]) => {
               const cards = filterSet(book.cards, filters);
@@ -198,7 +214,18 @@ export default function FlashStudy() {
             loadCards(deckId),
             loadDeckProgress(user?.uid, deckId),
             loadStats(user?.uid),
-          ]).then(([deck, cards, progress, stats]) => ({ deck, cards, progress, stats })),
+            // Which cards have a mnemonic. A missing or unreadable index only
+            // means no "See the mnemonic" buttons, never a failed session.
+            loadDeckLinks(deckId).catch(() => ({})),
+          ]).then(([deck, cards, progress, stats, links]) => ({
+            deck,
+            cards,
+            progress,
+            stats,
+            mnemonicOf: Object.fromEntries(
+              cards.map((c) => [c._key, mnemonicFor(links, c._key)]).filter(([, r]) => r),
+            ),
+          })),
     [deckId, spotId, user?.uid],
   );
 
@@ -211,6 +238,7 @@ export default function FlashStudy() {
   const [graded, setGraded] = useState({});
   const [tally, setTally] = useState({ answered: 0, correct: 0 });
   const [done, setDone] = useState(false);
+  const [peek, setPeek] = useState(null);
 
   // The session is built once. Rebuilding it as progress changes would make
   // cards appear and disappear underneath the person answering them.
@@ -347,6 +375,16 @@ export default function FlashStudy() {
     });
   }, [queue, at, graded, tally, finished, spotKind, spotId, data.data]);
 
+  // Mnemonic decks read as mnemonics: the prompt on the front, the picture on
+  // the back. A card with only a picture on its back gets that layout in any
+  // deck, since an empty "Answer" heading above a picture says nothing.
+  const drawn = hasVisualBack(card);
+  const picture = drawn || isPictureBack(card);
+  const mnemonic = data.data?.deck?.kind === MNEMONIC || picture;
+  const home = mnemonic ? '/mnemonics' : '/flashcards';
+  const buttons = mnemonic ? MNEMONIC_BUTTONS : RATING_BUTTONS;
+  const linkedMnemonic = data.data?.mnemonicOf?.[card?._key] || null;
+
   // Keyboard on the web: space flips, 1/2/3 rate.
   useEffect(() => {
     const onKey = (e) => {
@@ -358,19 +396,11 @@ export default function FlashStudy() {
       }
       if (!flipped) return;
       const index = { Digit1: 0, Digit2: 1, Digit3: 2 }[e.code];
-      if (index !== undefined) answer(RATING_BUTTONS[index].rating);
+      if (buttons[index]) answer(buttons[index].rating);
     };
     window.addEventListener('keydown', onKey);
     return () => window.removeEventListener('keydown', onKey);
-  }, [flipped, card, answer, finished]);
-
-  // Mnemonic decks read as mnemonics: the prompt on the front, the picture on
-  // the back. A card with only a picture on its back gets that layout in any
-  // deck, since an empty "Answer" heading above a picture says nothing.
-  const drawn = hasVisualBack(card);
-  const picture = drawn || isPictureBack(card);
-  const mnemonic = data.data?.deck?.kind === MNEMONIC || picture;
-  const home = mnemonic ? '/mnemonics' : '/flashcards';
+  }, [flipped, card, answer, finished, buttons]);
 
   const percent = useMemo(
     () => (queue?.length ? Math.round((at / queue.length) * 100) : 0),
@@ -403,6 +433,10 @@ export default function FlashStudy() {
   }
 
   if (finished || !card) {
+    // Mnemonics just studied that have flashcards behind them.
+    const testRefs = setMode
+      ? [...new Set(queue.filter((c) => linksOf(c).length).map((c) => refOf(c.deck, c._key)))]
+      : [];
     const accuracy = tally.answered ? Math.round((tally.correct / tally.answered) * 100) : 0;
     return (
       <div className="min-h-screen">
@@ -429,8 +463,24 @@ export default function FlashStudy() {
               </div>
             </div>
           </Card>
+          {testRefs.length > 0 && (
+            <Card className="border-teal-200 bg-teal-50/60 p-4">
+              <p className="font-semibold text-slate-800">Now test the facts behind them</p>
+              <p className="mt-0.5 text-sm text-slate-600">
+                {testRefs.length === 1
+                  ? 'One of these mnemonics has flashcards that check what it covers.'
+                  : `${testRefs.length} of these mnemonics have flashcards that check what they cover.`}
+              </p>
+              <Button
+                className="mt-3 w-full justify-center"
+                onClick={() => leave(testPath(testRefs, deckPath))}
+              >
+                <Target size={18} /> Test yourself
+              </Button>
+            </Card>
+          )}
           <Button className="w-full justify-center" onClick={() => leave(deckPath)}>
-            Back to the deck
+            {linkedMode ? 'Back to the mnemonics' : 'Back to the deck'}
           </Button>
           <Button variant="outline" className="w-full justify-center" onClick={() => leave(home)}>
             {mnemonic ? 'All mnemonics' : 'All decks'}
@@ -452,7 +502,10 @@ export default function FlashStudy() {
         onBack={() => leave(deckPath)}
       />
       <div className="h-1 w-full shrink-0 bg-slate-200">
-        <div className="h-full bg-violet-500 transition-all duration-300" style={{ width: `${percent}%` }} />
+        <div
+          className={`h-full transition-all duration-300 ${mnemonic ? 'bg-teal-500' : 'bg-violet-500'}`}
+          style={{ width: `${percent}%` }}
+        />
       </div>
 
       <div className="flex min-h-0 flex-1 items-center justify-center p-4">
@@ -475,7 +528,7 @@ export default function FlashStudy() {
               <div className="flex h-full flex-col">
                 <p className="text-[11px] font-semibold uppercase tracking-wide text-slate-400">
                   {setMode && card.deckTitle
-                    ? `${card.deckTitle} · ${sectionOf(card)}`
+                    ? `${card.deckTitle} · ${card.topic || sectionOf(card)}`
                     : card.chapter || card.topic || (mnemonic ? 'Mnemonic' : 'Question')}
                 </p>
                 <div className="flex flex-1 flex-col justify-center">
@@ -517,6 +570,25 @@ export default function FlashStudy() {
                     </p>
                   )}
                 </div>
+                {linkedMnemonic && (
+                  <span
+                    role="button"
+                    tabIndex={0}
+                    onClick={(e) => {
+                      e.stopPropagation();
+                      setPeek(linkedMnemonic);
+                    }}
+                    onKeyDown={(e) => {
+                      if (e.key === 'Enter') {
+                        e.stopPropagation();
+                        setPeek(linkedMnemonic);
+                      }
+                    }}
+                    className="mt-3 inline-flex items-center gap-1.5 self-start rounded-full border border-teal-200 bg-white px-3.5 py-1.5 text-sm font-semibold text-teal-700 shadow-sm"
+                  >
+                    <Lightbulb size={16} /> See the mnemonic
+                  </span>
+                )}
                 {card.tags && <p className="mt-3 text-xs text-slate-400">{card.tags}</p>}
               </div>
             </Face>
@@ -529,9 +601,11 @@ export default function FlashStudy() {
       <div className="shrink-0 border-t border-slate-200 bg-white p-4 pb-safe">
         {flipped ? (
           <>
-            <p className="mb-2 text-center text-xs text-slate-400">How well did you know it?</p>
+            <p className="mb-2 text-center text-xs text-slate-400">
+              {mnemonic ? 'Did the hook come back to you?' : 'How well did you know it?'}
+            </p>
           <div className="mx-auto flex max-w-3xl gap-2">
-            {RATING_BUTTONS.map(({ rating, label, hint, icon: Icon, className }) => (
+            {buttons.map(({ rating, label, hint, icon: Icon, className }) => (
               <button
                 key={rating}
                 onClick={() => answer(rating)}
@@ -559,6 +633,38 @@ export default function FlashStudy() {
           </div>
         )}
       </div>
+      {peek && <MnemonicPeek mnemonicRef={peek} onClose={() => setPeek(null)} />}
     </div>
   );
+}
+
+/**
+ * The flashcards behind some mnemonics, as one session. Each card keeps its
+ * own deck for saving progress, and remembers which mnemonic it came from so
+ * its back can still open it.
+ */
+async function loadLinked(mnemonicRefs, uid) {
+  const [mnemonics, allProgress, stats] = await Promise.all([
+    loadByRefs(mnemonicRefs),
+    loadAllProgress(uid),
+    loadStats(uid),
+  ]);
+  const mnemonicOf = {};
+  const refs = [];
+  mnemonics.forEach((m) =>
+    linksOf(m).forEach((r) => {
+      if (refs.includes(r)) return;
+      refs.push(r);
+      mnemonicOf[r.split('~')[1]] = m._ref;
+    }),
+  );
+  const cards = await loadByRefs(refs);
+  return {
+    deck: { title: 'Test yourself', system: 'Flashcards' },
+    cards,
+    progress: flattenProgress(allProgress, [...new Set(cards.map((c) => c.deck))]),
+    stats,
+    deckOf: Object.fromEntries(cards.map((c) => [c._key, c.deck])),
+    mnemonicOf,
+  };
 }

@@ -86,3 +86,20 @@ test('progress from several decks merges by card', () => {
   const merged = flattenProgress({ cardio: { a: { box: 1 } }, neuro: { c: { box: 2 } }, other: { z: {} } }, ['cardio', 'neuro']);
   assert.deepEqual(Object.keys(merged).sort(), ['a', 'c']);
 });
+
+test('look-alikes need real shared topic words', async () => {
+  const { findSimilar, overlap, topicWords } = await import('./mnemonics.js');
+  assert.deepEqual([...topicWords('The causes of [N]eonatal hypoglycaemia')].sort(), ['causes', 'hypoglycaemia', 'neonatal']);
+  assert.equal(overlap('neonatal hypoglycaemia causes', 'causes of hypoglycaemia in neonates'), 2 / 3);
+  const items = ['Causes of neonatal hypoglycaemia', 'Causes of stridor', 'Features of Kawasaki disease'];
+  const hits = findSimilar('What are the causes of hypoglycaemia in a neonatal baby?', items);
+  assert.equal(hits[0].item, 'Causes of neonatal hypoglycaemia');
+  assert.equal(hits.length, 1);
+  assert.deepEqual(findSimilar('stridor', items), []);
+});
+
+test('cards group into runs by heading, keeping their index', async () => {
+  const { groupByHeading } = await import('./mnemonics.js');
+  const g = groupByHeading([{ t: 'A' }, { t: 'A' }, { t: 'B' }, { t: 'A' }], (x) => x.t);
+  assert.deepEqual(g.map((x) => [x.heading, x.start, x.cards.length]), [['A', 0, 2], ['B', 2, 1], ['A', 3, 1]]);
+});

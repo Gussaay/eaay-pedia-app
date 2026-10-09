@@ -77,7 +77,8 @@ function AddButton({ onClick, children }) {
 export function FlashCategories() {
   const navigate = useNavigate();
   const toast = useToast();
-  const list = useList('flashcategory');
+  // Mnemonic categories are managed in their own screen (AdminMnemonics.jsx).
+  const list = useList('flashcategory', { filter: (c) => !isMnemonicCategory(c) });
   const books = useList('flashbooks');
   const [form, setForm] = useState(null);
   const [confirm, setConfirm] = useState(null);
@@ -119,6 +120,12 @@ export function FlashCategories() {
         <AddButton onClick={() => setForm({ title: '', source: '', img: '', publish: true, mnemonic: false })}>
           Add new category
         </AddButton>
+        <button
+          onClick={() => navigate('/admin/mnemonics')}
+          className="w-full rounded-2xl border border-teal-200 bg-teal-50 p-3 text-left text-sm text-teal-800"
+        >
+          Mnemonics are managed separately — <b>open the mnemonic manager</b>.
+        </button>
 
         {list.loading ? (
           <SkeletonList />
@@ -716,6 +723,10 @@ export function FlashDeckCards() {
           tags: form.tags.trim(),
           chapter: form.chapter.trim(),
           source: String(form.source || '').trim(),
+          // A mnemonic's links to the flashcards it covers are edited in the
+          // mnemonic manager; saving here must not drop them.
+          links: form.links || null,
+          topic: form.topic || '',
         },
       };
       // The deck list shows the count without reading the cards, so it has to
