@@ -64,3 +64,15 @@ export function mnemonicFor(deckLinks, cardId) {
 /** The study screen for the flashcards behind some mnemonics. */
 export const testPath = (mnemonicRefs = [], back = '') =>
   `/flashcards/linked?m=${mnemonicRefs.join(',')}&mode=all&limit=0${back ? `&back=${encodeURIComponent(back)}` : ''}`;
+
+/**
+ * What a quiz question links to, so its explanation can offer the mnemonic
+ * and the flashcards on the same point:
+ *
+ *   quizqq/<id>/mnem_links   { "<mDeck>~<mCard>": true, … }
+ *   quizqq/<id>/card_links   { "<fDeck>~<fCard>": true, … }
+ */
+export const questionLinks = (question) => ({
+  mnemonics: linksOf({ links: question?.mnem_links }),
+  flashcards: linksOf({ links: question?.card_links }),
+});

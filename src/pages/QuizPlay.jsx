@@ -37,6 +37,7 @@ import { findSavedSession, invalidateQuestions, loadQuestions, loadQuizMeta, pla
 import { queuePendingResult } from '../lib/sync';
 import { AppBar, Button, Card, ErrorBox, Input, Modal, Page, Spinner, Textarea, ZoomImage, useToast } from '../components/ui';
 import QuestionEditModal from '../components/QuestionEditModal';
+import StudyLinks from '../components/StudyLinks';
 
 export default function QuizPlay() {
   const { kind, id } = useParams();
@@ -1002,6 +1003,7 @@ function ExplanationModal({ question, quizTitle, selected, answer, onClose, onNe
             : 'No explanation available, you can add your own by submitting your comments below.')}
       </p>
       <ZoomImage src={question.exp_img} className="mt-3" />
+      <StudyLinks question={question} />
 
       <div className="mt-5 border-t border-slate-100 pt-4">
         <p className="text-sm font-semibold text-slate-700 mb-2">Comments</p>

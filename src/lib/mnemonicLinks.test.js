@@ -1,6 +1,6 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
-import { linkUpdates, linksMap, linksOf, mnemonicFor, parseRef, refOf } from './mnemonicLinks.js';
+import { linkUpdates, linksMap, linksOf, mnemonicFor, parseRef, questionLinks, refOf } from './mnemonicLinks.js';
 
 test('refs join and split a deck and a card id', () => {
   assert.equal(refOf('d1', 'c1'), 'd1~c1');
@@ -34,4 +34,11 @@ test('a flashcard finds its mnemonic in the deck link map', () => {
   assert.equal(mnemonicFor(deck, 'c2'), null);
   assert.equal(mnemonicFor(deck, 'c3'), null);
   assert.equal(mnemonicFor(null, 'c1'), null);
+});
+
+test('questionLinks reads both link maps of a quiz question', () => {
+  const q = { mnem_links: { 'm~1': true }, card_links: { 'f~1': true, 'f~2': true, bad: true } };
+  assert.deepEqual(questionLinks(q), { mnemonics: ['m~1'], flashcards: ['f~1', 'f~2'] });
+  assert.deepEqual(questionLinks({}), { mnemonics: [], flashcards: [] });
+  assert.deepEqual(questionLinks(null), { mnemonics: [], flashcards: [] });
 });
