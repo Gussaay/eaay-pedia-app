@@ -12,7 +12,7 @@
 //   exam   — you may move freely and change any answer until you submit
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import { useNavigate, useParams, useSearchParams } from 'react-router-dom';
-import { ArrowLeft, ArrowRight, Clock, LayoutGrid, Lightbulb, MessageSquarePlus, Pencil, Send, X } from 'lucide-react';
+import { ArrowLeft, ArrowRight, Clock, Highlighter, LayoutGrid, Lightbulb, MessageSquarePlus, Pencil, Send, X } from 'lucide-react';
 import { useAuth } from '../hooks/useAuth';
 import { useBackHandler } from '../lib/back';
 import { useSwipe } from '../hooks/useSwipe';
@@ -32,6 +32,7 @@ import {
   tallyAnswers,
   visibleOptions,
 } from '../lib/quiz';
+import { hintsOf, markHints } from '../lib/questionHints';
 import { loadHistory, recordSession } from '../lib/quizHistory';
 import { findSavedSession, invalidateQuestions, loadQuestions, loadQuizMeta, playPath } from '../lib/quizSource';
 import { queuePendingResult } from '../lib/sync';
@@ -84,6 +85,8 @@ export default function QuizPlay() {
   const [exitAsk, setExitAsk] = useState(false);
   const [submitAsk, setSubmitAsk] = useState(false);
   const [editing, setEditing] = useState(false);
+  // The bank position whose hint is lit, so moving on switches it off.
+  const [hintFor, setHintFor] = useState(-1);
   const submittedRef = useRef(false);
 
   const discardSaved = useCallback(
@@ -167,6 +170,9 @@ export default function QuizPlay() {
   const tq = deck.length;
   const options = useMemo(() => (current ? visibleOptions(current, meta?.source) : []), [current, meta]);
   const answer = String(current?.answer || '').trim().toLowerCase();
+  // Review mode only: an exam gives nothing away.
+  const hints = useMemo(() => (mode === 'review' ? hintsOf(current) : []), [current, mode]);
+  const hintOn = hints.length > 0 && hintFor === qi;
 
   // The score is counted from the answers, not accumulated as they are given:
   // exam mode lets an answer be changed, and a running total would for ever
@@ -591,10 +597,34 @@ export default function QuizPlay() {
               </div>
             )}
             <Card className="p-5">
-              <p className="text-lg text-slate-900 whitespace-pre-line leading-relaxed">{current.question}</p>
+              <p className="text-lg text-slate-900 whitespace-pre-line leading-relaxed">
+                {hintOn
+                  ? markHints(current.question, hints).map((part, i) =>
+                      part.hit ? (
+                        <mark key={i} className="rounded bg-yellow-200 px-0.5 font-semibold text-slate-900">
+                          {part.text}
+                        </mark>
+                      ) : (
+                        part.text
+                      ),
+                    )
+                  : current.question}
+              </p>
               <div data-no-swipe>
                 <ZoomImage src={current.question_img} className="mt-3" />
               </div>
+              {hints.length > 0 && (
+                <button
+                  onClick={() => setHintFor(hintOn ? -1 : qi)}
+                  className={`mt-3 inline-flex items-center gap-1.5 rounded-full border px-3 py-1 text-sm font-medium transition ${
+                    hintOn
+                      ? 'border-yellow-300 bg-yellow-100 text-yellow-900'
+                      : 'border-slate-200 bg-white text-slate-600 hover:border-yellow-300 hover:bg-yellow-50'
+                  }`}
+                >
+                  <Highlighter size={16} /> {hintOn ? 'Hide hint' : 'Hint'}
+                </button>
+              )}
             </Card>
             <div className="space-y-2.5">
               {options.map((k) => {

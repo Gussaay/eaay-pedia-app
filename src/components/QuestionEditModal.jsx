@@ -1,7 +1,8 @@
 // Admin quick edit from inside a quiz (EditActivity).
 import { useState } from 'react';
 import { updateAt } from '../lib/rtdb';
-import { Button, Modal, useToast } from './ui';
+import { hintsOf } from '../lib/questionHints';
+import { Button, Input, Modal, useToast } from './ui';
 import QuestionForm, { emptyQuestion, validateQuestion } from './QuestionForm';
 
 export default function QuestionEditModal({ question, onClose, onSaved }) {
@@ -14,6 +15,7 @@ export default function QuestionEditModal({ question, onClose, onSaved }) {
     v.answer = v.answer.trim().toLowerCase();
     return v;
   });
+  const [hint, setHint] = useState(() => hintsOf(question).join(' | '));
   const [saving, setSaving] = useState(false);
 
   const save = async () => {
@@ -27,6 +29,7 @@ export default function QuestionEditModal({ question, onClose, onSaved }) {
         answer: value.answer,
         exp: value.exp,
         exp_img: value.exp_img,
+        hint: hintsOf({ hint }).join(' | ') || null,
       };
       await updateAt(`quizqq/${question._key}`, patch);
       toast('Question edited successfully', 'success');
@@ -52,6 +55,13 @@ export default function QuestionEditModal({ question, onClose, onSaved }) {
       }
     >
       <QuestionForm value={value} onChange={setValue} />
+      <Input
+        label="Hint words"
+        hint="Words of the question highlighted by the Hint button in review mode. Separate them with |"
+        value={hint}
+        onChange={(e) => setHint(e.target.value)}
+        placeholder="barking cough | stridor"
+      />
     </Modal>
   );
 }
