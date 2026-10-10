@@ -188,9 +188,10 @@ function Compare({ left, right, tone }) {
       <div style={{ background: colour, color: '#fff', fontWeight: 800, fontSize: 15, padding: '6px 8px', textAlign: 'center' }}>
         {side?.title}
       </div>
-      <div style={{ padding: '6px 8px', display: 'flex', flexDirection: 'column', gap: 3 }}>
+      <div style={{ padding: '2px 8px', display: 'flex', flexDirection: 'column' }}>
         {(side?.items || []).map((x, i) => (
-          <span key={i} style={{ fontSize: 13, color: ink, lineHeight: 1.25 }}>
+          // A faint rule between rows so each pair reads as its own line.
+          <span key={i} style={{ fontSize: 13, color: ink, lineHeight: 1.25, padding: '5px 0', borderTop: i ? `1px solid ${soft(colour, 0.25)}` : 'none' }}>
             {x}
           </span>
         ))}
