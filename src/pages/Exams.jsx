@@ -1,11 +1,13 @@
 // HomeActivity: the quizzes of a book, "By exam" (allquiz) or, for collection
-// books (source contains "smsb"), "By system" (chapters).
+// books (source contains "smsb"), "By system" (chapters). Every book can also be
+// browsed by chapter and by basic science (components/QuestionBrowser.jsx).
 import { useState } from 'react';
 import { useNavigate, useParams, useSearchParams } from 'react-router-dom';
 import { FileQuestion } from 'lucide-react';
 import { useList } from '../hooks/useData';
 import { num } from '../lib/rtdb';
 import { quizPath } from '../lib/quizSource';
+import QuestionBrowser from '../components/QuestionBrowser';
 import { AppBar, Empty, ErrorBox, ListCard, Page, SkeletonList } from '../components/ui';
 
 const countBadge = (n) =>
@@ -35,18 +37,23 @@ export default function Exams() {
     sort: (a, b) => num(b[`${type}number`]) - num(a[`${type}number`]),
   });
 
+  const book = useList(editMode ? null : 'mcqs', { filter: (b) => b.source === source });
+  const bank = book.data[0]?.main_category || '';
+  const tabs = [
+    ['exam', 'By exam'],
+    ...(isCollection ? [['system', 'By system']] : []),
+    ...(bank ? [['chapters', 'Chapters'], ['science', 'Science']] : []),
+  ];
+  const browsing = tab === 'chapters' || tab === 'science';
   const active = tab === 'exam' ? exams : chapters;
 
   return (
     <div className="min-h-screen">
       <AppBar title={name || 'Quizzes'} subtitle={editMode ? 'Edit mode — tap a quiz to edit it' : undefined} />
-      {isCollection && !editMode && (
+      {!editMode && tabs.length > 1 && (
         <div className="sticky top-14 z-20 bg-white border-b border-slate-100">
           <div className="max-w-3xl mx-auto flex">
-            {[
-              ['exam', 'By exam'],
-              ['system', 'By system'],
-            ].map(([k, label]) => (
+            {tabs.map(([k, label]) => (
               <button
                 key={k}
                 onClick={() => setTab(k)}
@@ -61,6 +68,10 @@ export default function Exams() {
         </div>
       )}
       <Page>
+        {browsing ? (
+          <QuestionBrowser bank={bank} book={source} bookTitle={name} name={name} mode={tab} />
+        ) : (
+          <>
         <ErrorBox error={!active.data.length && active.error} onRetry={active.reload} />
         {active.loading ? (
           <SkeletonList rows={6} />
@@ -97,6 +108,8 @@ export default function Exams() {
               />
             ))}
           </div>
+        )}
+          </>
         )}
       </Page>
     </div>

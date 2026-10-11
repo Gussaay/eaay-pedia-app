@@ -4,11 +4,14 @@ import { useState } from 'react';
 import { ImagePlus, Trash2 } from 'lucide-react';
 import { uploadImage } from '../lib/rtdb';
 import { OPTION_KEYS } from '../lib/quiz';
-import { Button, Textarea, ZoomImage, useToast } from './ui';
+import { SECTIONS } from '../lib/questionBrowse';
+import { Button, Select, Textarea, ZoomImage, useToast } from './ui';
 import ChapterPicker from './ChapterPicker';
 
 export const emptyQuestion = {
   question: '', a: '', b: '', c: '', d: '', e: '', answer: '', exp: '', exp_img: '', category1: '', category2: '',
+  // Basic-science section chosen by an admin; '' lets the app work it out (lib/questionBrowse.js).
+  science: '',
 };
 
 export function validateQuestion(q, { requireCategory } = {}) {
@@ -88,6 +91,17 @@ export default function QuestionForm({ value, onChange, showCategories = false }
         <div className="grid sm:grid-cols-2 gap-3">
           <ChapterPicker label="Category 1 (system)" value={value.category1} onChange={(v) => set('category1', v)} />
           <ChapterPicker label="Category 2 (optional)" value={value.category2} onChange={(v) => set('category2', v)} />
+          <Select
+            label="Basic science"
+            hint="Used when students browse by basic science. Automatic works it out from the question."
+            value={value.science || ''}
+            onChange={(e) => set('science', e.target.value)}
+          >
+            <option value="">Automatic</option>
+            {SECTIONS.map((s) => (
+              <option key={s} value={s}>{s === 'Clinical' ? 'Clinical (bedside)' : s}</option>
+            ))}
+          </Select>
         </div>
       )}
     </div>

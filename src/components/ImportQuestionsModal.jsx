@@ -13,6 +13,8 @@ import {
   templateCsv,
 } from '../lib/questionImport';
 import { pickSheet } from '../lib/sheetPick';
+import { browseFields } from '../lib/questionBrowse';
+import { bankOfSource } from '../lib/banks';
 import { Button, Modal, Toggle, useToast } from './ui';
 
 function downloadTemplate() {
@@ -86,8 +88,11 @@ export default function ImportQuestionsModal({ quiz, childKey, existingQuestions
     setError('');
     try {
       const updates = {};
+      const bank = await bankOfSource(quiz.source || '').catch(() => '');
       toImport.forEach((item) => {
-        updates[`quizqq/${newKey('quizqq')}`] = buildRecord(item, quiz);
+        const record = buildRecord(item, quiz);
+        // Chapter and basic-science tags for the browse screens.
+        updates[`quizqq/${newKey('quizqq')}`] = { ...record, ...browseFields(record, bank) };
       });
       // Keep the quiz's question counter in step with the new total.
       updates[`allquiz/${childKey}/number`] = str(existingQuestions.length + toImport.length);

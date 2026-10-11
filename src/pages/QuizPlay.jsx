@@ -580,7 +580,7 @@ export default function QuizPlay() {
           <>
             <div className="flex flex-wrap gap-2 text-xs">
               <span className="rounded-full bg-brand-50 text-brand-800 px-2.5 py-1 font-semibold">Question No: {qi + 1}</span>
-              {meta.source === 'smsb' || meta.bysystem ? (
+              {meta.source === 'smsb' || meta.bysystem || meta.set ? (
                 current.title && <span className="rounded-full bg-amber-50 text-amber-800 px-2.5 py-1">{current.title}</span>
               ) : null}
               {current.category && <span className="rounded-full bg-slate-100 text-slate-700 px-2.5 py-1">{current.category}</span>}

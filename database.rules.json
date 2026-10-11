@@ -19,7 +19,7 @@
     // Without these the query still works, but Firebase downloads the whole
     // node and filters in the browser. quizqq is the big one.
     "quizqq": {
-      ".indexOn": ["key", "category1", "category2"]
+      ".indexOn": ["key", "category1", "category2", "bchap", "bsci"]
     },
     "resume": {
       ".indexOn": ["uid"]

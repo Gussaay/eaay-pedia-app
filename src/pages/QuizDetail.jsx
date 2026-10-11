@@ -64,7 +64,8 @@ export default function QuizDetail() {
     const statKey = q.bysystem ? q.id : q.pkey;
     incrementString(`statistics/${statKey}/${mode}`).catch(() => {});
     updateAt(`statistics/${statKey}`, { title: q.title }).catch(() => {});
-    if (count !== null && count !== q.number) {
+    // A set has no stored record to keep in step.
+    if (!q.set && count !== null && count !== q.number) {
       if (q.bysystem) updateAt(`chapters/${q.id}`, { [`${q.type}number`]: str(count) }).catch(() => {});
       else updateAt(`allquiz/${q.id}`, { number: str(count) }).catch(() => {});
     }

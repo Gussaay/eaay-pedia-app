@@ -1,7 +1,10 @@
 // Loads a quiz (metadata + questions) for the two kinds the Android app had:
 //  - "exam":    an allquiz/<childKey> record; questions are quizqq where key == allquiz.key
+//               (plus any questions it links from other quizzes, allquiz/<id>/order)
 //  - "chapter": a chapters/<chapterKey> record played "by system"; questions are
 //               quizqq where category1/category2 == chapter name and type == sub-type.
+// and one the web app added:
+//  - "set":     a slice of a whole bank by chapter and/or basic science (lib/questionBrowse.js).
 //
 // Everything opened online is also saved for offline play (src/lib/offline.js),
 // and reads fall back to that copy when the device has no connection.
@@ -11,6 +14,7 @@ import { getOne, getWhere, toList, num } from './rtdb';
 import { listSpots, loadSpot } from './resume';
 import { matchesChapter } from './quiz';
 import { getQuiz, saveQuiz } from './offline';
+import { setTitle } from './questionBrowse';
 
 const questionCache = new Map();
 
@@ -25,6 +29,7 @@ function withTimeout(promise, ms = 20000) {
 }
 
 async function fetchMeta(kind, id, params) {
+  if (kind === 'set') return setMeta(id, params);
   if (kind === 'chapter') {
     const ch = (await getOne(`chapters/${id}`)) || {};
     const type = params.type || '';
@@ -64,8 +69,40 @@ async function fetchMeta(kind, id, params) {
   };
 }
 
+/**
+ * A "set": every question of a bank (optionally one book) in one chapter
+ * and/or one basic-science section, played like a quiz. The id is the set's
+ * own key (setId), so progress and the leaderboard belong to that slice.
+ */
+function setMeta(id, params) {
+  const { bank = '', book = '', chapter = '', science = '' } = params;
+  return {
+    kind: 'set',
+    id,
+    pkey: id,
+    bysystem: false,
+    set: true,
+    bank,
+    book,
+    science,
+    type: '',
+    chapter: chapter || '?',
+    filterChapter: chapter,
+    title: setTitle({ chapter, science, bookTitle: params.bookTitle || '' }),
+    des: book
+      ? `Questions from ${params.bookTitle || 'this book'}, gathered by chapter and basic science.`
+      : 'Questions from every book in this bank, gathered by chapter and basic science.',
+    uploader: 'Dr. Qusay Mohamed',
+    img: '',
+    source: book,
+    name: params.name || '',
+    number: 0,
+  };
+}
+
 export async function loadQuizMeta(kind, id, params = {}) {
-  // The saved copy is keyed by pkey, which for chapters we can rebuild locally.
+  // The saved copy is keyed by pkey, which for chapters and sets we can rebuild locally.
+  if (kind === 'set') return setMeta(id, params);
   const offlineKey = kind === 'chapter' ? { kind, pkey: `${id}${params.type || ''}` } : null;
   if (!isOffline()) {
     try {
@@ -91,6 +128,20 @@ async function findSavedByExamId(kind, id) {
 
 async function fetchQuestions(meta) {
   let list;
+  if (meta.set) {
+    list = meta.filterChapter
+      ? await getWhere('quizqq', 'bchap', `${meta.bank}|${meta.filterChapter}`)
+      : await getWhere('quizqq', 'bsci', `${meta.bank}|${meta.science}`);
+    list = list.filter(
+      (q) =>
+        q.question !== undefined &&
+        (!meta.science || q.science === meta.science) &&
+        (!meta.book || q.source === meta.book),
+    );
+    // Keep each book's questions together, in their quiz order.
+    list.sort((a, b) => String(a.source).localeCompare(String(b.source)) || (a._key < b._key ? -1 : a._key > b._key ? 1 : 0));
+    return list;
+  }
   if (meta.bysystem) {
     const [c1, c2] = await Promise.all([
       getWhere('quizqq', 'category1', meta.chapter),
@@ -101,6 +152,23 @@ async function fetchQuestions(meta) {
     list = [...byKey.values()].filter((q) => matchesChapter(q, meta.chapter, meta.type));
   } else {
     list = await getWhere('quizqq', 'key', meta.pkey);
+    // A quiz can also link questions that live in another quiz (a recall
+    // sitting that repeats an earlier question): allquiz/<id>/order maps every
+    // question id, its own and linked ones, to its place in the quiz.
+    const order = meta.raw?.order;
+    if (order && typeof order === 'object') {
+      const have = new Set(list.map((q) => q._key));
+      const linked = await Promise.all(
+        Object.keys(order)
+          .filter((id) => !have.has(id))
+          .map((id) => getOne(`quizqq/${id}`).then((q) => q && { ...q, _key: id })),
+      );
+      list = [...list, ...linked.filter(Boolean)];
+      const at = (q) => (order[q._key] === undefined ? Infinity : num(order[q._key]));
+      list = list.filter((q) => q.question !== undefined);
+      list.sort((a, b) => at(a) - at(b) || (a._key < b._key ? -1 : a._key > b._key ? 1 : 0));
+      return list;
+    }
   }
   list = list.filter((q) => q.question !== undefined);
   list.sort((a, b) => (a._key < b._key ? -1 : a._key > b._key ? 1 : 0));

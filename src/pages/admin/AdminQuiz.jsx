@@ -5,6 +5,8 @@ import { ChevronLeft, ChevronRight, Eraser, Plus, Trash2, Upload } from 'lucide-
 import { useAsync } from '../../hooks/useData';
 import { getOne, getWhere, pushTo, removeAt, removePaths, str, updateAt } from '../../lib/rtdb';
 import { invalidateQuestions } from '../../lib/quizSource';
+import { browseFields } from '../../lib/questionBrowse';
+import { bankOfSource } from '../../lib/banks';
 import ImageField from '../../components/ImageField';
 import QuestionForm, { emptyQuestion, validateQuestion } from '../../components/QuestionForm';
 import ImportQuestionsModal from '../../components/ImportQuestionsModal';
@@ -268,6 +270,8 @@ export function QuestionEditorPage() {
         if (q[k] !== undefined) v[k] = String(q[k]);
       });
       v.answer = v.answer.trim().toLowerCase();
+      // Only a section an admin chose shows as chosen; a worked-out one shows as Automatic.
+      v.science = q.science_manual ? String(q.science || '') : '';
       setValue(v);
     }
     // eslint-disable-next-line react-hooks/exhaustive-deps
@@ -293,7 +297,11 @@ export function QuestionEditorPage() {
         type: quiz.type || '',
         title: quiz.title || '',
         exp_img: value.exp_img,
+        science: value.science || '',
+        science_manual: !!value.science,
       };
+      // Chapter and basic-science tags for the browse screens.
+      Object.assign(record, browseFields(record, await bankOfSource(quiz.source || '').catch(() => '')));
       if (isNew) {
         await pushTo('quizqq', { key: quiz.key, source: quiz.source || '', ...record });
         await syncCount(childKey, quiz, questions.length + 1);
