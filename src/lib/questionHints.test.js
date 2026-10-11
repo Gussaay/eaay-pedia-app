@@ -25,3 +25,11 @@ test('markHints marks whole-word matches and keeps the text intact', () => {
   assert.deepEqual(markHints('', ['x']), [{ text: '', hit: false }]);
   assert.deepEqual(markHints('IgA (low)', ['(low)']).filter((p) => p.hit).map((p) => p.text), ['(low)']);
 });
+
+test('copies of the same question are listed apart from similar ones', async () => {
+  const { sameOf, similarOf } = await import('./questionHints.js');
+  const q = { same: { a1: true, b2: true }, similar: { a1: true, c3: true } };
+  assert.deepEqual(sameOf(q), ['a1', 'b2']);
+  assert.deepEqual(similarOf(q), ['c3']);
+  assert.deepEqual(sameOf({}), []);
+});

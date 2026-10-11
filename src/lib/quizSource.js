@@ -132,9 +132,12 @@ async function fetchQuestions(meta) {
     list = meta.filterChapter
       ? await getWhere('quizqq', 'bchap', `${meta.bank}|${meta.filterChapter}`)
       : await getWhere('quizqq', 'bsci', `${meta.bank}|${meta.science}`);
+    // A recall question repeated in several sittings has a copy in each
+    // (quizqq/<id>/same_as on the copies); a set needs it only once.
     list = list.filter(
       (q) =>
         q.question !== undefined &&
+        !q.same_as &&
         (!meta.science || q.science === meta.science) &&
         (!meta.book || q.source === meta.book),
     );

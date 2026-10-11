@@ -1,14 +1,15 @@
 // "Remember it" under a quiz explanation: the mnemonic, the flashcards and the
 // similar questions linked to this one (quizqq/<id>/mnem_links, card_links and
-// similar), opened over the quiz so the session is not lost.
+// similar), opened over the quiz so the session is not lost. A question asked
+// again in other sittings also shows where (quizqq/<id>/same).
 import { useState } from 'react';
 import { createPortal } from 'react-dom';
-import { ChevronRight, Copy, Layers, Lightbulb, X } from 'lucide-react';
+import { ChevronRight, Copy, Layers, Lightbulb, Repeat2, X } from 'lucide-react';
 import { useAsync } from '../hooks/useData';
 import { useBackHandler } from '../lib/back';
 import { loadByRefs } from '../lib/mnemonicData';
 import { questionLinks } from '../lib/mnemonicLinks';
-import { similarOf } from '../lib/questionHints';
+import { sameOf, similarOf } from '../lib/questionHints';
 import { visibleOptions } from '../lib/quiz';
 import { getOne } from '../lib/rtdb';
 import MnemonicPeek from './MnemonicPeek';
@@ -18,6 +19,8 @@ export default function StudyLinks({ question }) {
   const { mnemonics, flashcards } = questionLinks(question);
   const [mnemonic, setMnemonic] = useState(null);
   const similar = similarOf(question);
+  const same = sameOf(question);
+  const [sameOpen, setSameOpen] = useState(false);
   const [cardsOpen, setCardsOpen] = useState(false);
   const [similarOpen, setSimilarOpen] = useState(false);
   // Only the mnemonic titles are read up front; the flashcards wait for a tap.
@@ -25,7 +28,7 @@ export default function StudyLinks({ question }) {
     () => (mnemonics.length ? loadByRefs(mnemonics) : Promise.resolve([])),
     [mnemonics.join(',')],
   );
-  if (!mnemonics.length && !flashcards.length && !similar.length) return null;
+  if (!mnemonics.length && !flashcards.length && !similar.length && !same.length) return null;
 
   return (
     <div className="mt-5 border-t border-slate-100 pt-4">
@@ -63,6 +66,18 @@ export default function StudyLinks({ question }) {
             <ChevronRight size={18} className="shrink-0 text-brand-400" />
           </button>
         )}
+        {same.length > 0 && (
+          <button
+            onClick={() => setSameOpen(true)}
+            className="w-full flex items-center gap-3 rounded-xl border border-violet-200 bg-violet-50 px-3 py-2.5 text-left hover:bg-violet-100"
+          >
+            <Repeat2 size={18} className="shrink-0 text-violet-600" />
+            <span className="flex-1 text-sm font-medium text-slate-800">
+              Asked in {same.length + 1} sittings — a repeated question
+            </span>
+            <ChevronRight size={18} className="shrink-0 text-violet-400" />
+          </button>
+        )}
         {similar.length > 0 && (
           <button
             onClick={() => setSimilarOpen(true)}
@@ -79,6 +94,7 @@ export default function StudyLinks({ question }) {
       {mnemonic && <MnemonicPeek mnemonicRef={mnemonic} onClose={() => setMnemonic(null)} />}
       {cardsOpen && <FlashcardsPeek refs={flashcards} onClose={() => setCardsOpen(false)} />}
       {similarOpen && <SimilarPeek ids={similar} onClose={() => setSimilarOpen(false)} />}
+      {sameOpen && <SamePeek here={question.title} ids={same} onClose={() => setSameOpen(false)} />}
     </div>
   );
 }
@@ -106,6 +122,40 @@ function Sheet({ icon, title, tone, onClose, children }) {
       </div>
     </div>,
     document.body,
+  );
+}
+
+// Where else this exact question was asked: the quiz of each linked copy.
+function SamePeek({ here, ids, onClose }) {
+  const data = useAsync(
+    () => Promise.all(ids.map((id) => getOne(`quizqq/${id}/title`).catch(() => null))),
+    [ids.join(',')],
+  );
+  const titles = [...new Set([here, ...(data.data || [])].filter(Boolean).map(String))].sort((a, b) =>
+    a.localeCompare(b, undefined, { numeric: true }),
+  );
+  return (
+    <Sheet icon={<Repeat2 size={18} className="shrink-0 text-violet-600" />} title="A repeated question" tone="text-violet-700" onClose={onClose}>
+      {data.loading ? (
+        <div className="py-10">
+          <Spinner />
+        </div>
+      ) : (
+        <>
+          <p className="text-sm text-slate-600 mb-3">
+            This question came up in {ids.length + 1} sittings, so it is worth knowing well.
+          </p>
+          <ul className="space-y-1.5">
+            {titles.map((t) => (
+              <li key={t} className={`rounded-lg px-3 py-2 text-sm ${t === here ? 'bg-violet-50 font-semibold text-violet-800' : 'bg-slate-50 text-slate-700'}`}>
+                {t}
+                {t === here ? ' (this quiz)' : ''}
+              </li>
+            ))}
+          </ul>
+        </>
+      )}
+    </Sheet>
   );
 }
 

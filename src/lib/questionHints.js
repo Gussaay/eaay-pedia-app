@@ -6,12 +6,23 @@
 //
 // Pure, so it can be unit-tested.
 
-/** Ids of the questions linked as similar to this one. */
-export function similarOf(question) {
-  const v = question?.similar;
+const idList = (v) => {
   if (!v) return [];
   const list = Array.isArray(v) ? v : Object.keys(v).filter((k) => v[k]);
   return [...new Set(list.filter((k) => typeof k === 'string' && k && !/[/.#$[\]]/.test(k)))];
+};
+
+/**
+ * Ids of the copies of this same question in other quizzes (a recall question
+ * asked again in a later sitting): quizqq/<id>/same, written by
+ * .tmp/recall/upload.mjs. Each quiz keeps its own copy; this only links them.
+ */
+export const sameOf = (question) => idList(question?.same);
+
+/** Ids of the questions linked as similar to this one (not counting its own copies). */
+export function similarOf(question) {
+  const same = new Set(sameOf(question));
+  return idList(question?.similar).filter((k) => !same.has(k));
 }
 
 /** The hint phrases, from "a | b", a list, or a map of them. */
