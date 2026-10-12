@@ -5,14 +5,15 @@
 // Nothing generated here is saved to the question bank. An admin who wants to
 // keep a set downloads it as CSV and puts it through the normal Import, where
 // the preview and duplicate checks still apply.
-import { useState } from 'react';
-import { ArrowLeft, ArrowRight, Brain, Download, Layers, Lightbulb, ListChecks, MessageCircle, RotateCcw, Sparkles } from 'lucide-react';
+import { useEffect, useState } from 'react';
+import { ArrowLeft, ArrowRight, Brain, Download, Layers, Lightbulb, ListChecks, MessageCircle, RotateCcw, Sparkles, Gauge } from 'lucide-react';
 import { askAi } from '../lib/ai';
 import { cardsToCsv, mcqsToCsv, normalizeCards, normalizeMcqs } from '../lib/aiFormat';
 import { OPTION_KEYS } from '../lib/quiz';
 import { LEVELS } from '../config';
 import { useAuth } from '../hooks/useAuth';
-import AiChat, { AiReply } from '../components/AiChat';
+import { subscribe } from '../lib/rtdb';
+import AiChat, { AiReply, ModelTag } from '../components/AiChat';
 import { AppBar, Button, Card, Empty, Input, Page, Select } from '../components/ui';
 
 const TABS = [
@@ -85,7 +86,7 @@ function QuizTab() {
     const res = await run({ task: 'quiz', topic, count, level });
     if (!res) return;
     const qs = normalizeMcqs(res.items);
-    setSet(qs.length ? { topic, qs } : null);
+    setSet(qs.length ? { topic, qs, model: res.model } : null);
     setPicked({});
   };
 
@@ -113,6 +114,7 @@ function QuizTab() {
           <div className="flex items-center justify-between mt-4 mb-2">
             <p className="text-sm text-slate-600">
               <b>{set.topic}</b> · {answered}/{set.qs.length} answered{answered ? ` · ${right} correct` : ''}
+              <ModelTag model={set.model} />
             </p>
             <Button variant="ghost" className="!py-1 text-sm" onClick={() => download(`ai-mcqs-${slug(set.topic)}.csv`, mcqsToCsv(set.qs))}>
               <Download size={16} /> CSV
@@ -175,7 +177,7 @@ function CardsTab() {
     const res = await run({ task: 'cards', topic, count });
     if (!res) return;
     const cards = normalizeCards(res.items);
-    setDeck(cards.length ? { topic, cards } : null);
+    setDeck(cards.length ? { topic, cards, model: res.model } : null);
     setPos(0);
     setShown(false);
   };
@@ -202,6 +204,7 @@ function CardsTab() {
           <div className="flex items-center justify-between mt-4 mb-2">
             <p className="text-sm text-slate-600">
               <b>{deck.topic}</b> · card {pos + 1} of {deck.cards.length}
+              <ModelTag model={deck.model} />
             </p>
             <Button variant="ghost" className="!py-1 text-sm" onClick={() => download(`ai-cards-${slug(deck.topic)}.csv`, cardsToCsv(deck.cards))}>
               <Download size={16} /> CSV
@@ -242,7 +245,7 @@ function MnemonicTab() {
 
   const generate = async (topic) => {
     const res = await run({ task: 'mnemonic', topic });
-    if (res) setResult({ topic, text: res.text });
+    if (res) setResult({ topic, text: res.text, model: res.model });
   };
 
   return (
@@ -259,12 +262,76 @@ function MnemonicTab() {
           <AiChat
             key={result.text}
             context={{ kind: 'text', text: `Mnemonic for ${result.topic}` }}
-            seed={[{ role: 'model', text: result.text }]}
+            seed={[{ role: 'model', text: result.text, model: result.model }]}
             placeholder="Ask for another version, or what a letter means…"
           />
         </Card>
       )}
     </>
+  );
+}
+
+// ------------------------------------------------------------------ usage
+// Gemini's free tier counts requests per model per day, and the day ends at
+// midnight Pacific time. The aiStudy function records each request and the
+// daily limit Google reports when a model runs out (functions/ai.js).
+const usageDay = () => new Date().toLocaleDateString('en-CA', { timeZone: 'America/Los_Angeles' });
+
+function hoursToPacificMidnight() {
+  const parts = Object.fromEntries(
+    new Intl.DateTimeFormat('en-US', { timeZone: 'America/Los_Angeles', hour: 'numeric', minute: 'numeric', hourCycle: 'h23' })
+      .formatToParts(new Date())
+      .map((p) => [p.type, Number(p.value)]),
+  );
+  const mins = 24 * 60 - (parts.hour * 60 + parts.minute);
+  return mins >= 60 ? `${Math.floor(mins / 60)} h ${mins % 60} min` : `${mins} min`;
+}
+
+function AiUsage() {
+  const [day, setDay] = useState(null);
+  const [limits, setLimits] = useState(null);
+  useEffect(() => subscribe(`aiUsage/days/${usageDay()}`, setDay), []);
+  useEffect(() => subscribe('aiUsage/limits', setLimits), []);
+
+  const keys = [...new Set([...Object.keys(day || {}), ...Object.keys(limits || {})])].sort();
+  return (
+    <Card className="p-4 mb-4">
+      <p className="text-sm font-semibold text-slate-800 flex items-center gap-1.5">
+        <Gauge size={16} className="text-brand-600" /> Gemini requests today
+      </p>
+      {!keys.length ? (
+        <p className="text-sm text-slate-500 mt-2">No requests yet today.</p>
+      ) : (
+        <div className="mt-3 space-y-2.5">
+          {keys.map((k) => {
+            const used = Number(day?.[k]?.used) || 0;
+            const limit = Number(limits?.[k]) || 0;
+            const out = Number(day?.[k]?.resetAt) > Date.now();
+            const left = limit ? Math.max(0, limit - used) : null;
+            const pct = out ? 100 : limit ? Math.min(100, (used / limit) * 100) : 0;
+            return (
+              <div key={k}>
+                <div className="flex items-baseline justify-between gap-2 text-sm">
+                  <span className="text-slate-700 truncate">{k.replace(/_/g, '.')}</span>
+                  <span className={`shrink-0 font-semibold ${out ? 'text-red-600' : 'text-slate-600'}`}>
+                    {out ? 'used up' : limit ? `${left} of ${limit} left` : `${used} used`}
+                  </span>
+                </div>
+                {(limit > 0 || out) && (
+                  <div className="h-1.5 rounded-full bg-slate-100 mt-1 overflow-hidden">
+                    <div className={`h-full rounded-full ${out || pct >= 90 ? 'bg-red-500' : pct >= 60 ? 'bg-amber-400' : 'bg-emerald-500'}`} style={{ width: `${pct}%` }} />
+                  </div>
+                )}
+              </div>
+            );
+          })}
+        </div>
+      )}
+      <p className="text-[11px] text-slate-400 mt-3">
+        Counts requests from this app on the free tier. Resets in {hoursToPacificMidnight()} (midnight US Pacific time).
+        A model's limit shows once Google has reported it.
+      </p>
+    </Card>
   );
 }
 
@@ -283,6 +350,7 @@ export default function AiStudy() {
           </Empty>
         ) : (
           <>
+            <AiUsage />
             <div className="grid grid-cols-4 gap-1 bg-slate-100 rounded-2xl p-1 mb-4">
               {TABS.map(({ key, label, icon: Icon }) => (
                 <button

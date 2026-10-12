@@ -1,10 +1,10 @@
 // Pieces of the AI study helper shared by the AI Study page and the quiz
 // explanation: a safe renderer for a reply, and a small tutor chat.
 import { useEffect, useRef, useState } from 'react';
-import { Send, Sparkles } from 'lucide-react';
+import { ChevronRight, Cpu, Send, Sparkles } from 'lucide-react';
 import { askAi } from '../lib/ai';
 import { parseReply } from '../lib/aiFormat';
-import { Button } from './ui';
+import { Button, Modal } from './ui';
 
 /** Renders Gemini's light markdown as React nodes (never innerHTML). */
 export function AiReply({ text, className = '' }) {
@@ -17,6 +17,16 @@ export function AiReply({ text, className = '' }) {
         return <p key={i}>{body}</p>;
       })}
     </div>
+  );
+}
+
+/** Which Gemini model wrote a reply, e.g. "gemini-2.5-flash". */
+export function ModelTag({ model, className = '' }) {
+  if (!model) return null;
+  return (
+    <span className={`inline-flex items-center gap-1 text-[11px] text-slate-400 ${className}`}>
+      <Cpu size={12} /> {model}
+    </span>
   );
 }
 
@@ -46,7 +56,7 @@ export default function AiChat({ context, seed = [], placeholder = 'Ask anything
     setBusy(true);
     try {
       const res = await askAi({ task: 'chat', messages: next, context });
-      setMessages((m) => [...m, { role: 'model', text: res.text }]);
+      setMessages((m) => [...m, { role: 'model', text: res.text, model: res.model }]);
     } catch (e) {
       setError(e.message);
       setMessages(messages);
@@ -67,6 +77,7 @@ export default function AiChat({ context, seed = [], placeholder = 'Ask anything
           ) : (
             <div key={i} className="mr-4 rounded-2xl rounded-bl-md bg-slate-50 border border-slate-100 px-3 py-2">
               <AiReply text={m.text} />
+              <ModelTag model={m.model} className="mt-1.5" />
             </div>
           ),
         )}
@@ -100,23 +111,32 @@ export default function AiChat({ context, seed = [], placeholder = 'Ask anything
   );
 }
 
-/** "Explain with AI" for one MCQ, with follow-up questions in place. */
+/**
+ * "Explain with AI" for one MCQ. The explanation and any follow-up questions
+ * open in a pop-up; closing it keeps the reply, so it reopens without a new
+ * request.
+ */
 export function AiExplain({ question }) {
-  const [reply, setReply] = useState('');
+  const [reply, setReply] = useState(null);
+  const [open, setOpen] = useState(false);
   const [busy, setBusy] = useState(false);
   const [error, setError] = useState('');
 
   useEffect(() => {
-    setReply('');
+    setReply(null);
+    setOpen(false);
     setError('');
   }, [question._key]);
 
   const explain = async () => {
+    setOpen(true);
+    if (reply || busy) return;
     setBusy(true);
     setError('');
     try {
       const { _key, ...q } = question;
-      setReply((await askAi({ task: 'explain', question: q })).text);
+      const res = await askAi({ task: 'explain', question: q });
+      setReply({ text: res.text, model: res.model });
     } catch (e) {
       setError(e.message);
     } finally {
@@ -127,27 +147,48 @@ export function AiExplain({ question }) {
   const { _key, ...plain } = question;
   return (
     <div className="mt-4 rounded-2xl border border-violet-100 bg-violet-50/50 p-3">
-      {!reply ? (
-        <>
-          <Button variant="ghost" className="!px-0 !text-violet-700" onClick={explain} loading={busy}>
-            {!busy && <Sparkles size={18} />} Explain with AI
-          </Button>
-          {error && <p className="text-sm text-red-600 mt-1">{error}</p>}
-        </>
-      ) : (
-        <>
-          <p className="text-sm font-semibold text-violet-800 flex items-center gap-1.5 mb-2">
-            <Sparkles size={16} /> AI tutor
+      <Button variant="ghost" className="!px-0 !text-violet-700 w-full !justify-between" onClick={explain}>
+        <span className="flex items-center gap-2">
+          <Sparkles size={18} /> {reply ? 'Open AI explanation' : 'Explain with AI'}
+        </span>
+        <ChevronRight size={18} />
+      </Button>
+
+      <Modal
+        open={open}
+        onClose={() => setOpen(false)}
+        wide
+        title={
+          <span className="flex items-center gap-2 text-violet-800">
+            <Sparkles size={18} /> AI tutor
+          </span>
+        }
+      >
+        {busy && (
+          <p className="text-sm text-slate-400 flex items-center gap-2 py-6">
+            <Sparkles size={16} className="animate-pulse text-violet-500" /> Explaining this question…
           </p>
-          <AiChat
-            key={_key}
-            context={{ kind: 'question', question: plain }}
-            seed={[{ role: 'model', text: reply }]}
-            placeholder="Ask a follow-up…"
-          />
-          <p className="text-[11px] text-slate-400 mt-2">AI can be wrong — check important facts against your references.</p>
-        </>
-      )}
+        )}
+        {error && (
+          <div className="py-4">
+            <p className="text-sm text-red-600">{error}</p>
+            <Button variant="outline" className="mt-3" onClick={() => { setError(''); explain(); }}>
+              Try again
+            </Button>
+          </div>
+        )}
+        {reply && (
+          <>
+            <AiChat
+              key={_key}
+              context={{ kind: 'question', question: plain }}
+              seed={[{ role: 'model', text: reply.text, model: reply.model }]}
+              placeholder="Ask a follow-up…"
+            />
+            <p className="text-[11px] text-slate-400 mt-2">AI can be wrong — check important facts against your references.</p>
+          </>
+        )}
+      </Modal>
     </div>
   );
 }

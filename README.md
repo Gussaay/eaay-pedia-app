@@ -100,7 +100,10 @@ firebase functions:secrets:set GEMINI_API_KEY   # paste the key
 firebase deploy --only functions
 ```
 
-The model defaults to `gemini-flash-latest` (Google's current Flash model; older ones such as 2.5 are closed to new keys). To pin one, put `GEMINI_MODEL=...` in
+The model defaults to `gemini-flash-latest` (Google's current Flash model). The free tier
+caps each model separately (as low as 20 requests a day), so when its quota runs out the
+function falls back to `gemini-flash-lite-latest`, then `gemini-2.5-flash` and
+`gemini-2.5-flash-lite`. To pin one model instead, put `GEMINI_MODEL=...` in
 `functions/.env` and redeploy. Generated sets are not saved anywhere. The **CSV**
 button downloads them in the Import / "Upload a set" format if you want to keep them.
 
