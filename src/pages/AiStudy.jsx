@@ -12,7 +12,7 @@ import { cardsToCsv, mcqsToCsv, normalizeCards, normalizeMcqs } from '../lib/aiF
 import { OPTION_KEYS } from '../lib/quiz';
 import { LEVELS } from '../config';
 import { useAuth } from '../hooks/useAuth';
-import AiChat, { AiReply } from '../components/AiChat';
+import AiChat, { AiReply, ModelTag } from '../components/AiChat';
 import { AppBar, Button, Card, Empty, Input, Page, Select } from '../components/ui';
 
 const TABS = [
@@ -85,7 +85,7 @@ function QuizTab() {
     const res = await run({ task: 'quiz', topic, count, level });
     if (!res) return;
     const qs = normalizeMcqs(res.items);
-    setSet(qs.length ? { topic, qs } : null);
+    setSet(qs.length ? { topic, qs, model: res.model } : null);
     setPicked({});
   };
 
@@ -113,6 +113,7 @@ function QuizTab() {
           <div className="flex items-center justify-between mt-4 mb-2">
             <p className="text-sm text-slate-600">
               <b>{set.topic}</b> · {answered}/{set.qs.length} answered{answered ? ` · ${right} correct` : ''}
+              <ModelTag model={set.model} />
             </p>
             <Button variant="ghost" className="!py-1 text-sm" onClick={() => download(`ai-mcqs-${slug(set.topic)}.csv`, mcqsToCsv(set.qs))}>
               <Download size={16} /> CSV
@@ -175,7 +176,7 @@ function CardsTab() {
     const res = await run({ task: 'cards', topic, count });
     if (!res) return;
     const cards = normalizeCards(res.items);
-    setDeck(cards.length ? { topic, cards } : null);
+    setDeck(cards.length ? { topic, cards, model: res.model } : null);
     setPos(0);
     setShown(false);
   };
@@ -202,6 +203,7 @@ function CardsTab() {
           <div className="flex items-center justify-between mt-4 mb-2">
             <p className="text-sm text-slate-600">
               <b>{deck.topic}</b> · card {pos + 1} of {deck.cards.length}
+              <ModelTag model={deck.model} />
             </p>
             <Button variant="ghost" className="!py-1 text-sm" onClick={() => download(`ai-cards-${slug(deck.topic)}.csv`, cardsToCsv(deck.cards))}>
               <Download size={16} /> CSV
@@ -242,7 +244,7 @@ function MnemonicTab() {
 
   const generate = async (topic) => {
     const res = await run({ task: 'mnemonic', topic });
-    if (res) setResult({ topic, text: res.text });
+    if (res) setResult({ topic, text: res.text, model: res.model });
   };
 
   return (
@@ -259,7 +261,7 @@ function MnemonicTab() {
           <AiChat
             key={result.text}
             context={{ kind: 'text', text: `Mnemonic for ${result.topic}` }}
-            seed={[{ role: 'model', text: result.text }]}
+            seed={[{ role: 'model', text: result.text, model: result.model }]}
             placeholder="Ask for another version, or what a letter means…"
           />
         </Card>

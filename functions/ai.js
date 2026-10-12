@@ -266,6 +266,8 @@ export const aiStudy = onCall(
       throw new HttpsError('internal', `Gemini returned no answer (${why}).`);
     }
 
+    // "-latest" is an alias; Google reports the concrete version it ran.
+    model = json.modelVersion || model;
     if (!schema) return { text, model };
     try {
       return { items: JSON.parse(text), model };
