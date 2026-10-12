@@ -26,8 +26,9 @@ import { logger } from 'firebase-functions';
 import { getDatabase } from 'firebase-admin/database';
 
 const GEMINI_API_KEY = defineSecret('GEMINI_API_KEY');
-// Change the model without a code change: GEMINI_MODEL=... in functions/.env
-const MODEL = process.env.GEMINI_MODEL || 'gemini-2.5-flash';
+// "-latest" follows Google's current Flash model, so a retired version never
+// breaks the app. Pin one instead with GEMINI_MODEL=... in functions/.env
+const MODEL = process.env.GEMINI_MODEL || 'gemini-flash-latest';
 
 const ADMIN_EMAILS = ['gussaay@gmail.com', 'malazmuzamil55@gmail.com'];
 
