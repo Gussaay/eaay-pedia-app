@@ -184,7 +184,9 @@ export const aiStudy = onCall(
     if (!(await isAdmin(request.auth))) {
       throw new HttpsError('permission-denied', 'The AI study helper is only available to admins.');
     }
-    const key = GEMINI_API_KEY.value();
+    // A key pasted into the masked secrets prompt can carry spaces, a line
+    // break or quotes, which Google then reports as a bad OAuth token.
+    const key = String(GEMINI_API_KEY.value() || '').replace(/[\s"']/g, '');
     if (!key) throw new HttpsError('failed-precondition', 'GEMINI_API_KEY is not set on the server.');
 
     const { contents, schema } = buildRequest(request.data);
@@ -214,7 +216,14 @@ export const aiStudy = onCall(
     }
     if (!res.ok) {
       const msg = json?.error?.message || `HTTP ${res.status}`;
-      logger.warn(`Gemini ${res.status}: ${msg}`);
+      logger.warn(`Gemini ${res.status}: ${msg} (key length ${key.length})`);
+      if (res.status === 401) {
+        throw new HttpsError(
+          'failed-precondition',
+          'Google rejected the Gemini key. Copy it again from aistudio.google.com/apikey and re-run ' +
+            'firebase functions:secrets:set GEMINI_API_KEY.',
+        );
+      }
       if (res.status === 402) throw new HttpsError('failed-precondition', 'The Gemini key has no credit left (AI Studio > billing).');
       if (res.status === 429) throw new HttpsError('resource-exhausted', 'Gemini rate limit reached, try again in a minute.');
       if (res.status === 503) throw new HttpsError('unavailable', 'Gemini is busy right now, try again in a minute.');
