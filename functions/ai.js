@@ -27,8 +27,13 @@ import { getDatabase } from 'firebase-admin/database';
 
 const GEMINI_API_KEY = defineSecret('GEMINI_API_KEY');
 // "-latest" follows Google's current Flash model, so a retired version never
-// breaks the app. Pin one instead with GEMINI_MODEL=... in functions/.env
-const MODEL = process.env.GEMINI_MODEL || 'gemini-flash-latest';
+// breaks the app. The free tier caps each model separately (as low as 20
+// requests a day), so when one model's quota runs out or it is closed to the
+// key, the next one is tried. Pin a single model with GEMINI_MODEL=... in
+// functions/.env
+const MODELS = process.env.GEMINI_MODEL
+  ? [process.env.GEMINI_MODEL]
+  : ['gemini-flash-latest', 'gemini-flash-lite-latest', 'gemini-2.5-flash', 'gemini-2.5-flash-lite'];
 
 const ADMIN_EMAILS = ['gussaay@gmail.com', 'malazmuzamil55@gmail.com'];
 
@@ -200,23 +205,47 @@ export const aiStudy = onCall(
       },
     };
 
-    // "High demand" (503) and short rate-limit spikes usually clear within
-    // seconds, so try again a couple of times before showing an error.
-    let res;
-    let json;
-    for (let attempt = 0; ; attempt++) {
-      res = await fetch(`https://generativelanguage.googleapis.com/v1beta/models/${MODEL}:generateContent`, {
+    const call = (model) =>
+      fetch(`https://generativelanguage.googleapis.com/v1beta/models/${model}:generateContent`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json', 'x-goog-api-key': key },
         body: JSON.stringify(body),
-      });
-      json = await res.json().catch(() => ({}));
-      if (res.ok || ![429, 500, 503].includes(res.status) || attempt === 2) break;
-      await new Promise((r) => setTimeout(r, 2000 * 2 ** attempt));
+      }).then(async (r) => [r, await r.json().catch(() => ({}))]);
+    // Seconds Google asks us to wait on a 429 ("retryDelay": "37s").
+    const retryAfter = (j) =>
+      parseFloat((j?.error?.details || []).find((d) => d.retryDelay)?.retryDelay) || 0;
+
+    let res;
+    let json;
+    let model;
+    let quotaWait = 0;
+    for (model of MODELS) {
+      // "High demand" (503) and per-minute rate limits usually clear within
+      // seconds, so try the same model again a couple of times.
+      for (let attempt = 0; ; attempt++) {
+        [res, json] = await call(model);
+        const wait = res.status === 429 ? retryAfter(json) : 0;
+        if (res.status === 429 && wait > 30) break; // daily quota: no point retrying this model
+        if (res.ok || ![429, 500, 503].includes(res.status) || attempt === 2) break;
+        await new Promise((r) => setTimeout(r, Math.max(wait * 1000, 2000 * 2 ** attempt)));
+      }
+      if (res.ok) break;
+      logger.warn(`Gemini ${model} ${res.status}: ${json?.error?.message || ''} (key length ${key.length})`);
+      // Out of quota, or this model is not open to the key: try the next one.
+      if (res.status === 429) quotaWait = Math.max(quotaWait, retryAfter(json));
+      else if (![403, 404].includes(res.status)) break;
     }
     if (!res.ok) {
       const msg = json?.error?.message || `HTTP ${res.status}`;
-      logger.warn(`Gemini ${res.status}: ${msg} (key length ${key.length})`);
+      if (quotaWait > 30) {
+        const h = Math.floor(quotaWait / 3600);
+        const m = Math.ceil((quotaWait % 3600) / 60);
+        throw new HttpsError(
+          'resource-exhausted',
+          `Today's free Gemini quota is used up. It resets in about ${h ? `${h} h ` : ''}${m} min, ` +
+            'or turn on billing for the key in AI Studio.',
+        );
+      }
       if (res.status === 401) {
         throw new HttpsError(
           'failed-precondition',
@@ -237,9 +266,9 @@ export const aiStudy = onCall(
       throw new HttpsError('internal', `Gemini returned no answer (${why}).`);
     }
 
-    if (!schema) return { text, model: MODEL };
+    if (!schema) return { text, model };
     try {
-      return { items: JSON.parse(text), model: MODEL };
+      return { items: JSON.parse(text), model };
     } catch {
       throw new HttpsError('internal', 'Gemini returned malformed JSON, try again.');
     }
