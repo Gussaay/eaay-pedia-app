@@ -28,6 +28,14 @@
       ".indexOn": ["key"]
     },
 
+    // ------------------------------------------------------------- AI usage
+    // Daily Gemini request counts, written only by the aiStudy function (the
+    // Admin SDK skips rules) and shown to admins on the AI Study page.
+    "aiUsage": {
+      ".read": "auth.token.email === 'gussaay@gmail.com' || auth.token.email === 'malazmuzamil55@gmail.com' || root.child('quizusers').child(auth.uid).child('admin').val() === 'true'",
+      ".write": false
+    },
+
     // ------------------------------------------------------- updates & pushes
     // Everyone reads which version to run; only admins decide it. Without this,
     // any signed-in user could point every installed app at a bundle of their
