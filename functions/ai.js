@@ -198,24 +198,31 @@ export const aiStudy = onCall(
       },
     };
 
-    const res = await fetch(
-      `https://generativelanguage.googleapis.com/v1beta/models/${MODEL}:generateContent`,
-      {
+    // "High demand" (503) and short rate-limit spikes usually clear within
+    // seconds, so try again a couple of times before showing an error.
+    let res;
+    let json;
+    for (let attempt = 0; ; attempt++) {
+      res = await fetch(`https://generativelanguage.googleapis.com/v1beta/models/${MODEL}:generateContent`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json', 'x-goog-api-key': key },
         body: JSON.stringify(body),
-      },
-    );
-    const json = await res.json().catch(() => ({}));
+      });
+      json = await res.json().catch(() => ({}));
+      if (res.ok || ![429, 500, 503].includes(res.status) || attempt === 2) break;
+      await new Promise((r) => setTimeout(r, 2000 * 2 ** attempt));
+    }
     if (!res.ok) {
       const msg = json?.error?.message || `HTTP ${res.status}`;
       logger.warn(`Gemini ${res.status}: ${msg}`);
+      if (res.status === 402) throw new HttpsError('failed-precondition', 'The Gemini key has no credit left (AI Studio > billing).');
       if (res.status === 429) throw new HttpsError('resource-exhausted', 'Gemini rate limit reached, try again in a minute.');
+      if (res.status === 503) throw new HttpsError('unavailable', 'Gemini is busy right now, try again in a minute.');
       throw new HttpsError('internal', `Gemini error: ${clip(msg, 300)}`);
     }
 
     const cand = json?.candidates?.[0];
-    const text = (cand?.content?.parts || []).map((p) => p.text || '').join('').trim();
+    const text = (cand?.content?.parts || []).filter((p) => !p.thought).map((p) => p.text || '').join('').trim();
     if (!text) {
       const why = cand?.finishReason || json?.promptFeedback?.blockReason || 'empty reply';
       throw new HttpsError('internal', `Gemini returned no answer (${why}).`);
