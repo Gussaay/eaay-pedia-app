@@ -1,6 +1,6 @@
 {
   "name": "easy-pedia-functions",
-  "description": "Push delivery for Easy Pedia MCQs",
+  "description": "Push delivery and AI study helper for Easy Pedia MCQs",
   "private": true,
   "type": "module",
   "main": "index.js",

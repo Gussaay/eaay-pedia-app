@@ -10,7 +10,7 @@
 //   review — an answer is final, but you may look back over every earlier
 //            question in the session, as far back as its first one
 //   exam   — you may move freely and change any answer until you submit
-import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
+import { lazy, Suspense, useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import { useNavigate, useParams, useSearchParams } from 'react-router-dom';
 import { ArrowLeft, ArrowRight, Clock, Highlighter, LayoutGrid, Lightbulb, MessageSquarePlus, Pencil, Send, X } from 'lucide-react';
 import { useAuth } from '../hooks/useAuth';
@@ -39,6 +39,9 @@ import { queuePendingResult } from '../lib/sync';
 import { AppBar, Button, Card, ErrorBox, Input, Modal, Page, Spinner, Textarea, ZoomImage, useToast } from '../components/ui';
 import QuestionEditModal from '../components/QuestionEditModal';
 import StudyLinks from '../components/StudyLinks';
+
+// Admin-only, so its code (and firebase/functions) loads only when shown.
+const AiExplain = lazy(() => import('../components/AiChat').then((m) => ({ default: m.AiExplain })));
 
 export default function QuizPlay() {
   const { kind, id } = useParams();
@@ -978,7 +981,7 @@ function NavigatorModal({ deck, questions, answers, index, min, max, onPick, onC
 
 // -------------------------------------------------------------------------
 function ExplanationModal({ question, quizTitle, selected, answer, onClose, onNext, isLast }) {
-  const { user, profile } = useAuth();
+  const { user, profile, isAdmin } = useAuth();
   const toast = useToast();
   const [comments, setComments] = useState(null);
   const [writing, setWriting] = useState(false);
@@ -1034,6 +1037,11 @@ function ExplanationModal({ question, quizTitle, selected, answer, onClose, onNe
       </p>
       <ZoomImage src={question.exp_img} className="mt-3" />
       <StudyLinks question={question} />
+      {isAdmin && (
+        <Suspense fallback={null}>
+          <AiExplain question={question} />
+        </Suspense>
+      )}
 
       <div className="mt-5 border-t border-slate-100 pt-4">
         <p className="text-sm font-semibold text-slate-700 mb-2">Comments</p>

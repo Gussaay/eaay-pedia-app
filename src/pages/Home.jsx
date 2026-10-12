@@ -5,7 +5,7 @@
 // right section in one tap, not to list everything.
 import { useMemo, useState } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
-import { Bell, ChevronRight, CloudUpload, Mail, Menu, MessageCircle, PlayCircle, RotateCcw, Send, ShieldCheck, Smartphone } from 'lucide-react';
+import { Bell, ChevronRight, CloudUpload, Mail, Menu, MessageCircle, PlayCircle, RotateCcw, Send, ShieldCheck, Smartphone, Sparkles } from 'lucide-react';
 import { useAuth } from '../hooks/useAuth';
 import { useAsync, useList } from '../hooks/useData';
 import { getLatest, num } from '../lib/rtdb';
@@ -202,6 +202,12 @@ export default function Home() {
         {isAdmin && (
           <Button variant="secondary" className="w-full" onClick={() => navigate('/admin')}>
             <ShieldCheck size={18} /> Admin panel
+          </Button>
+        )}
+
+        {isAdmin && (
+          <Button variant="secondary" className="w-full !bg-violet-50 !text-violet-800" onClick={() => navigate('/ai')}>
+            <Sparkles size={18} /> AI Study (Gemini)
           </Button>
         )}
 

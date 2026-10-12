@@ -44,6 +44,7 @@ const MnemonicExam = lazy(() => import('./pages/MnemonicExam'));
 const MnemonicPaper = lazy(() => import('./pages/MnemonicPaper'));
 const MnemonicSet = lazy(() => import('./pages/MnemonicSet'));
 const MnemonicGallery = lazy(() => import('./pages/MnemonicGallery'));
+const AiStudy = lazy(() => import('./pages/AiStudy'));
 
 function Splash() {
   return (
@@ -191,6 +192,7 @@ export default function App() {
           <Route path="/app-updates" element={guard(<AppUpdates />)} />
           <Route path="/contact" element={guard(<Contact />)} />
           <Route path="/about" element={guard(<About />)} />
+          <Route path="/ai" element={guard(<RequireAdmin><AiStudy /></RequireAdmin>)} />
           <Route path="/admin/*" element={guard(<RequireAdmin><Admin /></RequireAdmin>)} />
           <Route path="*" element={<Navigate to="/" replace />} />
         </Routes>

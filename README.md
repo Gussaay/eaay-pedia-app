@@ -80,6 +80,30 @@ do), so offline support is built in `src/lib/offline.js` (IndexedDB) and
   server values at that moment so it never overwrites newer progress;
 - Profile > Offline shows what is stored, pending results and "Clear offline data".
 
+## AI Study helper (Gemini, admins only)
+
+`/ai` (Home > **AI Study**, also in the side menu) has a tutor chat, "Quiz me"
+(generated MCQs), generated flashcards and a mnemonic maker. Every quiz
+explanation also gets an **Explain with AI** button with follow-up questions.
+
+A Gemini/Claude *chat subscription* cannot be connected to another app, so this
+uses a Gemini **API key**. The free tier from Google AI Studio is enough for personal study.
+The key is a Firebase secret read only by the `aiStudy` Cloud Function
+(`functions/ai.js`). It never ships in the APK, and the function refuses anyone
+who is not an admin (same emails as `src/config.js`, or the User manager's admin flag).
+
+One-time setup:
+
+```bash
+# 1. create a key at https://aistudio.google.com/apikey
+firebase functions:secrets:set GEMINI_API_KEY   # paste the key
+firebase deploy --only functions
+```
+
+The model defaults to `gemini-2.5-flash`. To change it, put `GEMINI_MODEL=...` in
+`functions/.env` and redeploy. Generated sets are not saved anywhere. The **CSV**
+button downloads them in the Import / "Upload a set" format if you want to keep them.
+
 ## ⚠️ Things to do in the Firebase console
 
 1. **Deploy the database rules.** `database.rules.json` is the whole ruleset — the

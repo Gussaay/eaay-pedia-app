@@ -234,3 +234,6 @@ export const deliverPush = onValueWritten(
     await housekeep().catch((e) => logger.warn(`housekeeping: ${e.message}`));
   },
 );
+
+// AI study helper (Gemini), admin-only — see ai.js.
+export { aiStudy } from './ai.js';
