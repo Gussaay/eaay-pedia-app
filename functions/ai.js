@@ -43,8 +43,52 @@ const SYSTEM = [
   'Specialization Board and similar). Be accurate, concise and exam-focused. Use short',
   'paragraphs and bullet points; plain text with simple markdown (**bold**, "- " bullets)',
   'only. Name the guideline or classic source when a fact depends on one. If something is',
-  'uncertain or guidelines differ, say so rather than guessing.',
+  'uncertain or guidelines differ, say so rather than guessing. Write formulas and',
+  'chemistry as plain text (NaHCO3, Ca2+), never LaTeX.',
 ].join(' ');
+
+// Flash models "think" before answering, which made a one-paragraph reply take
+// 30-90 s. Tutoring needs little of it: 2.5 models turn it off with a budget of
+// 0, newer ones (behind the -latest aliases) take a level instead. A model that
+// rejects the setting is asked again without it.
+const thinkingFor = (model) =>
+  /2\.5/.test(model) ? { thinkingBudget: 0 } : { thinkingLevel: 'low' };
+
+// Gemini's SSE stream: each `data:` line is a partial GenerateContentResponse.
+// Text is handed to `onText` as it arrives and also returned merged, in the
+// shape generateContent gives, so the rest of the handler is the same.
+async function readSse(res, onText) {
+  const decoder = new TextDecoder();
+  let buf = '';
+  let text = '';
+  let last = {};
+  const take = (line) => {
+    if (!line.startsWith('data:')) return;
+    let j;
+    try {
+      j = JSON.parse(line.slice(5));
+    } catch {
+      return;
+    }
+    last = j;
+    const piece = (j?.candidates?.[0]?.content?.parts || []).filter((p) => !p.thought).map((p) => p.text || '').join('');
+    if (piece) {
+      text += piece;
+      onText(piece);
+    }
+  };
+  for await (const chunk of res.body) {
+    buf += decoder.decode(chunk, { stream: true });
+    const lines = buf.split(/\r?\n/);
+    buf = lines.pop();
+    lines.forEach(take);
+  }
+  take(buf);
+  return {
+    ...last,
+    candidates: [{ ...last?.candidates?.[0], content: { parts: [{ text }] } }],
+  };
+}
 
 const clip = (s, n) => String(s ?? '').slice(0, n);
 
@@ -217,7 +261,7 @@ async function isAdmin(auth) {
 
 export const aiStudy = onCall(
   { secrets: [GEMINI_API_KEY], timeoutSeconds: 120, memory: '256MiB', maxInstances: 3 },
-  async (request) => {
+  async (request, response) => {
     if (!request.auth) throw new HttpsError('unauthenticated', 'Sign in first.');
     if (!(await isAdmin(request.auth))) {
       throw new HttpsError('permission-denied', 'The AI study helper is only available to admins.');
@@ -228,22 +272,35 @@ export const aiStudy = onCall(
     if (!key) throw new HttpsError('failed-precondition', 'GEMINI_API_KEY is not set on the server.');
 
     const { contents, schema } = buildRequest(request.data);
-    const body = {
+    // Replies the app shows as they are written (explanations, chat) stream;
+    // JSON sets are only useful whole.
+    const stream = !schema && request.acceptsStreaming && response;
+    let streamed = false; // once text has gone out, no other model may take over
+    let thinking = true;
+    const bodyFor = (model) => ({
       systemInstruction: { parts: [{ text: SYSTEM }] },
       contents,
       generationConfig: {
         temperature: schema ? 0.6 : 0.4,
-        maxOutputTokens: 8192,
+        maxOutputTokens: schema ? 8192 : 3072,
+        ...(thinking ? { thinkingConfig: thinkingFor(model) } : {}),
         ...(schema ? { responseMimeType: 'application/json', responseSchema: schema } : {}),
       },
-    };
+    });
 
-    const call = (model) =>
-      fetch(`https://generativelanguage.googleapis.com/v1beta/models/${model}:generateContent`, {
+    const call = async (model) => {
+      const method = stream ? 'streamGenerateContent?alt=sse' : 'generateContent';
+      const r = await fetch(`https://generativelanguage.googleapis.com/v1beta/models/${model}:${method}`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json', 'x-goog-api-key': key },
-        body: JSON.stringify(body),
-      }).then(async (r) => [r, await r.json().catch(() => ({}))]);
+        body: JSON.stringify(bodyFor(model)),
+      });
+      if (!r.ok || !stream) return [r, await r.json().catch(() => ({}))];
+      return [r, await readSse(r, (t) => {
+        streamed = true;
+        response.sendChunk(t);
+      })];
+    };
     // Seconds Google asks us to wait on a 429 ("retryDelay": "37s").
     const retryAfter = (j) =>
       parseFloat((j?.error?.details || []).find((d) => d.retryDelay)?.retryDelay) || 0;
@@ -252,24 +309,30 @@ export const aiStudy = onCall(
     let json;
     let model;
     let quotaWait = 0;
+    const started = Date.now();
     for (model of MODELS) {
       // "High demand" (503) and per-minute rate limits usually clear within
-      // seconds, so try the same model again a couple of times.
+      // seconds, so try the same model once more before moving on.
       for (let attempt = 0; ; attempt++) {
         [res, json] = await call(model);
+        if (res.status === 400 && thinking && /thinking/i.test(json?.error?.message || '')) {
+          thinking = false; // this model takes no thinking setting: ask again without it
+          continue;
+        }
         const wait = res.status === 429 ? retryAfter(json) : 0;
         if (res.status === 429 && wait > 30) break; // daily quota: no point retrying this model
-        if (res.ok || ![429, 500, 503].includes(res.status) || attempt === 2) break;
-        await new Promise((r) => setTimeout(r, Math.max(wait * 1000, 2000 * 2 ** attempt)));
+        if (res.ok || ![429, 500, 503].includes(res.status) || attempt >= 1) break;
+        await new Promise((r) => setTimeout(r, Math.min(Math.max(wait * 1000, 1500), 5000)));
       }
-      if (res.ok) break;
+      if (res.ok || streamed) break;
+      if (Date.now() - started > 60_000) break; // the app gives up at 120 s; leave time to say why
       logger.warn(`Gemini ${model} ${res.status}: ${json?.error?.message || ''} (key length ${key.length})`);
-      // Out of quota, or this model is not open to the key: try the next one.
+      // Out of quota, overloaded, or not open to the key: try the next one.
       if (res.status === 429) {
         quotaWait = Math.max(quotaWait, retryAfter(json));
         if (retryAfter(json) > 30) await recordQuotaHit(json?.error?.message, retryAfter(json));
       }
-      else if (![403, 404].includes(res.status)) break;
+      else if (![403, 404, 500, 503].includes(res.status)) break;
     }
     if (!res.ok) {
       const msg = json?.error?.message || `HTTP ${res.status}`;
