@@ -1,0 +1,51 @@
+name: Deploy Cloud Functions
+
+# Deploys functions/ (aiStudy, deliverPush) whenever it changes on main, or on
+# demand from the Actions tab (Run workflow). The web/APK workflow does not
+# touch functions, so before this they had to be deployed from a PC.
+#
+# Uses the same service account as the hosting deploy. Deploying functions
+# needs more than hosting does; if this fails with a 403, give that account
+# these roles in Google Cloud console > IAM (project easy-pedia):
+#   Cloud Functions Admin, Cloud Run Admin, Service Account User,
+#   Artifact Registry Administrator, Cloud Build Editor, Secret Manager Viewer,
+#   Firebase Realtime Database Viewer
+# then re-run this workflow.
+on:
+  push:
+    branches:
+      - main
+    paths:
+      - 'functions/**'
+      - 'firebase.json'
+  workflow_dispatch:
+
+concurrency:
+  group: deploy-functions
+  cancel-in-progress: false
+
+jobs:
+  deploy:
+    name: Deploy functions
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+
+      - name: Install function dependencies
+        working-directory: functions
+        run: npm ci
+
+      - name: Deploy
+        env:
+          FIREBASE_SERVICE_ACCOUNT: ${{ secrets.FIREBASE_SERVICE_ACCOUNT_EASY_PEDIA }}
+        run: |
+          printf '%s' "$FIREBASE_SERVICE_ACCOUNT" > "$RUNNER_TEMP/sa.json"
+          export GOOGLE_APPLICATION_CREDENTIALS="$RUNNER_TEMP/sa.json"
+          npx --yes firebase-tools@14 deploy --only functions --project easy-pedia --non-interactive --force
+          rm -f "$RUNNER_TEMP/sa.json"
