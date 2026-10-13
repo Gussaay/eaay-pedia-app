@@ -202,3 +202,75 @@ export function decodeAnswers(s) {
     });
   return out;
 }
+
+// ---------------------------------------------------------------- answer review
+// The pieces of a finished attempt that lib/quizReview.js stores and the
+// review screen shows.
+/**
+ * The attempt as a list, in play order: { key, pos, choice }.
+ *
+ * `pos` is the question's place in the bank when it was played, a fallback
+ * for a question with no key. An exam keeps every question, answered or not,
+ * because the blanks are worth seeing; a review session keeps the ones that
+ * were answered, since anything after the point where it was left was never
+ * reached at all.
+ */
+export function buildAttempt(deck, questions, answers, { keepBlank = false } = {}) {
+  const items = [];
+  (deck || []).forEach((bankPos, i) => {
+    const q = questions[bankPos];
+    const choice = String(answers?.[i] || '').trim().toLowerCase();
+    if (!q || (!choice && !keepBlank)) return;
+    items.push({ key: q._key || '', pos: bankPos, choice });
+  });
+  return items;
+}
+
+/** "key|pos|choice;…" — keys are database push keys, so they hold neither. */
+export const encodeAttempt = (items) =>
+  (items || []).map((it) => `${it.key || ''}|${it.pos}|${it.choice || ''}`).join(';');
+
+export function decodeAttempt(s) {
+  return String(s || '')
+    .split(';')
+    .filter(Boolean)
+    .map((part) => {
+      const [key, pos, choice] = part.split('|');
+      return { key: key || '', pos: parseInt(pos, 10), choice: String(choice || '').trim().toLowerCase() };
+    })
+    .filter((it) => it.key || Number.isInteger(it.pos));
+}
+
+/**
+ * Joins a stored attempt to the questions as they are now. A question is found
+ * by its key first, so an attempt still lines up after the bank was reordered;
+ * one that has since been deleted is dropped rather than shown wrongly.
+ */
+export function reviewItems(items, questions) {
+  const byKey = new Map();
+  questions.forEach((q, i) => q?._key && byKey.set(q._key, i));
+  const out = [];
+  (items || []).forEach((it, order) => {
+    const at = it.key ? byKey.get(it.key) : it.pos;
+    const q = at === undefined ? undefined : questions[at];
+    if (!q || (it.key && q._key !== it.key)) return;
+    const status = !it.choice ? 'blank' : isCorrect(q, it.choice) ? 'correct' : 'wrong';
+    out.push({ order, number: at + 1, question: q, choice: it.choice, status });
+  });
+  return out;
+}
+
+export const REVIEW_FILTERS = ['all', 'correct', 'wrong', 'blank'];
+
+export function filterItems(items, filter) {
+  if (!filter || filter === 'all') return items;
+  return items.filter((it) => it.status === filter);
+}
+
+export function reviewCounts(items) {
+  const out = { all: items.length, correct: 0, wrong: 0, blank: 0 };
+  items.forEach((it) => {
+    out[it.status] += 1;
+  });
+  return out;
+}

@@ -1,11 +1,12 @@
 // QuizdetailActivity: quiz info, your score, leaderboard, start buttons.
 import { useEffect, useState } from 'react';
 import { useNavigate, useParams, useSearchParams } from 'react-router-dom';
-import { BookOpenCheck, CheckCircle2, DownloadCloud, PlayCircle, RotateCcw, Timer, Trophy } from 'lucide-react';
+import { BookOpenCheck, CheckCircle2, DownloadCloud, ListChecks, PlayCircle, RotateCcw, Timer, Trophy } from 'lucide-react';
 import { useAuth } from '../hooks/useAuth';
 import { useAsync, useOnline } from '../hooks/useData';
 import { incrementString, str, updateAt } from '../lib/rtdb';
-import { downloadQuiz, findSavedSession, loadLeaderboard, loadQuestions, loadQuizMeta, playPath } from '../lib/quizSource';
+import { downloadQuiz, findSavedSession, loadLeaderboard, loadQuestions, loadQuizMeta, playPath, reviewPath } from '../lib/quizSource';
+import { loadAttempts } from '../lib/quizReview';
 import { getQuiz, quizKey, removeQuiz } from '../lib/offline';
 import { AppBar, Avatar, Button, Card, ErrorBox, Page, Spinner, Thumb, useToast } from '../components/ui';
 
@@ -22,6 +23,7 @@ export default function QuizDetail() {
   const [leaders, setLeaders] = useState(null);
   const [saved, setSaved] = useState(null); // offline copy, if any
   const [paused, setPaused] = useState(null); // a session left half-finished
+  const [attempts, setAttempts] = useState([]); // finished ones, to review
   const [downloading, setDownloading] = useState(false);
   const online = useOnline();
   const toast = useToast();
@@ -44,6 +46,9 @@ export default function QuizDetail() {
     findSavedSession(user.uid, meta.data.pkey)
       .then(setPaused)
       .catch(() => setPaused(null));
+    loadAttempts(user.uid, meta.data.pkey)
+      .then(setAttempts)
+      .catch(() => setAttempts([]));
   }, [meta.data, user.uid]);
 
   if (meta.loading) return <><AppBar title="Loading…" /><Spinner /></>;
@@ -135,6 +140,11 @@ export default function QuizDetail() {
             <Button variant="secondary" className="!py-3" disabled={!count} onClick={() => start('exam')}>
               <Timer size={20} /> Start with Exam mode
             </Button>
+            {attempts.length > 0 && (
+              <Button variant="outline" className="!py-3" onClick={() => navigate(reviewPath(kind, id, extra))}>
+                <ListChecks size={20} /> Review answers of previous attempts ({attempts.length})
+              </Button>
+            )}
             {saved?.manual ? (
               <div className="flex items-center justify-center gap-3 text-sm">
                 <span className="inline-flex items-center gap-1.5 text-emerald-700 font-semibold">

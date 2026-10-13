@@ -19,6 +19,7 @@ import { useSwipe } from '../hooks/useSwipe';
 import { clearSpot, saveSpot } from '../lib/resume';
 import { getOne, getWhere, num, pushTo, removeAt, str, updateAt, newKey } from '../lib/rtdb';
 import {
+  buildAttempt,
   computeSessionResult,
   decodeAnswers,
   decodeDeck,
@@ -34,7 +35,8 @@ import {
 } from '../lib/quiz';
 import { hintsOf, markHints } from '../lib/questionHints';
 import { loadHistory, recordSession } from '../lib/quizHistory';
-import { findSavedSession, invalidateQuestions, loadQuestions, loadQuizMeta, playPath } from '../lib/quizSource';
+import { saveAttempt } from '../lib/quizReview';
+import { findSavedSession, invalidateQuestions, loadQuestions, loadQuizMeta, playPath, reviewPath } from '../lib/quizSource';
 import { queuePendingResult } from '../lib/sync';
 import { AppBar, Button, Card, ErrorBox, Input, Modal, Page, Spinner, Textarea, ZoomImage, useToast } from '../components/ui';
 import QuestionEditModal from '../components/QuestionEditModal';
@@ -60,6 +62,7 @@ export default function QuizPlay() {
     return {
       path: playPath(kind, id, 'review', { ...extra, resume: '1', fresh: '' }),
       newPath: playPath(kind, id, 'review', { ...extra, fresh: '1', resume: '' }),
+      review: reviewPath(kind, id, extra),
     };
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [kind, id, params.toString()]);
@@ -245,11 +248,21 @@ export default function QuizPlay() {
         c.played += 1;
         if (ok) c.correct += 1;
       });
+      // The paper itself, kept alongside every earlier one, so its answers can
+      // be gone over from the result or any time later.
+      saveAttempt(user.uid, meta.pkey, {
+        items: buildAttempt(deck, questions, answers, { keepBlank: mode === 'exam' }),
+        questions,
+        title: meta.title,
+        mode,
+        path: routes.review,
+      }).catch(() => {});
       recordSession({
         uid: user.uid,
         pkey: meta.pkey,
         title: meta.title,
         source: meta.source,
+        review: routes.review,
         outcomes,
         categories,
         played: final.played,
@@ -270,6 +283,7 @@ export default function QuizPlay() {
             played: final.played,
             mode,
             pending,
+            review: routes.review,
           },
         });
 
@@ -332,7 +346,7 @@ export default function QuizPlay() {
       }
     },
     // eslint-disable-next-line react-hooks/exhaustive-deps
-    [played, correct, answers, deck, questions, meta, user, profile, navigate, mode],
+    [played, correct, answers, deck, questions, meta, user, profile, navigate, mode, routes],
   );
 
   // ---------------------------------------------------------------- answering
