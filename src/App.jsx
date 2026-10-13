@@ -18,6 +18,7 @@ const Exams = lazy(() => import('./pages/Exams'));
 const QuizDetail = lazy(() => import('./pages/QuizDetail'));
 const QuizPlay = lazy(() => import('./pages/QuizPlay'));
 const Results = lazy(() => import('./pages/Results'));
+const QuizAnswers = lazy(() => import('./pages/QuizAnswers'));
 const Performance = lazy(() => import('./pages/Performance'));
 const Profile = lazy(() => import('./pages/Profile'));
 const Notifications = lazy(() => import('./pages/Notifications'));
@@ -185,6 +186,7 @@ export default function App() {
           <Route path="/book/:source" element={guard(<Exams />)} />
           <Route path="/quiz/:kind/:id" element={guard(<QuizDetail />)} />
           <Route path="/play/:kind/:id" element={guard(<QuizPlay />)} />
+          <Route path="/review/:kind/:id" element={guard(<QuizAnswers />)} />
           <Route path="/results" element={guard(<Results />)} />
           <Route path="/performance" element={guard(<Performance />)} />
           <Route path="/profile" element={guard(<Profile />)} />

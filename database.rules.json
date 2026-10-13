@@ -133,6 +133,14 @@
         ".write": "auth.uid === $uid"
       }
     },
+    // The last finished attempt of each quiz (questions and choices), so its
+    // answers can be reviewed again later and on another device.
+    "quizreview": {
+      "$uid": {
+        ".read": "auth.uid === $uid",
+        ".write": "auth.uid === $uid"
+      }
+    },
 
     // ---------------------------------------------------------------- interest
     // Who asked to be told when a coming-soon section opens. Readable by any

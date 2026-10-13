@@ -12,6 +12,7 @@
 //   - the database copy is what makes the same progress appear on a second
 //     device, and it is allowed to fail without the session being lost
 import { getOne, removeAt, str, updateAt } from './rtdb';
+import { clearAttempts } from './quizReview';
 
 const LKEY = 'quizhistory:v1';
 
@@ -76,6 +77,7 @@ export async function loadDashboard(uid) {
       pkey,
       title: v?.title || 'Untitled quiz',
       source: v?.source || '',
+      review: v?.review || '',
       attempts: Number(v?.attempts) || 0,
       played: Number(v?.played) || 0,
       correct: Number(v?.correct) || 0,
@@ -105,7 +107,7 @@ export async function loadDashboard(uid) {
  * (say the rules have not been deployed yet) must not cost the reader the
  * other two.
  */
-export async function recordSession({ uid, pkey, title, source, outcomes, categories, played, correct, percentage }) {
+export async function recordSession({ uid, pkey, title, source, review, outcomes, categories, played, correct, percentage }) {
   if (!uid || !pkey) return;
   if (outcomes && Object.keys(outcomes).length) {
     const all = readLocal();
@@ -119,16 +121,17 @@ export async function recordSession({ uid, pkey, title, source, outcomes, catego
           Object.fromEntries(Object.entries(outcomes).map(([k, v]) => [k, v ? '1' : '0'])),
         ).catch(() => {})
       : null,
-    bumpQuizStats({ uid, pkey, title, source, played, correct, percentage }).catch(() => {}),
+    bumpQuizStats({ uid, pkey, title, source, review, played, correct, percentage }).catch(() => {}),
     bumpCategories(uid, categories).catch(() => {}),
   ]);
 }
 
-async function bumpQuizStats({ uid, pkey, title, source, played, correct, percentage }) {
+async function bumpQuizStats({ uid, pkey, title, source, review, played, correct, percentage }) {
   const prev = (await getOne(`quizstats/${uid}/${pkey}`)) || {};
   await updateAt(`quizstats/${uid}/${pkey}`, {
     title: title || prev.title || '',
     source: source || prev.source || '',
+    review: review || prev.review || '',
     attempts: str((Number(prev.attempts) || 0) + 1),
     played: str((Number(prev.played) || 0) + played),
     correct: str((Number(prev.correct) || 0) + correct),
@@ -156,9 +159,11 @@ async function bumpCategories(uid, categories) {
 /** "Reset statistics": the dashboard and the per-question history both go. */
 export async function resetHistory(uid) {
   writeLocal({});
+  clearAttempts();
   await Promise.all([
     removeAt(`quizhistory/${uid}`).catch(() => {}),
     removeAt(`quizstats/${uid}`).catch(() => {}),
     removeAt(`quizcats/${uid}`).catch(() => {}),
+    removeAt(`quizreview/${uid}`).catch(() => {}),
   ]);
 }

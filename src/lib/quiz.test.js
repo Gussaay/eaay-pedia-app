@@ -4,6 +4,7 @@ import {
   visibleOptions, isCorrect, planSession, examDurationMs, formatDuration,
   computeSessionResult, rating, answerStats, matchesChapter,
   planDeck, historyCounts, tallyAnswers, encodeDeck, decodeDeck, encodeAnswers, decodeAnswers,
+  buildAttempt, encodeAttempt, decodeAttempt, reviewItems, filterItems, reviewCounts,
 } from './quiz.js';
 
 test('visibleOptions hides empty options and E for smsb', () => {
@@ -118,4 +119,33 @@ test('a deck and its answers survive a round trip through the database', () => {
   assert.deepEqual(decodeAnswers(encodeAnswers(answers)), answers);
   assert.deepEqual(decodeDeck(''), []);
   assert.deepEqual(decodeAnswers(''), {});
+});
+
+test('buildAttempt keeps play order, and blanks only when asked', () => {
+  const qs = [{ _key: 'k0', answer: 'a' }, { _key: 'k1', answer: 'b' }, { _key: 'k2', answer: 'c' }];
+  const deck = [2, 0, 1];
+  const answers = { 0: 'c', 2: 'a' };
+  assert.deepEqual(buildAttempt(deck, qs, answers), [
+    { key: 'k2', pos: 2, choice: 'c' },
+    { key: 'k1', pos: 1, choice: 'a' },
+  ]);
+  assert.equal(buildAttempt(deck, qs, answers, { keepBlank: true }).length, 3);
+});
+
+test('attempts round-trip through a string', () => {
+  const items = [{ key: '-Nabc_1', pos: 4, choice: 'd' }, { key: '', pos: 7, choice: '' }];
+  assert.deepEqual(decodeAttempt(encodeAttempt(items)), items);
+  assert.deepEqual(decodeAttempt(''), []);
+});
+
+test('reviewItems follows keys after a reorder and drops deleted questions', () => {
+  const qs = [{ _key: 'k1', answer: 'b' }, { _key: 'k0', answer: 'a' }];
+  const items = reviewItems(
+    [{ key: 'k0', pos: 0, choice: 'a' }, { key: 'k1', pos: 1, choice: 'c' }, { key: 'gone', pos: 2, choice: 'a' }, { key: 'k1', pos: 1, choice: '' }],
+    qs,
+  );
+  assert.deepEqual(items.map((it) => [it.number, it.status]), [[2, 'correct'], [1, 'wrong'], [1, 'blank']]);
+  assert.deepEqual(reviewCounts(items), { all: 3, correct: 1, wrong: 1, blank: 1 });
+  assert.equal(filterItems(items, 'wrong').length, 1);
+  assert.equal(filterItems(items, 'all').length, 3);
 });

@@ -2,7 +2,7 @@
 import { useRef, useState } from 'react';
 import { Navigate, useLocation, useNavigate } from 'react-router-dom';
 import { toPng } from 'html-to-image';
-import { CloudOff, Home as HomeIcon, RotateCcw, Share2 } from 'lucide-react';
+import { CloudOff, Home as HomeIcon, ListChecks, RotateCcw, Share2 } from 'lucide-react';
 import { useAuth } from '../hooks/useAuth';
 import { useList } from '../hooks/useData';
 import { rating } from '../lib/quiz';
@@ -71,6 +71,11 @@ export default function Results() {
             <CloudOff size={18} className="shrink-0" />
             <p>Saved on your device. Your score will be sent automatically when you are back online.</p>
           </div>
+        )}
+        {state.review && (
+          <Button variant="secondary" className="w-full !py-3" onClick={() => navigate(state.review)}>
+            <ListChecks size={18} /> Review your answers
+          </Button>
         )}
         <Button className="w-full !py-3" onClick={share} loading={sharing}>
           <Share2 size={18} /> Share your result

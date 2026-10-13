@@ -238,6 +238,11 @@ export default function Performance() {
                       <span className="flex-1 truncate font-medium text-slate-800">{q.title}</span>
                       <span className={`text-sm font-semibold ${b.text}`}>{accuracy}%</span>
                     </div>
+                    {q.review && (
+                      <Link to={q.review} className="inline-flex items-center gap-1 text-xs font-semibold text-brand-700 mt-1">
+                        <ListChecks size={14} /> Review last answers
+                      </Link>
+                    )}
                     <div className="flex flex-wrap gap-x-3 gap-y-1 text-xs text-slate-500 mt-1">
                       <span>{q.attempts} attempt/s</span>
                       <span>best {q.best}%</span>

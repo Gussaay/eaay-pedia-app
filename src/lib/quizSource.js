@@ -301,3 +301,10 @@ export function playPath(kind, id, mode, params = {}) {
   ).toString();
   return `/play/${kind}/${encodeURIComponent(id)}?${qs}`;
 }
+
+/** Where the answers of the last finished attempt can be gone over. */
+export function reviewPath(kind, id, params = {}) {
+  const { mode, resume, fresh, ...rest } = params;
+  const qs = new URLSearchParams(Object.entries(rest).filter(([, v]) => v)).toString();
+  return `/review/${kind}/${encodeURIComponent(id)}${qs ? `?${qs}` : ''}`;
+}
