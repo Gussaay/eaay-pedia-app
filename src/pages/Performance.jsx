@@ -240,7 +240,7 @@ export default function Performance() {
                     </div>
                     {q.review && (
                       <Link to={q.review} className="inline-flex items-center gap-1 text-xs font-semibold text-brand-700 mt-1">
-                        <ListChecks size={14} /> Review last answers
+                        <ListChecks size={14} /> Review answers
                       </Link>
                     )}
                     <div className="flex flex-wrap gap-x-3 gap-y-1 text-xs text-slate-500 mt-1">

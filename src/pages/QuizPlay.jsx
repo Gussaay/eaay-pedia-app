@@ -248,10 +248,11 @@ export default function QuizPlay() {
         c.played += 1;
         if (ok) c.correct += 1;
       });
-      // The paper itself, so its answers can be gone over from the result or
-      // any time later.
+      // The paper itself, kept alongside every earlier one, so its answers can
+      // be gone over from the result or any time later.
       saveAttempt(user.uid, meta.pkey, {
         items: buildAttempt(deck, questions, answers, { keepBlank: mode === 'exam' }),
+        questions,
         title: meta.title,
         mode,
         path: routes.review,

@@ -1,0 +1,43 @@
+name: Deploy Database Rules
+
+# Deploys database.rules.json to the Realtime Database whenever it changes on
+# main, or on demand from the Actions tab (Run workflow). Neither of the other
+# workflows touches the rules, so before this they had to be deployed from a PC
+# with `firebase deploy --only database`.
+#
+# Uses the same service account as the hosting deploy. If this fails with a
+# 403, give that account the "Firebase Realtime Database Admin" role in Google
+# Cloud console > IAM (project easy-pedia), then re-run this workflow.
+on:
+  push:
+    branches:
+      - main
+    paths:
+      - 'database.rules.json'
+  workflow_dispatch:
+
+concurrency:
+  group: deploy-rules
+  cancel-in-progress: false
+
+jobs:
+  deploy:
+    name: Deploy database rules
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+
+      - name: Deploy
+        env:
+          FIREBASE_SERVICE_ACCOUNT: ${{ secrets.FIREBASE_SERVICE_ACCOUNT_EASY_PEDIA }}
+        run: |
+          printf '%s' "$FIREBASE_SERVICE_ACCOUNT" > "$RUNNER_TEMP/sa.json"
+          export GOOGLE_APPLICATION_CREDENTIALS="$RUNNER_TEMP/sa.json"
+          npx --yes firebase-tools@14 deploy --only database --project easy-pedia --non-interactive
+          rm -f "$RUNNER_TEMP/sa.json"

@@ -1,10 +1,11 @@
 // Going over the answers of a finished quiz, in review or exam mode alike.
 //
 // Opened from the result, or any time later from the quiz page and the
-// performance dashboard: the last finished attempt of each quiz is kept
-// (lib/quizReview.js). The paper can be narrowed to the questions answered
-// correctly, wrongly or left blank, and each one opens with the correct answer,
-// the option that was picked and the explanation.
+// performance dashboard: every finished attempt of each quiz is kept
+// (lib/quizReview.js), the newest shown first and any earlier one a pick away.
+// The paper can be narrowed to the questions answered correctly, wrongly or
+// left blank, and each one opens with the correct answer, the option that was
+// picked and the explanation.
 import { useEffect, useMemo, useRef, useState } from 'react';
 import { useNavigate, useParams, useSearchParams } from 'react-router-dom';
 import { ArrowLeft, ArrowRight, CheckCircle2, CircleDashed, List, XCircle } from 'lucide-react';
@@ -12,7 +13,7 @@ import { useAuth } from '../hooks/useAuth';
 import { useBackHandler } from '../lib/back';
 import { useSwipe } from '../hooks/useSwipe';
 import { filterItems, reviewCounts, reviewItems, visibleOptions } from '../lib/quiz';
-import { loadAttempt } from '../lib/quizReview';
+import { loadAttempts } from '../lib/quizReview';
 import { loadQuestions, loadQuizMeta, playPath } from '../lib/quizSource';
 import { AppBar, Button, Card, ErrorBox, Page, Spinner, ZoomImage } from '../components/ui';
 import StudyLinks from '../components/StudyLinks';
@@ -40,12 +41,15 @@ export default function QuizAnswers() {
   const { user } = useAuth();
 
   const [meta, setMeta] = useState(null);
-  const [items, setItems] = useState(null);
-  const [attempt, setAttempt] = useState(null);
+  const [questions, setQuestions] = useState(null);
+  const [attempts, setAttempts] = useState([]);
   const [error, setError] = useState(null);
 
-  // The filter lives in the address, so leaving and coming back keeps it.
+  // The filter and the attempt live in the address, so leaving and coming
+  // back keeps them.
   const filter = FILTERS.some((f) => f.id === params.get('show')) ? params.get('show') : 'all';
+  const attempt = attempts.find((a) => a.id === params.get('attempt')) || attempts[0] || null;
+  const attemptNo = attempt ? attempts.length - attempts.indexOf(attempt) : 0;
   const [open, setOpen] = useState(-1); // position in the filtered list, -1 = list view
 
   useEffect(() => {
@@ -54,12 +58,13 @@ export default function QuizAnswers() {
       try {
         const extra = Object.fromEntries(params);
         delete extra.show;
+        delete extra.attempt;
         const m = await loadQuizMeta(kind, id, extra);
-        const [qs, a] = await Promise.all([loadQuestions(m), loadAttempt(user.uid, m.pkey)]);
+        const [qs, list] = await Promise.all([loadQuestions(m), loadAttempts(user.uid, m.pkey)]);
         if (cancelled) return;
         setMeta(m);
-        setAttempt(a);
-        setItems(a ? reviewItems(a.items, qs) : []);
+        setAttempts(list);
+        setQuestions(qs);
       } catch (e) {
         if (!cancelled) setError(e);
       }
@@ -70,17 +75,23 @@ export default function QuizAnswers() {
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [kind, id, user.uid]);
 
+  const items = useMemo(
+    () => (questions ? (attempt ? reviewItems(attempt.items, questions) : []) : null),
+    [questions, attempt],
+  );
   const counts = useMemo(() => reviewCounts(items || []), [items]);
   const shown = useMemo(() => filterItems(items || [], filter), [items, filter]);
   const item = open >= 0 ? shown[open] : null;
 
-  const setFilter = (f) => {
+  const setParam = (name, value) => {
     const next = new URLSearchParams(params);
-    if (f === 'all') next.delete('show');
-    else next.set('show', f);
+    if (value) next.set(name, value);
+    else next.delete(name);
     setParams(next, { replace: true });
     setOpen(-1);
   };
+  const setFilter = (f) => setParam('show', f === 'all' ? '' : f);
+  const setAttempt = (aid) => setParam('attempt', aid === attempts[0]?.id ? '' : aid);
 
   const step = (d) => {
     const i = open + d;
@@ -121,7 +132,7 @@ export default function QuizAnswers() {
     );
   if (!items) return <><AppBar title={title} /><Spinner label="Loading your answers…" /></>;
 
-  if (!items.length)
+  if (!attempts.length)
     return (
       <>
         <AppBar title={title} />
@@ -129,7 +140,15 @@ export default function QuizAnswers() {
           <Card className="p-6 text-center">
             <p className="text-slate-700">There is no finished attempt of this quiz to review yet.</p>
             <p className="text-sm text-slate-500 mt-1">Finish a session in review or exam mode and its answers will be kept here.</p>
-            <Button className="w-full mt-5" onClick={() => navigate(playPath(kind, id, 'review', Object.fromEntries(params)))}>
+            <Button
+              className="w-full mt-5"
+              onClick={() => {
+                const extra = Object.fromEntries(params);
+                delete extra.show;
+                delete extra.attempt;
+                navigate(playPath(kind, id, 'review', extra));
+              }}
+            >
               Start the quiz
             </Button>
           </Card>
@@ -145,7 +164,7 @@ export default function QuizAnswers() {
     const exp = String(q.exp || '').trim();
     return (
       <div className="min-h-screen pb-28" ref={swipeRef}>
-        <AppBar title={title} subtitle={`${open + 1} of ${shown.length}${filter === 'all' ? '' : ` · ${FILTERS.find((f) => f.id === filter).label.toLowerCase()}`}`} onBack={() => setOpen(-1)} />
+        <AppBar title={title} subtitle={`Attempt #${attemptNo} · ${open + 1} of ${shown.length}${filter === 'all' ? '' : ` · ${FILTERS.find((f) => f.id === filter).label.toLowerCase()}`}`} onBack={() => setOpen(-1)} />
         <Page className="space-y-4">
           <div className="flex flex-wrap items-center gap-2 text-xs">
             <span className="rounded-full bg-brand-50 text-brand-800 px-2.5 py-1 font-semibold">Question No: {item.number}</span>
@@ -219,11 +238,29 @@ export default function QuizAnswers() {
       <AppBar title={title} subtitle="Review answers" />
       <Page className="space-y-4">
         <Card className="p-5">
-          <p className="text-sm text-slate-500">
-            Last attempt{attempt?.mode === 'exam' ? ' (exam mode)' : ''}
-            {attempt?.at ? ` · ${when(attempt.at)}` : ''}
-          </p>
-          <p className="text-2xl font-bold text-brand-700 mt-1">
+          {attempts.length > 1 ? (
+            <label className="block">
+              <span className="text-sm text-slate-500">Attempt</span>
+              <select
+                className="mt-1 w-full rounded-xl border border-slate-200 bg-white px-3 py-2 text-slate-800"
+                value={attempt?.id || ''}
+                onChange={(e) => setAttempt(e.target.value)}
+              >
+                {attempts.map((a, i) => (
+                  <option key={a.id} value={a.id}>
+                    #{attempts.length - i} · {when(a.at)} · {a.mode === 'exam' ? 'Exam' : 'Review'} · {a.correct}/{a.played}
+                    {i === 0 ? ' (latest)' : ''}
+                  </option>
+                ))}
+              </select>
+            </label>
+          ) : (
+            <p className="text-sm text-slate-500">
+              Attempt #{attemptNo}{attempt?.mode === 'exam' ? ' (exam mode)' : ''}
+              {attempt?.at ? ` · ${when(attempt.at)}` : ''}
+            </p>
+          )}
+          <p className="text-2xl font-bold text-brand-700 mt-3">
             {counts.correct} / {answered} correct
             {answered ? <span className="text-base font-semibold text-slate-500"> · {Math.trunc((counts.correct / answered) * 100)}%</span> : null}
           </p>

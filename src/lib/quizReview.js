@@ -1,22 +1,24 @@
-// The last finished attempt of every quiz, kept so its answers can be gone
-// over afterwards — straight from the result, or any time later from the quiz
-// page or the performance dashboard.
+// Every finished attempt of every quiz, kept so its answers can be gone over
+// afterwards — straight from the result, or any time later from the quiz page
+// or the performance dashboard.
 //
 // quizHistory.js keeps one right/wrong flag per question, merged across every
 // attempt. That answers "which have I got wrong?", but not "what did I pick,
 // and what should it have been?" for one particular paper. This keeps the
-// paper itself: which questions it held, in order, and the option chosen on
-// each (blank for one left unanswered in an exam).
+// papers themselves: which questions each held, in order, and the option
+// chosen on each (blank for one left unanswered in an exam).
 //
-// Like the history, it is written to localStorage first (synchronous, works
-// offline) and to the database second (so a second device can review it too).
-import { getOne, str, updateAt } from './rtdb';
-import { encodeAttempt, decodeAttempt } from './quiz';
+// Like the history, each one is written to localStorage first (synchronous,
+// works offline) and to the database second. The database keeps them all and
+// is what a second device sees; the device keeps the newest few hundred.
+import { getOne, newKey, str, updateAt } from './rtdb';
+import { encodeAttempt, decodeAttempt, isCorrect } from './quiz';
 
-const LKEY = 'quizreview:v1';
-const MAX_LOCAL = 40;
+const LKEY = 'quizreview:v2';
+const MAX_LOCAL = 200;
 
 // ---------------------------------------------------------------- local copy
+// { [pkey]: { [attemptId]: record } }
 function readLocal() {
   try {
     return JSON.parse(localStorage.getItem(LKEY) || '{}');
@@ -25,43 +27,80 @@ function readLocal() {
   }
 }
 function writeLocal(all) {
-  // Newest few only: a phone that studies daily should not keep every paper.
-  const kept = Object.entries(all)
-    .sort((a, b) => (b[1]?.at || 0) - (a[1]?.at || 0))
-    .slice(0, MAX_LOCAL);
+  // Only the newest papers stay on the phone; older ones are still in the
+  // database and come back from there.
+  const flat = [];
+  Object.entries(all).forEach(([pkey, byId]) =>
+    Object.entries(byId || {}).forEach(([id, r]) => flat.push([pkey, id, r])),
+  );
+  flat.sort((a, b) => Number(b[2]?.at || 0) - Number(a[2]?.at || 0));
+  const kept = {};
+  flat.slice(0, MAX_LOCAL).forEach(([pkey, id, r]) => {
+    (kept[pkey] ||= {})[id] = r;
+  });
   try {
-    localStorage.setItem(LKEY, JSON.stringify(Object.fromEntries(kept)));
+    localStorage.setItem(LKEY, JSON.stringify(kept));
   } catch {
     /* private mode or full quota: the database copy still has it */
   }
 }
 
+const toAttempt = (id, r) => ({
+  id,
+  at: Number(r.at) || 0,
+  title: r.title || '',
+  mode: r.mode === 'exam' ? 'exam' : 'review',
+  path: r.path || '',
+  correct: Number(r.correct) || 0,
+  played: Number(r.played) || 0,
+  total: Number(r.total) || 0,
+  items: decodeAttempt(r.items),
+});
+
 // ---------------------------------------------------------------- read / write
-/** Called once a session is submitted. */
-export async function saveAttempt(uid, pkey, { items, title, mode, path }) {
+/** Called once a session is submitted. `questions` are the loaded bank. */
+export async function saveAttempt(uid, pkey, { items, questions, title, mode, path }) {
   if (!uid || !pkey || !items?.length) return;
-  const record = { at: Date.now(), title: title || '', mode: mode || 'review', path: path || '', items: encodeAttempt(items) };
+  let correct = 0;
+  let played = 0;
+  items.forEach((it) => {
+    if (!it.choice) return;
+    played += 1;
+    if (isCorrect(questions?.[it.pos], it.choice)) correct += 1;
+  });
+  const id = newKey(`quizreview/${uid}/${pkey}`);
+  const record = {
+    at: str(Date.now()),
+    title: title || '',
+    mode: mode || 'review',
+    path: path || '',
+    correct: str(correct),
+    played: str(played),
+    total: str(items.length),
+    items: encodeAttempt(items),
+  };
   const all = readLocal();
-  all[pkey] = record;
+  (all[pkey] ||= {})[id] = record;
   writeLocal(all);
-  await updateAt(`quizreview/${uid}/${pkey}`, { ...record, at: str(record.at) }).catch(() => {});
+  await updateAt(`quizreview/${uid}/${pkey}/${id}`, record).catch(() => {});
 }
 
-/** The newer of the device's copy and the database's, or null. */
-export async function loadAttempt(uid, pkey) {
-  if (!pkey) return null;
-  const local = readLocal()[pkey] || null;
-  let remote = null;
+/** Every attempt of one quiz, newest first: the device's and the database's. */
+export async function loadAttempts(uid, pkey) {
+  if (!pkey) return [];
+  const merged = { ...(readLocal()[pkey] || {}) };
   try {
-    remote = await getOne(`quizreview/${uid}/${pkey}`);
+    const remote = (await getOne(`quizreview/${uid}/${pkey}`)) || {};
+    Object.entries(remote).forEach(([id, r]) => {
+      if (r && typeof r === 'object') merged[id] = r;
+    });
   } catch {
-    /* offline, or rules not deployed yet */
+    /* offline, or rules not deployed yet: the device's copy is enough */
   }
-  const pick = [local, remote]
-    .filter((r) => r?.items)
-    .sort((a, b) => Number(b.at || 0) - Number(a.at || 0))[0];
-  if (!pick) return null;
-  return { ...pick, at: Number(pick.at) || 0, items: decodeAttempt(pick.items) };
+  return Object.entries(merged)
+    .filter(([, r]) => r?.items)
+    .map(([id, r]) => toAttempt(id, r))
+    .sort((a, b) => b.at - a.at);
 }
 
 /** Part of "Reset statistics"; the caller removes the database copy. */

@@ -133,7 +133,7 @@
         ".write": "auth.uid === $uid"
       }
     },
-    // The last finished attempt of each quiz (questions and choices), so its
+    // Every finished attempt of each quiz (questions and choices), so their
     // answers can be reviewed again later and on another device.
     "quizreview": {
       "$uid": {
