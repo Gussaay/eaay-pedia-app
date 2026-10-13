@@ -80,9 +80,10 @@ export function AiWaiting({ label, onCancel, className = '' }) {
 /**
  * A tutor conversation. `context` (a question, card or topic) is sent with
  * every turn so follow-ups stay about the thing being studied; `seed` starts
- * the chat with an earlier reply, e.g. the AI explanation of a question.
+ * the chat with an earlier reply, e.g. the AI explanation of a question;
+ * `ask` sends a first question as soon as the chat opens.
  */
-export default function AiChat({ context, seed = [], onChange, placeholder = 'Ask anything about pediatrics…', className = '' }) {
+export default function AiChat({ context, seed = [], ask, onChange, placeholder = 'Ask anything about pediatrics…', className = '' }) {
   const [messages, setMessages] = useState(seed);
   const [text, setText] = useState('');
   const [busy, setBusy] = useState(false);
@@ -95,8 +96,8 @@ export default function AiChat({ context, seed = [], onChange, placeholder = 'As
     endRef.current?.scrollIntoView({ behavior: 'smooth', block: 'nearest' });
   }, [messages, busy]);
 
-  const send = async () => {
-    const q = text.trim();
+  const send = async (asked) => {
+    const q = (typeof asked === 'string' ? asked : text).trim();
     if (!q || busy) return;
     const next = [...messages, { role: 'user', text: q }];
     setMessages(next);
@@ -113,7 +114,7 @@ export default function AiChat({ context, seed = [], onChange, placeholder = 'As
     } catch (e) {
       if (id !== request.current) return;
       setError(e.message);
-      setMessages(messages);
+      setMessages(next.slice(0, -1));
       setText(q);
     } finally {
       if (id === request.current) setBusy(false);
@@ -123,9 +124,21 @@ export default function AiChat({ context, seed = [], onChange, placeholder = 'As
   const cancel = () => {
     request.current++;
     setBusy(false);
-    setMessages((m) => (m[m.length - 1]?.role === 'user' ? m.slice(0, -1) : m));
-    setText((t) => t || messages[messages.length - 1]?.text || '');
+    const last = messages[messages.length - 1];
+    if (last?.role === 'user') {
+      setMessages(messages.slice(0, -1));
+      setText((t) => t || last.text);
+    }
   };
+
+  const asked = useRef(false);
+  useEffect(() => {
+    if (ask && !asked.current) {
+      asked.current = true;
+      send(ask);
+    }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []);
 
   // Once the keyboard has opened, bring the box back into view above it.
   const revealInput = () => setTimeout(() => inputRef.current?.scrollIntoView({ block: 'nearest', behavior: 'smooth' }), 350);
@@ -183,7 +196,9 @@ export function AiExplain({ question }) {
   const [open, setOpen] = useState(false);
   const [busy, setBusy] = useState(false);
   const [error, setError] = useState('');
-  const [round, setRound] = useState(0); // remounts the chat after "New explanation"
+  const [round, setRound] = useState(0); // remounts the chat after "New explanation" or a direct question
+  const [ask, setAsk] = useState(''); // a point typed under the button, sent as the chat opens
+  const [point, setPoint] = useState('');
   const request = useRef(0);
 
   useEffect(() => {
@@ -192,6 +207,8 @@ export function AiExplain({ question }) {
     setOpen(false);
     setBusy(false);
     setError('');
+    setAsk('');
+    setPoint('');
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [question._key]);
 
@@ -205,6 +222,7 @@ export function AiExplain({ question }) {
       if (id !== request.current) return;
       const first = [{ role: 'model', text: res.text, model: res.model }];
       setMessages(first);
+      setAsk('');
       setRound((r) => r + 1);
       saveTutorChat(question, first);
     } catch (e) {
@@ -217,6 +235,19 @@ export function AiExplain({ question }) {
   const explain = () => {
     setOpen(true);
     if (!messages && !busy) fetchExplanation();
+  };
+
+  // Straight to the tutor with one point, without waiting for a full explanation.
+  const clarify = () => {
+    const q = point.trim();
+    if (!q) return;
+    request.current++; // a full explanation still loading is dropped
+    setBusy(false);
+    setError('');
+    setAsk(q);
+    setPoint('');
+    setRound((r) => r + 1);
+    setOpen(true);
   };
 
   const cancel = () => {
@@ -240,6 +271,24 @@ export function AiExplain({ question }) {
         </span>
         <ChevronRight size={18} />
       </Button>
+      <form
+        className="flex gap-2 mt-2"
+        onSubmit={(e) => {
+          e.preventDefault();
+          clarify();
+        }}
+      >
+        <input
+          value={point}
+          onChange={(e) => setPoint(e.target.value)}
+          placeholder="Or ask about a specific point…"
+          enterKeyHint="send"
+          className="flex-1 min-w-0 rounded-xl border border-violet-200 bg-white px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-violet-300"
+        />
+        <Button type="submit" disabled={!point.trim()} className="!px-3 !bg-violet-600" aria-label="Ask the AI tutor">
+          <Send size={16} />
+        </Button>
+      </form>
 
       <Modal
         open={open}
@@ -260,13 +309,15 @@ export function AiExplain({ question }) {
             </Button>
           </div>
         )}
-        {messages && !busy && (
+        {(messages || ask) && !busy && (
           <>
             <AiChat
               key={`${_key}-${round}`}
               context={{ kind: 'question', question: plain }}
-              seed={messages}
+              seed={messages || []}
+              ask={ask}
               onChange={(m) => {
+                setAsk('');
                 setMessages(m);
                 saveTutorChat(question, m);
               }}
