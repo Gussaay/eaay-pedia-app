@@ -15,11 +15,20 @@ const MESSAGES = {
   'functions/deadline-exceeded': 'Gemini took too long, try again.',
 };
 
-export async function askAi(data) {
+/**
+ * One request to the helper. With `onText`, the reply streams: each piece of
+ * text is passed to it as Gemini writes it, and the promise still resolves
+ * with the whole reply. `signal` (an AbortController's) cancels it.
+ */
+export async function askAi(data, { onText, signal } = {}) {
   try {
-    const res = await call(data);
-    return res.data;
+    if (!onText) return (await call(data)).data;
+    const { stream, data: done } = await call.stream(data, { signal });
+    done.catch(() => {}); // a failure surfaces from the stream loop below
+    for await (const piece of stream) onText(String(piece));
+    return await done;
   } catch (e) {
+    if (signal?.aborted) throw new Error('Cancelled.');
     throw new Error(MESSAGES[e.code] || e.message || 'AI request failed.');
   }
 }

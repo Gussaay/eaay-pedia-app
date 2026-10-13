@@ -77,6 +77,23 @@ export function AiWaiting({ label, onCancel, className = '' }) {
   );
 }
 
+/** A reply still being written: the text so far, with a stop button. */
+function StreamingReply({ text, onCancel }) {
+  return (
+    <div className="mr-4 rounded-2xl rounded-bl-md bg-slate-50 border border-slate-100 px-3 py-2">
+      <AiReply text={text} />
+      <div className="flex items-center gap-2 mt-1.5 text-[11px] text-violet-500">
+        <Sparkles size={12} className="animate-pulse" /> Writing…
+        {onCancel && (
+          <button onClick={onCancel} className="ml-auto font-medium text-slate-500 hover:text-slate-700">
+            Stop
+          </button>
+        )}
+      </div>
+    </div>
+  );
+}
+
 /**
  * A tutor conversation. `context` (a question, card or topic) is sent with
  * every turn so follow-ups stay about the thing being studied; `seed` starts
@@ -91,10 +108,12 @@ export default function AiChat({ context, seed = [], ask, onChange, placeholder 
   const endRef = useRef(null);
   const inputRef = useRef(null);
   const request = useRef(0); // bumped on send and cancel; a stale reply is dropped
+  const abort = useRef(null);
+  const [partial, setPartial] = useState(''); // the reply so far, while it streams
 
   useEffect(() => {
     endRef.current?.scrollIntoView({ behavior: 'smooth', block: 'nearest' });
-  }, [messages, busy]);
+  }, [messages, busy, partial]);
 
   const send = async (asked) => {
     const q = (typeof asked === 'string' ? asked : text).trim();
@@ -104,9 +123,14 @@ export default function AiChat({ context, seed = [], ask, onChange, placeholder 
     setText('');
     setError('');
     setBusy(true);
+    setPartial('');
     const id = ++request.current;
+    abort.current = new AbortController();
     try {
-      const res = await askAi({ task: 'chat', messages: next, context });
+      const res = await askAi(
+        { task: 'chat', messages: next, context },
+        { signal: abort.current.signal, onText: (t) => id === request.current && setPartial((p) => p + t) },
+      );
       if (id !== request.current) return;
       const done = [...next, { role: 'model', text: res.text, model: res.model }];
       setMessages(done);
@@ -117,13 +141,18 @@ export default function AiChat({ context, seed = [], ask, onChange, placeholder 
       setMessages(next.slice(0, -1));
       setText(q);
     } finally {
-      if (id === request.current) setBusy(false);
+      if (id === request.current) {
+        setBusy(false);
+        setPartial('');
+      }
     }
   };
 
   const cancel = () => {
     request.current++;
+    abort.current?.abort();
     setBusy(false);
+    setPartial('');
     const last = messages[messages.length - 1];
     if (last?.role === 'user') {
       setMessages(messages.slice(0, -1));
@@ -158,7 +187,8 @@ export default function AiChat({ context, seed = [], ask, onChange, placeholder 
             </div>
           ),
         )}
-        {busy && <AiWaiting className="mr-4" onCancel={cancel} />}
+        {busy && partial && <StreamingReply text={partial} onCancel={cancel} />}
+        {busy && !partial && <AiWaiting className="mr-4" onCancel={cancel} />}
         {error && <p className="text-sm text-red-600">{error}</p>}
         <div ref={endRef} />
       </div>
@@ -199,10 +229,14 @@ export function AiExplain({ question }) {
   const [round, setRound] = useState(0); // remounts the chat after "New explanation" or a direct question
   const [ask, setAsk] = useState(''); // a point typed under the button, sent as the chat opens
   const [point, setPoint] = useState('');
+  const [partial, setPartial] = useState('');
   const request = useRef(0);
+  const abort = useRef(null);
 
   useEffect(() => {
     request.current++;
+    abort.current?.abort();
+    setPartial('');
     setMessages(getTutorChat(question));
     setOpen(false);
     setBusy(false);
@@ -214,11 +248,16 @@ export function AiExplain({ question }) {
 
   const fetchExplanation = async () => {
     const id = ++request.current;
+    abort.current = new AbortController();
     setBusy(true);
+    setPartial('');
     setError('');
     try {
       const { _key, ...q } = question;
-      const res = await askAi({ task: 'explain', question: q });
+      const res = await askAi(
+        { task: 'explain', question: q },
+        { signal: abort.current.signal, onText: (t) => id === request.current && setPartial((p) => p + t) },
+      );
       if (id !== request.current) return;
       const first = [{ role: 'model', text: res.text, model: res.model }];
       setMessages(first);
@@ -228,7 +267,10 @@ export function AiExplain({ question }) {
     } catch (e) {
       if (id === request.current) setError(e.message);
     } finally {
-      if (id === request.current) setBusy(false);
+      if (id === request.current) {
+        setBusy(false);
+        setPartial('');
+      }
     }
   };
 
@@ -242,7 +284,9 @@ export function AiExplain({ question }) {
     const q = point.trim();
     if (!q) return;
     request.current++; // a full explanation still loading is dropped
+    abort.current?.abort();
     setBusy(false);
+    setPartial('');
     setError('');
     setAsk(q);
     setPoint('');
@@ -252,7 +296,9 @@ export function AiExplain({ question }) {
 
   const cancel = () => {
     request.current++;
+    abort.current?.abort();
     setBusy(false);
+    setPartial('');
     setOpen(false);
   };
 
@@ -300,7 +346,8 @@ export function AiExplain({ question }) {
           </span>
         }
       >
-        {busy && <AiWaiting className="my-2" label="Explaining this question…" onCancel={cancel} />}
+        {busy && partial && <StreamingReply text={partial} onCancel={cancel} />}
+        {busy && !partial && <AiWaiting className="my-2" label="Explaining this question…" onCancel={cancel} />}
         {error && (
           <div className="py-4">
             <p className="text-sm text-red-600">{error}</p>
