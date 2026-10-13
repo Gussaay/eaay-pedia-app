@@ -1,8 +1,9 @@
 // Pieces of the AI study helper shared by the AI Study page and the quiz
 // explanation: a safe renderer for a reply, and a small tutor chat.
 import { useEffect, useRef, useState } from 'react';
-import { ChevronRight, Cpu, Send, Sparkles } from 'lucide-react';
+import { ChevronRight, Cpu, RotateCcw, Send, Sparkles } from 'lucide-react';
 import { askAi } from '../lib/ai';
+import { getTutorChat, saveTutorChat } from '../lib/aiCache';
 import { parseReply } from '../lib/aiFormat';
 import { Button, Modal } from './ui';
 
@@ -12,6 +13,7 @@ export function AiReply({ text, className = '' }) {
     <div className={`text-slate-700 leading-relaxed space-y-1.5 ${className}`}>
       {parseReply(text).map((b, i) => {
         const body = b.parts.map((p, j) => (p.bold ? <b key={j} className="text-slate-900">{p.text}</b> : <span key={j}>{p.text}</span>));
+        if (b.type === 'hr') return <hr key={i} className="border-slate-200 !my-3" />;
         if (b.type === 'h') return <p key={i} className="font-semibold text-slate-900 pt-1">{body}</p>;
         if (b.type === 'li') return <p key={i} className="pl-4 relative before:content-['•'] before:absolute before:left-0 before:text-brand-500">{body}</p>;
         return <p key={i}>{body}</p>;
@@ -30,17 +32,64 @@ export function ModelTag({ model, className = '' }) {
   );
 }
 
+const WAIT_HINTS = [
+  [0, 'Sending to Gemini…'],
+  [4, 'Gemini is writing the answer…'],
+  [15, 'Still writing — longer answers take a little while…'],
+  [30, 'Gemini is busy, retrying — this can take up to a minute…'],
+];
+
+/**
+ * Shown while a reply is on its way. Gemini sends the whole answer at once,
+ * often after 10–30 s, so a moving bar, a timer and what is happening keep it
+ * from looking frozen.
+ */
+export function AiWaiting({ label, onCancel, className = '' }) {
+  const [secs, setSecs] = useState(0);
+  useEffect(() => {
+    const started = Date.now();
+    const t = setInterval(() => setSecs(Math.floor((Date.now() - started) / 1000)), 1000);
+    return () => clearInterval(t);
+  }, []);
+  const hint = WAIT_HINTS.filter(([from]) => secs >= from).pop()[1];
+  return (
+    <div className={`rounded-2xl bg-violet-50/60 border border-violet-100 px-3 py-3 ${className}`} role="status" aria-live="polite">
+      <div className="flex items-center gap-2 text-sm text-violet-800">
+        <Sparkles size={16} className="animate-pulse text-violet-500 shrink-0" />
+        <span className="flex-1">{label || hint}</span>
+        <span className="tabular-nums text-xs text-violet-400">{secs}s</span>
+      </div>
+      {label && <p className="text-xs text-slate-500 mt-1 pl-6">{hint}</p>}
+      <div className="mt-2.5 h-1 rounded-full bg-violet-100 overflow-hidden">
+        <div className="h-full w-2/5 rounded-full bg-violet-400 animate-slide" />
+      </div>
+      <div className="mt-3 space-y-2 animate-pulse" aria-hidden>
+        <div className="h-2.5 rounded bg-violet-100 w-11/12" />
+        <div className="h-2.5 rounded bg-violet-100 w-4/5" />
+        <div className="h-2.5 rounded bg-violet-100 w-2/3" />
+      </div>
+      {onCancel && (
+        <button onClick={onCancel} className="mt-3 text-xs font-medium text-slate-500 hover:text-slate-700">
+          Cancel
+        </button>
+      )}
+    </div>
+  );
+}
+
 /**
  * A tutor conversation. `context` (a question, card or topic) is sent with
  * every turn so follow-ups stay about the thing being studied; `seed` starts
  * the chat with an earlier reply, e.g. the AI explanation of a question.
  */
-export default function AiChat({ context, seed = [], placeholder = 'Ask anything about pediatrics…', className = '' }) {
+export default function AiChat({ context, seed = [], onChange, placeholder = 'Ask anything about pediatrics…', className = '' }) {
   const [messages, setMessages] = useState(seed);
   const [text, setText] = useState('');
   const [busy, setBusy] = useState(false);
   const [error, setError] = useState('');
   const endRef = useRef(null);
+  const inputRef = useRef(null);
+  const request = useRef(0); // bumped on send and cancel; a stale reply is dropped
 
   useEffect(() => {
     endRef.current?.scrollIntoView({ behavior: 'smooth', block: 'nearest' });
@@ -54,17 +103,32 @@ export default function AiChat({ context, seed = [], placeholder = 'Ask anything
     setText('');
     setError('');
     setBusy(true);
+    const id = ++request.current;
     try {
       const res = await askAi({ task: 'chat', messages: next, context });
-      setMessages((m) => [...m, { role: 'model', text: res.text, model: res.model }]);
+      if (id !== request.current) return;
+      const done = [...next, { role: 'model', text: res.text, model: res.model }];
+      setMessages(done);
+      onChange?.(done);
     } catch (e) {
+      if (id !== request.current) return;
       setError(e.message);
       setMessages(messages);
       setText(q);
     } finally {
-      setBusy(false);
+      if (id === request.current) setBusy(false);
     }
   };
+
+  const cancel = () => {
+    request.current++;
+    setBusy(false);
+    setMessages((m) => (m[m.length - 1]?.role === 'user' ? m.slice(0, -1) : m));
+    setText((t) => t || messages[messages.length - 1]?.text || '');
+  };
+
+  // Once the keyboard has opened, bring the box back into view above it.
+  const revealInput = () => setTimeout(() => inputRef.current?.scrollIntoView({ block: 'nearest', behavior: 'smooth' }), 350);
 
   return (
     <div className={className}>
@@ -81,17 +145,15 @@ export default function AiChat({ context, seed = [], placeholder = 'Ask anything
             </div>
           ),
         )}
-        {busy && (
-          <p className="text-sm text-slate-400 flex items-center gap-2">
-            <Sparkles size={16} className="animate-pulse text-brand-500" /> Thinking…
-          </p>
-        )}
+        {busy && <AiWaiting className="mr-4" onCancel={cancel} />}
         {error && <p className="text-sm text-red-600">{error}</p>}
         <div ref={endRef} />
       </div>
       <div className="flex gap-2 mt-3 items-end">
         <textarea
+          ref={inputRef}
           rows={1}
+          onFocus={revealInput}
           value={text}
           onChange={(e) => setText(e.target.value)}
           onKeyDown={(e) => {
@@ -113,35 +175,60 @@ export default function AiChat({ context, seed = [], placeholder = 'Ask anything
 
 /**
  * "Explain with AI" for one MCQ. The explanation and any follow-up questions
- * open in a pop-up; closing it keeps the reply, so it reopens without a new
- * request.
+ * open in a pop-up and are kept on the device per question, so reopening it —
+ * now or after leaving the quiz — shows them again without a new request.
  */
 export function AiExplain({ question }) {
-  const [reply, setReply] = useState(null);
+  const [messages, setMessages] = useState(() => getTutorChat(question));
   const [open, setOpen] = useState(false);
   const [busy, setBusy] = useState(false);
   const [error, setError] = useState('');
+  const [round, setRound] = useState(0); // remounts the chat after "New explanation"
+  const request = useRef(0);
 
   useEffect(() => {
-    setReply(null);
+    request.current++;
+    setMessages(getTutorChat(question));
     setOpen(false);
+    setBusy(false);
     setError('');
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [question._key]);
 
-  const explain = async () => {
-    setOpen(true);
-    if (reply || busy) return;
+  const fetchExplanation = async () => {
+    const id = ++request.current;
     setBusy(true);
     setError('');
     try {
       const { _key, ...q } = question;
       const res = await askAi({ task: 'explain', question: q });
-      setReply({ text: res.text, model: res.model });
+      if (id !== request.current) return;
+      const first = [{ role: 'model', text: res.text, model: res.model }];
+      setMessages(first);
+      setRound((r) => r + 1);
+      saveTutorChat(question, first);
     } catch (e) {
-      setError(e.message);
+      if (id === request.current) setError(e.message);
     } finally {
-      setBusy(false);
+      if (id === request.current) setBusy(false);
     }
+  };
+
+  const explain = () => {
+    setOpen(true);
+    if (!messages && !busy) fetchExplanation();
+  };
+
+  const cancel = () => {
+    request.current++;
+    setBusy(false);
+    setOpen(false);
+  };
+
+  const regenerate = () => {
+    saveTutorChat(question, null);
+    setMessages(null);
+    fetchExplanation();
   };
 
   const { _key, ...plain } = question;
@@ -149,7 +236,7 @@ export function AiExplain({ question }) {
     <div className="mt-4 rounded-2xl border border-violet-100 bg-violet-50/50 p-3">
       <Button variant="ghost" className="!px-0 !text-violet-700 w-full !justify-between" onClick={explain}>
         <span className="flex items-center gap-2">
-          <Sparkles size={18} /> {reply ? 'Open AI explanation' : 'Explain with AI'}
+          <Sparkles size={18} /> {messages ? 'Open AI explanation' : busy ? 'Explaining…' : 'Explain with AI'}
         </span>
         <ChevronRight size={18} />
       </Button>
@@ -164,28 +251,33 @@ export function AiExplain({ question }) {
           </span>
         }
       >
-        {busy && (
-          <p className="text-sm text-slate-400 flex items-center gap-2 py-6">
-            <Sparkles size={16} className="animate-pulse text-violet-500" /> Explaining this question…
-          </p>
-        )}
+        {busy && <AiWaiting className="my-2" label="Explaining this question…" onCancel={cancel} />}
         {error && (
           <div className="py-4">
             <p className="text-sm text-red-600">{error}</p>
-            <Button variant="outline" className="mt-3" onClick={() => { setError(''); explain(); }}>
+            <Button variant="outline" className="mt-3" onClick={fetchExplanation}>
               Try again
             </Button>
           </div>
         )}
-        {reply && (
+        {messages && !busy && (
           <>
             <AiChat
-              key={_key}
+              key={`${_key}-${round}`}
               context={{ kind: 'question', question: plain }}
-              seed={[{ role: 'model', text: reply.text, model: reply.model }]}
+              seed={messages}
+              onChange={(m) => {
+                setMessages(m);
+                saveTutorChat(question, m);
+              }}
               placeholder="Ask a follow-up…"
             />
-            <p className="text-[11px] text-slate-400 mt-2">AI can be wrong — check important facts against your references.</p>
+            <div className="flex items-center justify-between gap-3 mt-2">
+              <p className="text-[11px] text-slate-400">AI can be wrong — check important facts against your references.</p>
+              <button onClick={regenerate} className="shrink-0 flex items-center gap-1 text-[11px] font-medium text-violet-600 hover:text-violet-800">
+                <RotateCcw size={12} /> New explanation
+              </button>
+            </div>
           </>
         )}
       </Modal>

@@ -43,21 +43,46 @@ export const cardsToCsv = (cards) =>
 
 /**
  * The small slice of markdown Gemini uses in a reply, as blocks to render:
- * { type: 'p' | 'li' | 'h', parts: [{ text, bold }] }. Rendering it ourselves
+ * { type: 'p' | 'li' | 'h' | 'hr', parts: [{ text, bold }] }. Rendering it ourselves
  * keeps model output out of innerHTML.
  */
+const SUB = { 0: '₀', 1: '₁', 2: '₂', 3: '₃', 4: '₄', 5: '₅', 6: '₆', 7: '₇', 8: '₈', 9: '₉', '+': '₊', '-': '₋' };
+const SUP = { 0: '⁰', 1: '¹', 2: '²', 3: '³', 4: '⁴', 5: '⁵', 6: '⁶', 7: '⁷', 8: '⁸', 9: '⁹', '+': '⁺', '-': '⁻' };
+const script = (map) => (_, a, b) => [...(a ?? b)].map((c) => map[c] ?? c).join('');
+
+/** Gemini sometimes writes chemistry as LaTeX ($NaHCO_3$, $Ca^{2+}$): show it as plain text. */
+export const plainMath = (text) =>
+  text.replace(/\$(?![\s\d])([^$\n]{1,60}?)(?<!\s)\$/g, (_, m) =>
+    m
+      .replace(/\\(?:text|mathrm)\{([^}]*)\}/g, '$1')
+      .replace(/_\{([0-9+-]+)\}|_([0-9+-]+)/g, script(SUB))
+      .replace(/\^\{([0-9+-]+)\}|\^([0-9+-]+)/g, script(SUP)),
+  );
+
 export function parseReply(text) {
   return s(text)
     .split('\n')
     .map((line) => line.trimEnd())
     .filter((line) => line.trim())
     .map((line) => {
+      if (/^\s*(?:-{3,}|\*{3,}|_{3,})\s*$/.test(line)) return { type: 'hr', parts: [] };
       let type = 'p';
-      let body = line.trim();
+      let body = plainMath(line.trim());
       const li = body.match(/^(?:[-*•]|\d+[.)])\s+(.*)$/);
       const h = body.match(/^#{1,6}\s+(.*)$/);
       if (h) { type = 'h'; body = h[1]; } else if (li) { type = 'li'; body = li[1]; }
       const parts = body.split(/\*\*(.+?)\*\*/g).map((t, i) => ({ text: t, bold: i % 2 === 1 })).filter((p) => p.text);
       return { type, parts };
     });
+}
+
+/**
+ * Tells whether a saved AI conversation still belongs to a question: it is
+ * thrown away once the stem, options or key are edited.
+ */
+export function questionFingerprint(q) {
+  const str = [q?.question, q?.a, q?.b, q?.c, q?.d, q?.e, q?.answer].map(s).join('\u0001');
+  let h = 5381;
+  for (let i = 0; i < str.length; i++) h = ((h * 33) ^ str.charCodeAt(i)) >>> 0;
+  return h.toString(36);
 }

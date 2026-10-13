@@ -24,10 +24,12 @@ module.exports = {
       keyframes: {
         pop: { '0%': { transform: 'scaleX(0)' }, '100%': { transform: 'scaleX(1)' } },
         wiggle: { '0%, 100%': { transform: 'rotate(-10deg)' }, '50%': { transform: 'rotate(10deg)' } },
+        slide: { '0%': { transform: 'translateX(-100%)' }, '100%': { transform: 'translateX(250%)' } },
       },
       animation: {
         pop: 'pop 0.5s ease-out',
         wiggle: 'wiggle 0.6s ease-in-out 3',
+        slide: 'slide 1.4s ease-in-out infinite',
       },
     },
   },
