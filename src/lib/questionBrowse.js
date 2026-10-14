@@ -214,14 +214,86 @@ export function browseFields(q, bank) {
 }
 
 /** A stable, database-safe id for a set (used as the quiz's progress key). */
-export function setId({ bank = '', book = '', chapter = '', science = '' } = {}) {
+export function setId({ bank = '', book = '', chapter = '', science = '', filter = '' } = {}) {
   const slug = (s) => String(s || '').toLowerCase().replace(/[^a-z0-9]+/g, '-').replace(/^-|-$/g, '');
-  return ['set', slug(bank), slug(book) || 'all', slug(chapter) || 'all', slug(science) || 'all'].join('_');
+  const parts = ['set', slug(bank), slug(book) || 'all', slug(chapter) || 'all', slug(science) || 'all'];
+  if (filter) parts.push(slug(filter));
+  return parts.join('_');
+}
+
+// ---------------------------------------------------------------------------
+// Practice sets of one book, by how a question is linked to others and by
+// your own answers. A recall question asked in several sittings has a copy in
+// each (quizqq/<id>/same, and same_as on the copies); each set uses it once.
+//   repeated    asked in more than one sitting (has copies)
+//   similar     has similar questions on the same point (quizqq/<id>/similar)
+//   linked      repeated or similar
+//   unlinked    neither repeated nor similar
+//   notsimilar  no similar questions
+//   unanswered  you have not answered it (or any copy of it) yet
+//   wrong       your answers to it so far are wrong (never right)
+// ---------------------------------------------------------------------------
+export const PRACTICE = [
+  { key: 'repeated', label: 'Repeated questions', hint: 'Asked in more than one sitting' },
+  { key: 'similar', label: 'Similar questions', hint: 'Have similar questions on the same point' },
+  { key: 'linked', label: 'All linked questions', hint: 'Repeated or similar' },
+  { key: 'unlinked', label: 'Unlinked questions', hint: 'Neither repeated nor similar' },
+  { key: 'notsimilar', label: 'Not similar', hint: 'No similar question elsewhere' },
+  { key: 'unanswered', label: 'Not answered yet', hint: 'Questions you have never answered', mine: true },
+  { key: 'wrong', label: 'Answered wrongly', hint: 'Questions you got wrong and not yet right', mine: true },
+];
+export const practiceLabel = (key) => PRACTICE.find((p) => p.key === key)?.label || '';
+
+const hasKeys = (v) => !!v && typeof v === 'object' && Object.values(v).some(Boolean);
+const keysOf = (v) => (v && typeof v === 'object' ? Object.keys(v).filter((k) => v[k]) : []);
+
+/** The id shared by every copy of one question. */
+export const groupOf = (q) => String(q?.same_as || q?._key || '');
+export const isRepeated = (q) => hasKeys(q?.same);
+export const isSimilar = (q) => keysOf(q?.similar).some((k) => !q?.same?.[k]);
+
+/**
+ * One question per group (the original where present), keeping order.
+ * `list` items need `_key`.
+ */
+export function uniqueQuestions(list = []) {
+  const byGroup = new Map();
+  list.forEach((q) => {
+    const g = groupOf(q);
+    const have = byGroup.get(g);
+    if (!have || (have.same_as && !q.same_as)) byGroup.set(g, q);
+  });
+  const keep = new Set([...byGroup.values()].map((q) => q._key));
+  return list.filter((q) => keep.has(q._key));
+}
+
+/**
+ * Applies a practice filter. `history` is { questionId: 1 | 0 } across all
+ * your quizzes; a question counts as answered if any of its copies is.
+ */
+export function practiceFilter(list = [], filter, history = {}) {
+  const outcome = (q) => {
+    const ids = [q._key, q.same_as, ...keysOf(q.same)].filter(Boolean);
+    const seen = ids.filter((id) => history[id] !== undefined);
+    if (!seen.length) return null;
+    return seen.some((id) => Number(history[id]) === 1) ? 1 : 0;
+  };
+  const test = {
+    repeated: isRepeated,
+    similar: isSimilar,
+    linked: (q) => isRepeated(q) || isSimilar(q),
+    unlinked: (q) => !isRepeated(q) && !isSimilar(q),
+    notsimilar: (q) => !isSimilar(q),
+    unanswered: (q) => outcome(q) === null,
+    wrong: (q) => outcome(q) === 0,
+  }[filter];
+  const unique = uniqueQuestions(list);
+  return test ? unique.filter(test) : unique;
 }
 
 /** A heading for a set, e.g. "Cardiology · Pharmacology". */
-export function setTitle({ chapter = '', science = '', bookTitle = '' } = {}) {
-  const parts = [chapter, science === 'Clinical' ? 'Clinical (bedside)' : science].filter(Boolean);
+export function setTitle({ chapter = '', science = '', bookTitle = '', filter = '' } = {}) {
+  const parts = [practiceLabel(filter), chapter, science === 'Clinical' ? 'Clinical (bedside)' : science].filter(Boolean);
   const head = parts.join(' · ') || 'All questions';
   return bookTitle ? `${head} — ${bookTitle}` : head;
 }

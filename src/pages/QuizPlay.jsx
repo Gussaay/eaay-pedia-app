@@ -33,7 +33,7 @@ import {
   tallyAnswers,
   visibleOptions,
 } from '../lib/quiz';
-import { hintsOf, markHints } from '../lib/questionHints';
+import { hintsOf, markHints, sameOf, similarOf } from '../lib/questionHints';
 import { loadHistory, recordSession } from '../lib/quizHistory';
 import { saveAttempt } from '../lib/quizReview';
 import { findSavedSession, invalidateQuestions, loadQuestions, loadQuizMeta, playPath, reviewPath } from '../lib/quizSource';
@@ -601,6 +601,16 @@ export default function QuizPlay() {
                 current.title && <span className="rounded-full bg-amber-50 text-amber-800 px-2.5 py-1">{current.title}</span>
               ) : null}
               {current.category && <span className="rounded-full bg-slate-100 text-slate-700 px-2.5 py-1">{current.category}</span>}
+              {sameOf(current).length > 0 && (
+                <span className="rounded-full bg-violet-50 text-violet-800 px-2.5 py-1" title="The same question came up in other sittings">
+                  Repeated · {sameOf(current).length + 1} sittings
+                </span>
+              )}
+              {similarOf(current).length > 0 && (
+                <span className="rounded-full bg-amber-50 text-amber-800 px-2.5 py-1" title="There are similar questions on the same point">
+                  Similar · {similarOf(current).length}
+                </span>
+              )}
               {mode === 'review' ? (
                 <span className="rounded-full bg-emerald-50 text-emerald-800 px-2.5 py-1 ml-auto">Score: {correct}/{played}</span>
               ) : (

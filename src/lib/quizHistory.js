@@ -66,6 +66,29 @@ export async function loadHistory(uid, pkey) {
   return out;
 }
 
+/**
+ * Your last outcome on every question you have answered, in any quiz or set:
+ * { [question._key]: 1 | 0 }. A question answered in two quizzes counts as
+ * right if it was right in either (used for "not answered yet" and "answered
+ * wrongly" practice sets).
+ */
+export async function loadAllHistory(uid) {
+  const merge = (out, byQuiz) =>
+    Object.values(byQuiz || {}).forEach((qs) =>
+      Object.entries(qs || {}).forEach(([k, v]) => {
+        out[k] = Math.max(out[k] ?? 0, Number(v) ? 1 : 0);
+      }),
+    );
+  const out = {};
+  try {
+    merge(out, (await getOne(`quizhistory/${uid}`)) || {});
+  } catch {
+    /* offline: the local copy is enough */
+  }
+  merge(out, readLocal());
+  return out;
+}
+
 /** Everything needed by the performance dashboard, in one go. */
 export async function loadDashboard(uid) {
   const [stats, cats] = await Promise.all([

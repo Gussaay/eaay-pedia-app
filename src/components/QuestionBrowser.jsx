@@ -8,11 +8,11 @@
 // .tmp/link/browse.mjs), so the lists open without reading every question.
 import { useMemo } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { ChevronRight, FlaskConical, Layers } from 'lucide-react';
+import { ChevronRight, CircleDashed, FlaskConical, Layers, Link2, Repeat2, XCircle } from 'lucide-react';
 import { useAsync } from '../hooks/useData';
 import { getOne } from '../lib/rtdb';
 import { quizPath } from '../lib/quizSource';
-import { CHAPTERS, SECTIONS, setId } from '../lib/questionBrowse';
+import { CHAPTERS, PRACTICE, SECTIONS, setId } from '../lib/questionBrowse';
 import { Empty, ErrorBox, SkeletonList } from './ui';
 
 const plural = (n, word) => `${n.toLocaleString()} ${word}${n === 1 ? '' : 's'}`;
@@ -91,6 +91,39 @@ export default function QuestionBrowser({ bank, book = '', bookTitle = '', name 
   if (data.loading) return <SkeletonList />;
   if (data.error) return <ErrorBox error={data.error} onRetry={data.reload} />;
   return <BrowseLists stats={stats} mode={mode} onOpen={open} />;
+}
+
+/**
+ * Practice sets for one book: repeated, similar, linked, unlinked and not
+ * similar questions (counts from qbrowse/<bank>/books/<book>/flags), and the
+ * ones you have not answered or answered wrongly (worked out when opened).
+ */
+export function PracticeSets({ bank, book, bookTitle = '', name = '' }) {
+  const navigate = useNavigate();
+  const data = useAsync(() => getOne(`qbrowse/${bank}/books/${book}/flags`), [bank, book]);
+  const flags = data.data || {};
+  const open = (filter) => {
+    const f = { bank, book, filter };
+    navigate(quizPath('set', setId(f), { ...f, bookTitle, name }));
+  };
+  if (data.loading) return <SkeletonList rows={7} />;
+  return (
+    <div className="space-y-2">
+      <p className="text-sm text-slate-500">
+        Practise this book by how questions are linked, or by your own answers. A question asked in several sittings
+        appears once.
+      </p>
+      {PRACTICE.map((p) => (
+        <Row
+          key={p.key}
+          icon={p.mine ? (p.key === 'wrong' ? XCircle : CircleDashed) : p.key === 'repeated' ? Repeat2 : Link2}
+          title={p.label}
+          subtitle={`${p.hint}${flags[p.key] !== undefined ? ` · ${plural(Number(flags[p.key]) || 0, 'question')}` : ''}`}
+          onOpen={() => open(p.key)}
+        />
+      ))}
+    </div>
+  );
 }
 
 /** The rows themselves, from a qbrowse counts record. */

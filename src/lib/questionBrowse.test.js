@@ -42,3 +42,23 @@ test('set ids are database-safe and stable', () => {
   assert.match(id, /^[A-Za-z0-9_-]+$/);
   assert.equal(setTitle({ chapter: 'Cardiology', science: 'Clinical' }), 'Cardiology · Clinical (bedside)');
 });
+
+test('practice sets use each repeated question once and read your answers', async () => {
+  const { practiceFilter, uniqueQuestions } = await import('./questionBrowse.js');
+  const list = [
+    { _key: 'a', same: { b: true } },
+    { _key: 'b', same_as: 'a', same: { a: true } },
+    { _key: 'c', similar: { d: true } },
+    { _key: 'd' },
+  ];
+  assert.deepEqual(uniqueQuestions(list).map((q) => q._key), ['a', 'c', 'd']);
+  assert.deepEqual(practiceFilter(list, 'repeated').map((q) => q._key), ['a']);
+  assert.deepEqual(practiceFilter(list, 'similar').map((q) => q._key), ['c']);
+  assert.deepEqual(practiceFilter(list, 'linked').map((q) => q._key), ['a', 'c']);
+  assert.deepEqual(practiceFilter(list, 'unlinked').map((q) => q._key), ['d']);
+  assert.deepEqual(practiceFilter(list, 'notsimilar').map((q) => q._key), ['a', 'd']);
+  // answering a copy counts for the original
+  const history = { b: 0, c: 1 };
+  assert.deepEqual(practiceFilter(list, 'unanswered', history).map((q) => q._key), ['d']);
+  assert.deepEqual(practiceFilter(list, 'wrong', history).map((q) => q._key), ['a']);
+});

@@ -94,7 +94,18 @@ export default function StudyLinks({ question }) {
       {mnemonic && <MnemonicPeek mnemonicRef={mnemonic} onClose={() => setMnemonic(null)} />}
       {cardsOpen && <FlashcardsPeek refs={flashcards} onClose={() => setCardsOpen(false)} />}
       {similarOpen && <SimilarPeek ids={similar} onClose={() => setSimilarOpen(false)} />}
-      {sameOpen && <SamePeek here={question.title} ids={same} onClose={() => setSameOpen(false)} />}
+      {sameOpen && (
+        <SamePeek
+          here={question.title}
+          ids={same}
+          similar={similar}
+          onClose={() => setSameOpen(false)}
+          onSimilar={() => {
+            setSameOpen(false);
+            setSimilarOpen(true);
+          }}
+        />
+      )}
     </div>
   );
 }
@@ -125,15 +136,19 @@ function Sheet({ icon, title, tone, onClose, children }) {
   );
 }
 
-// Where else this exact question was asked: the quiz of each linked copy.
-function SamePeek({ here, ids, onClose }) {
+// Where else this question was asked: the quiz of each linked copy, then the
+// quizzes holding similar questions, labelled "Similar".
+function SamePeek({ here, ids, similar = [], onClose, onSimilar }) {
   const data = useAsync(
-    () => Promise.all(ids.map((id) => getOne(`quizqq/${id}/title`).catch(() => null))),
-    [ids.join(',')],
+    () =>
+      Promise.all([...ids, ...similar].map((id) => getOne(`quizqq/${id}/title`).catch(() => null))),
+    [ids.join(','), similar.join(',')],
   );
-  const titles = [...new Set([here, ...(data.data || [])].filter(Boolean).map(String))].sort((a, b) =>
+  const got = data.data || [];
+  const titles = [...new Set([here, ...got.slice(0, ids.length)].filter(Boolean).map(String))].sort((a, b) =>
     a.localeCompare(b, undefined, { numeric: true }),
   );
+  const similarTitles = [...new Set(got.slice(ids.length).filter(Boolean).map(String))];
   return (
     <Sheet icon={<Repeat2 size={18} className="shrink-0 text-violet-600" />} title="A repeated question" tone="text-violet-700" onClose={onClose}>
       {data.loading ? (
@@ -153,6 +168,22 @@ function SamePeek({ here, ids, onClose }) {
               </li>
             ))}
           </ul>
+          {similarTitles.length > 0 && (
+            <>
+              <p className="text-sm text-slate-600 mt-4 mb-2">Similar questions on the same point appear in:</p>
+              <ul className="space-y-1.5">
+                {similarTitles.map((t) => (
+                  <li key={t} className="flex items-center gap-2 rounded-lg bg-amber-50 px-3 py-2 text-sm text-slate-700">
+                    <span className="rounded-full bg-amber-100 px-2 py-0.5 text-xs font-semibold text-amber-800">Similar</span>
+                    {t}
+                  </li>
+                ))}
+              </ul>
+              <button onClick={onSimilar} className="mt-3 text-sm font-semibold text-amber-700 hover:underline">
+                Answer the similar questions
+              </button>
+            </>
+          )}
         </>
       )}
     </Sheet>

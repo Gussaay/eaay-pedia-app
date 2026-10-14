@@ -1,13 +1,14 @@
 // HomeActivity: the quizzes of a book, "By exam" (allquiz) or, for collection
 // books (source contains "smsb"), "By system" (chapters). Every book can also be
-// browsed by chapter and by basic science (components/QuestionBrowser.jsx).
+// browsed by chapter and by basic science, and practised by repeated, similar,
+// unanswered or wrongly answered questions (components/QuestionBrowser.jsx).
 import { useState } from 'react';
 import { useNavigate, useParams, useSearchParams } from 'react-router-dom';
 import { FileQuestion } from 'lucide-react';
 import { useList } from '../hooks/useData';
 import { num } from '../lib/rtdb';
 import { quizPath } from '../lib/quizSource';
-import QuestionBrowser from '../components/QuestionBrowser';
+import QuestionBrowser, { PracticeSets } from '../components/QuestionBrowser';
 import { AppBar, Empty, ErrorBox, ListCard, Page, SkeletonList } from '../components/ui';
 
 const countBadge = (n) =>
@@ -42,9 +43,9 @@ export default function Exams() {
   const tabs = [
     ['exam', 'By exam'],
     ...(isCollection ? [['system', 'By system']] : []),
-    ...(bank ? [['chapters', 'Chapters'], ['science', 'Science']] : []),
+    ...(bank ? [['chapters', 'Chapters'], ['science', 'Science'], ['practice', 'Practice']] : []),
   ];
-  const browsing = tab === 'chapters' || tab === 'science';
+  const browsing = tab === 'chapters' || tab === 'science' || tab === 'practice';
   const active = tab === 'exam' ? exams : chapters;
 
   return (
@@ -69,7 +70,11 @@ export default function Exams() {
       )}
       <Page>
         {browsing ? (
-          <QuestionBrowser bank={bank} book={source} bookTitle={name} name={name} mode={tab} />
+          tab === 'practice' ? (
+            <PracticeSets bank={bank} book={source} bookTitle={name} name={name} />
+          ) : (
+            <QuestionBrowser bank={bank} book={source} bookTitle={name} name={name} mode={tab} />
+          )
         ) : (
           <>
         <ErrorBox error={!active.data.length && active.error} onRetry={active.reload} />
