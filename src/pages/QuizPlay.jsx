@@ -12,7 +12,7 @@
 //   exam   — you may move freely and change any answer until you submit
 import { lazy, Suspense, useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import { useNavigate, useParams, useSearchParams } from 'react-router-dom';
-import { ArrowLeft, ArrowRight, Clock, Highlighter, LayoutGrid, Lightbulb, MessageSquarePlus, Pencil, Send, X } from 'lucide-react';
+import { ArrowLeft, ArrowRight, Clock, Highlighter, LayoutGrid, Lightbulb, MessageSquarePlus, Pencil, Send, X, SkipForward } from 'lucide-react';
 import { useAuth } from '../hooks/useAuth';
 import { useBackHandler } from '../lib/back';
 import { useSwipe } from '../hooks/useSwipe';
@@ -192,7 +192,8 @@ export default function QuizPlay() {
   const reveal = mode === 'review' && !!chosen;
   // Review mode locks an answer the moment it is given; exam mode never does,
   // until the paper is submitted.
-  const locked = mode === 'review' && (!!chosen || index < maxIndex);
+  // Review mode locks a question once answered; one that was skipped can still be answered later.
+  const locked = mode === 'review' && !!chosen;
   const answeredCount = useMemo(() => Object.values(answers).filter(Boolean).length, [answers]);
 
   // ---------------------------------------------------------------- session
@@ -596,32 +597,46 @@ export default function QuizPlay() {
       <Page className="space-y-4">
         {current && (
           <>
-            <div className="flex flex-wrap gap-2 text-xs">
-              <span className="rounded-full bg-brand-50 text-brand-800 px-2.5 py-1 font-semibold">Question No: {qi + 1}</span>
+            {/* One line: the quiz name and category shrink (with …) before the counts do. */}
+            <div className="flex items-center gap-2 text-xs whitespace-nowrap">
               {meta.source === 'smsb' || meta.bysystem || meta.set ? (
-                current.title && <span className="rounded-full bg-amber-50 text-amber-800 px-2.5 py-1">{current.title}</span>
+                current.title && <span className="min-w-0 truncate rounded-full bg-amber-50 text-amber-800 px-2.5 py-1">{current.title}</span>
               ) : null}
-              {current.category && <span className="rounded-full bg-slate-100 text-slate-700 px-2.5 py-1">{current.category}</span>}
+              {current.category && <span className="min-w-0 truncate rounded-full bg-slate-100 text-slate-700 px-2.5 py-1">{current.category}</span>}
               {sameOf(current).length + similarOf(current).length > 0 && (
                 <span
-                  className="rounded-full bg-violet-50 text-violet-800 px-2.5 py-1"
+                  className="shrink-0 rounded-full bg-violet-50 text-violet-800 px-2.5 py-1"
                   title="This question, or one on the same point, came up in other sittings"
                 >
                   Repeated · {sameOf(current).length + similarOf(current).length + 1}×
                 </span>
               )}
               {mode !== 'review' && (
-                <span className="rounded-full bg-brand-50 text-brand-800 px-2.5 py-1 ml-auto">Answered: {answeredCount}/{tq}</span>
+                <span className="shrink-0 rounded-full bg-brand-50 text-brand-800 px-2.5 py-1 ml-auto">Answered: {answeredCount}/{tq}</span>
               )}
             </div>
-            {mode === 'review' && reviewing && (
+            {mode === 'review' && reviewing && chosen && (
               <div className="flex items-center gap-2 rounded-xl bg-amber-50 text-amber-900 px-3 py-2 text-sm">
                 <ArrowLeft size={16} className="shrink-0" />
                 Looking back at an answered question — your answer cannot be changed. Swipe left to return to the quiz.
               </div>
             )}
-            <Card className="p-5">
-              <p className="text-lg text-slate-900 whitespace-pre-line leading-relaxed">
+            <Card className="relative p-5">
+              {hints.length > 0 && (
+                <button
+                  onClick={() => setHintFor(hintOn ? -1 : qi)}
+                  aria-label={hintOn ? 'Hide hint' : 'Show hint'}
+                  title={hintOn ? 'Hide hint' : 'Hint'}
+                  className={`absolute right-2 top-2 inline-flex items-center gap-1 rounded-full border px-2 py-1 text-xs font-medium transition ${
+                    hintOn
+                      ? 'border-yellow-300 bg-yellow-100 text-yellow-900'
+                      : 'border-slate-200 bg-white text-slate-500 hover:border-yellow-300 hover:bg-yellow-50'
+                  }`}
+                >
+                  <Highlighter size={14} /> Hint
+                </button>
+              )}
+              <p className={`text-lg text-slate-900 whitespace-pre-line leading-relaxed ${hints.length > 0 ? 'pr-14' : ''}`}>
                 {hintOn
                   ? markHints(current.question, hints).map((part, i) =>
                       part.hit ? (
@@ -637,18 +652,6 @@ export default function QuizPlay() {
               <div data-no-swipe>
                 <ZoomImage src={current.question_img} className="mt-3" />
               </div>
-              {hints.length > 0 && (
-                <button
-                  onClick={() => setHintFor(hintOn ? -1 : qi)}
-                  className={`mt-3 inline-flex items-center gap-1.5 rounded-full border px-3 py-1 text-sm font-medium transition ${
-                    hintOn
-                      ? 'border-yellow-300 bg-yellow-100 text-yellow-900'
-                      : 'border-slate-200 bg-white text-slate-600 hover:border-yellow-300 hover:bg-yellow-50'
-                  }`}
-                >
-                  <Highlighter size={16} /> {hintOn ? 'Hide hint' : 'Hint'}
-                </button>
-              )}
             </Card>
             <div className="space-y-2.5">
               {options.map((k) => {
@@ -721,12 +724,17 @@ export default function QuizPlay() {
         </div>
       )}
 
-      {/* Review mode, not yet answered: still let the reader look back. */}
-      {mode === 'review' && !chosen && index > navMin && (
+      {/* Review mode, not yet answered: look back, or skip this one for now. */}
+      {mode === 'review' && !chosen && (
         <div className="fixed bottom-0 inset-x-0 bg-white/95 backdrop-blur border-t border-slate-200 pb-safe">
-          <div className="max-w-3xl mx-auto flex items-center gap-3 p-3">
-            <Button variant="outline" onClick={goBack}>
-              <ArrowLeft size={18} /> Previous
+          <div className="max-w-3xl mx-auto flex items-center gap-2 p-3">
+            {index > navMin && (
+              <Button variant="outline" onClick={goBack}>
+                <ArrowLeft size={18} /> Previous
+              </Button>
+            )}
+            <Button variant="outline" onClick={reviewing ? goForward : advance}>
+              {!reviewing && index >= deck.length - 1 ? 'Skip & finish' : 'Skip'} <SkipForward size={18} />
             </Button>
             <Button variant="ghost" className="flex-1" onClick={() => setShowNav(true)}>
               <LayoutGrid size={18} /> All questions
