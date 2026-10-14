@@ -581,6 +581,7 @@ export default function QuizPlay() {
                 <Clock size={16} /> {formatDuration(remaining)}
               </span>
             )}
+            {mode === 'review' && <ScoreBadge correct={correct} played={played} />}
             {isAdmin && (
               <button className="p-2 rounded-full hover:bg-white/10" aria-label="Edit question" onClick={() => setEditing(true)}>
                 <Pencil size={20} />
@@ -609,9 +610,7 @@ export default function QuizPlay() {
                   Repeated · {sameOf(current).length + similarOf(current).length + 1}×
                 </span>
               )}
-              {mode === 'review' ? (
-                <span className="rounded-full bg-emerald-50 text-emerald-800 px-2.5 py-1 ml-auto">Score: {correct}/{played}</span>
-              ) : (
+              {mode !== 'review' && (
                 <span className="rounded-full bg-brand-50 text-brand-800 px-2.5 py-1 ml-auto">Answered: {answeredCount}/{tq}</span>
               )}
             </div>
@@ -1096,5 +1095,42 @@ function ExplanationModal({ question, quizTitle, selected, answer, onClose, onNe
         )}
       </div>
     </Modal>
+  );
+}
+
+/**
+ * The running score in the header (review mode): a ring filled to the
+ * percentage and coloured by it (green 75% and over, amber 50–74%, red below
+ * 50%), with the number right out of those answered beside it.
+ */
+export function ScoreBadge({ correct, played }) {
+  const pct = played ? Math.round((correct / played) * 100) : 0;
+  const colour = !played ? 'rgba(255,255,255,0.35)' : pct >= 75 ? '#34d399' : pct >= 50 ? '#fbbf24' : '#f87171';
+  const r = 15;
+  const c = 2 * Math.PI * r;
+  return (
+    <span className="flex items-center gap-1.5 rounded-full bg-white/10 py-0.5 pl-0.5 pr-2.5" aria-label={`Score ${correct} out of ${played}, ${pct} percent`}>
+      <span className="relative h-9 w-9 shrink-0">
+        <svg viewBox="0 0 36 36" className="h-9 w-9 -rotate-90">
+          <circle cx="18" cy="18" r={r} fill="none" stroke="rgba(255,255,255,0.2)" strokeWidth="3.5" />
+          <circle
+            cx="18"
+            cy="18"
+            r={r}
+            fill="none"
+            stroke={colour}
+            strokeWidth="3.5"
+            strokeLinecap="round"
+            strokeDasharray={c}
+            strokeDashoffset={c * (1 - pct / 100)}
+            style={{ transition: 'stroke-dashoffset 0.4s, stroke 0.4s' }}
+          />
+        </svg>
+        <span className="absolute inset-0 flex items-center justify-center text-[10px] font-bold">{played ? `${pct}%` : '–'}</span>
+      </span>
+      <span className="font-mono text-sm font-semibold">
+        {correct}/{played}
+      </span>
+    </span>
   );
 }
