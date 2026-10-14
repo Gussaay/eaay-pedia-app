@@ -214,43 +214,73 @@ export function browseFields(q, bank) {
 }
 
 /** A stable, database-safe id for a set (used as the quiz's progress key). */
-export function setId({ bank = '', book = '', chapter = '', science = '', filter = '' } = {}) {
+export function setId({ bank = '', book = '', chapter = '', science = '', filter = '', part = 0 } = {}) {
   const slug = (s) => String(s || '').toLowerCase().replace(/[^a-z0-9]+/g, '-').replace(/^-|-$/g, '');
   const parts = ['set', slug(bank), slug(book) || 'all', slug(chapter) || 'all', slug(science) || 'all'];
   if (filter) parts.push(slug(filter));
+  if (Number(part) > 0) parts.push(`p${Number(part)}`);
   return parts.join('_');
 }
 
 // ---------------------------------------------------------------------------
-// Practice sets of one book, by how a question is linked to others and by
-// your own answers. A recall question asked in several sittings has a copy in
-// each (quizqq/<id>/same, and same_as on the copies); each set uses it once.
-//   repeated    asked in more than one sitting (has copies)
-//   similar     has similar questions on the same point (quizqq/<id>/similar)
-//   linked      repeated or similar
-//   unlinked    neither repeated nor similar
-//   notsimilar  no similar questions
-//   unanswered  you have not answered it (or any copy of it) yet
-//   wrong       your answers to it so far are wrong (never right)
+// Practice sets of one book, from two filters that combine:
+//   questions:   all · repeated · not repeated
+//                A question is "repeated" when it was asked again in another
+//                sitting (quizqq/<id>/same) or has a similar question on the
+//                same point (quizqq/<id>/similar).
+//   your answers: all · not answered yet · answered correctly · answered wrongly
+//                From your answers in every quiz; copies of the same question
+//                count together.
+// A set's filter is written "linked+unanswered" (either part may be empty).
+// A recall question asked in several sittings has a copy in each, and every
+// set uses it once.
 // ---------------------------------------------------------------------------
-export const PRACTICE = [
-  { key: 'repeated', label: 'Repeated questions', hint: 'Asked in more than one sitting' },
-  { key: 'similar', label: 'Similar questions', hint: 'Have similar questions on the same point' },
-  { key: 'linked', label: 'All linked questions', hint: 'Repeated or similar' },
-  { key: 'unlinked', label: 'Unlinked questions', hint: 'Neither repeated nor similar' },
-  { key: 'notsimilar', label: 'Not similar', hint: 'No similar question elsewhere' },
-  { key: 'unanswered', label: 'Not answered yet', hint: 'Questions you have never answered', mine: true },
-  { key: 'wrong', label: 'Answered wrongly', hint: 'Questions you got wrong and not yet right', mine: true },
+export const LINK_FILTERS = [
+  { key: '', label: 'All questions' },
+  { key: 'linked', label: 'Repeated', hint: 'Asked again in another sitting, or with a similar question' },
+  { key: 'unlinked', label: 'Not repeated', hint: 'Asked once, with no similar question' },
 ];
-export const practiceLabel = (key) => PRACTICE.find((p) => p.key === key)?.label || '';
+export const ANSWER_FILTERS = [
+  { key: '', label: 'All' },
+  { key: 'unanswered', label: 'Not answered yet' },
+  { key: 'correct', label: 'Answered correctly' },
+  { key: 'wrong', label: 'Answered wrongly' },
+];
+// Older links used these names.
+const OLD = { repeated: 'linked', similar: 'linked', notsimilar: 'unlinked' };
+
+/** { link, answer } from "linked+unanswered" (also accepts single and older names). */
+export function parseFilter(filter = '') {
+  const out = { link: '', answer: '' };
+  String(filter || '')
+    .split('+')
+    .map((p) => OLD[p] || p)
+    .forEach((p) => {
+      if (LINK_FILTERS.some((f) => f.key && f.key === p)) out.link = p;
+      if (ANSWER_FILTERS.some((f) => f.key && f.key === p)) out.answer = p;
+    });
+  return out;
+}
+export const makeFilter = ({ link = '', answer = '' } = {}) => [link, answer].filter(Boolean).join('+');
+/** True when the set depends on your own answers (so it is worked out fresh each time). */
+export const isPersonalFilter = (filter) => !!parseFilter(filter).answer;
+export function filterLabel(filter) {
+  const { link, answer } = parseFilter(filter);
+  return [
+    link ? `${LINK_FILTERS.find((f) => f.key === link).label} questions` : '',
+    answer ? ANSWER_FILTERS.find((f) => f.key === answer).label.toLowerCase() : '',
+  ]
+    .filter(Boolean)
+    .join(', ')
+    .replace(/^./, (c) => c.toUpperCase());
+}
 
 const hasKeys = (v) => !!v && typeof v === 'object' && Object.values(v).some(Boolean);
 const keysOf = (v) => (v && typeof v === 'object' ? Object.keys(v).filter((k) => v[k]) : []);
 
 /** The id shared by every copy of one question. */
 export const groupOf = (q) => String(q?.same_as || q?._key || '');
-export const isRepeated = (q) => hasKeys(q?.same);
-export const isSimilar = (q) => keysOf(q?.similar).some((k) => !q?.same?.[k]);
+export const isRepeated = (q) => hasKeys(q?.same) || keysOf(q?.similar).length > 0;
 
 /**
  * One question per group (the original where present), keeping order.
@@ -267,33 +297,59 @@ export function uniqueQuestions(list = []) {
   return list.filter((q) => keep.has(q._key));
 }
 
-/**
- * Applies a practice filter. `history` is { questionId: 1 | 0 } across all
- * your quizzes; a question counts as answered if any of its copies is.
- */
-export function practiceFilter(list = [], filter, history = {}) {
-  const outcome = (q) => {
-    const ids = [q._key, q.same_as, ...keysOf(q.same)].filter(Boolean);
-    const seen = ids.filter((id) => history[id] !== undefined);
-    if (!seen.length) return null;
-    return seen.some((id) => Number(history[id]) === 1) ? 1 : 0;
-  };
-  const test = {
-    repeated: isRepeated,
-    similar: isSimilar,
-    linked: (q) => isRepeated(q) || isSimilar(q),
-    unlinked: (q) => !isRepeated(q) && !isSimilar(q),
-    notsimilar: (q) => !isSimilar(q),
-    unanswered: (q) => outcome(q) === null,
-    wrong: (q) => outcome(q) === 0,
-  }[filter];
-  const unique = uniqueQuestions(list);
-  return test ? unique.filter(test) : unique;
+/** 1 right, 0 wrong, null never answered — across every copy of the question. */
+export function outcomeOf(q, history = {}) {
+  const ids = [q._key, q.same_as, ...keysOf(q.same)].filter(Boolean);
+  const seen = ids.filter((id) => history[id] !== undefined);
+  if (!seen.length) return null;
+  return seen.some((id) => Number(history[id]) === 1) ? 1 : 0;
 }
 
+/**
+ * Applies a practice filter to a book's questions (each repeated question
+ * once). `history` is { questionId: 1 | 0 } across all your quizzes.
+ */
+export function practiceFilter(list = [], filter, history = {}) {
+  const { link, answer } = parseFilter(filter);
+  return uniqueQuestions(list).filter((q) => {
+    if (link === 'linked' && !isRepeated(q)) return false;
+    if (link === 'unlinked' && isRepeated(q)) return false;
+    if (!answer) return true;
+    const o = outcomeOf(q, history);
+    return answer === 'unanswered' ? o === null : answer === 'correct' ? o === 1 : o === 0;
+  });
+}
+
+/** How many questions each combination holds: counts[link][answer], plus copies included. */
+export function practiceCounts(list = [], history = {}) {
+  const counts = {};
+  const unique = uniqueQuestions(list);
+  for (const l of LINK_FILTERS) {
+    counts[l.key] = {};
+    for (const a of ANSWER_FILTERS) counts[l.key][a.key] = practiceFilter(unique, makeFilter({ link: l.key, answer: a.key }), history).length;
+  }
+  // The same questions counted with every copy, to show how many repeats were folded in.
+  const keep = new Set(practiceFilter(unique, 'linked').map(groupOf));
+  counts.copies = {
+    '': list.length,
+    linked: list.filter((q) => keep.has(groupOf(q))).length,
+    unlinked: list.filter((q) => !keep.has(groupOf(q))).length,
+  };
+  return counts;
+}
+
+// ---------------------------------------------------------------------------
+// Batches: a set of more than BATCH questions can be answered in parts.
+// ---------------------------------------------------------------------------
+export const BATCH = 100;
+export const batchCount = (n) => Math.ceil(n / BATCH);
+export const batchOf = (list, part) => (Number(part) > 0 ? list.slice((part - 1) * BATCH, part * BATCH) : list);
+export const batchRange = (part, total) => `${(part - 1) * BATCH + 1}–${Math.min(part * BATCH, total)}`;
+
 /** A heading for a set, e.g. "Cardiology · Pharmacology". */
-export function setTitle({ chapter = '', science = '', bookTitle = '', filter = '' } = {}) {
-  const parts = [practiceLabel(filter), chapter, science === 'Clinical' ? 'Clinical (bedside)' : science].filter(Boolean);
-  const head = parts.join(' · ') || 'All questions';
+export function setTitle({ chapter = '', science = '', bookTitle = '', filter = '', part = 0 } = {}) {
+  const parts = [filterLabel(filter), chapter, science === 'Clinical' ? 'Clinical (bedside)' : science].filter(Boolean);
+  let head = parts.join(' · ') || 'All questions';
+  if (Number(part) > 0) head += ` · Part ${part}`;
   return bookTitle ? `${head} — ${bookTitle}` : head;
 }

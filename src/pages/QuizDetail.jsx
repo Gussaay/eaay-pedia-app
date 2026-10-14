@@ -5,7 +5,9 @@ import { BookOpenCheck, CheckCircle2, DownloadCloud, ListChecks, PlayCircle, Rot
 import { useAuth } from '../hooks/useAuth';
 import { useAsync, useOnline } from '../hooks/useData';
 import { incrementString, str, updateAt } from '../lib/rtdb';
-import { downloadQuiz, findSavedSession, loadLeaderboard, loadQuestions, loadQuizMeta, playPath, reviewPath } from '../lib/quizSource';
+import { downloadQuiz, findSavedSession, loadLeaderboard, loadQuestions, loadQuizMeta, playPath, quizPath, reviewPath } from '../lib/quizSource';
+import { BATCH, setId } from '../lib/questionBrowse';
+import { BatchButtons } from '../components/QuestionBrowser';
 import { loadAttempts } from '../lib/quizReview';
 import { getQuiz, quizKey, removeQuiz } from '../lib/offline';
 import { AppBar, Avatar, Button, Card, ErrorBox, Page, Spinner, Thumb, useToast } from '../components/ui';
@@ -97,6 +99,16 @@ export default function QuizDetail() {
           </p>
           {countError && (
             <p className="text-center text-sm text-red-600">Could not load questions: {countError.message}</p>
+          )}
+          {/* A long set (chapter, science or practice) can be answered in parts of 100. */}
+          {q.set && !q.part && count > BATCH && (
+            <BatchButtons
+              total={count}
+              onOpen={(part) => {
+                const params = { ...extra, part };
+                navigate(quizPath('set', setId({ ...extra, part }), params));
+              }}
+            />
           )}
           <div className="grid grid-cols-2 gap-3 mt-4">
             <div className="rounded-xl bg-brand-50 p-3 text-center">

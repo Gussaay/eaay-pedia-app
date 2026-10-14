@@ -6,13 +6,26 @@
 // Every row and chip opens a "set" quiz (lib/quizSource.js, kind "set") made of
 // those questions. Counts come from qbrowse/<bank> (written by
 // .tmp/link/browse.mjs), so the lists open without reading every question.
-import { useMemo } from 'react';
+import { useMemo, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { ChevronRight, CircleDashed, FlaskConical, Layers, Link2, Repeat2, XCircle } from 'lucide-react';
+import { ChevronRight, FlaskConical, Layers } from 'lucide-react';
 import { useAsync } from '../hooks/useData';
 import { getOne } from '../lib/rtdb';
-import { quizPath } from '../lib/quizSource';
-import { CHAPTERS, PRACTICE, SECTIONS, setId } from '../lib/questionBrowse';
+import { loadBookQuestions, quizPath } from '../lib/quizSource';
+import { loadAllHistory } from '../lib/quizHistory';
+import { useAuth } from '../hooks/useAuth';
+import {
+  ANSWER_FILTERS,
+  BATCH,
+  CHAPTERS,
+  LINK_FILTERS,
+  SECTIONS,
+  batchCount,
+  batchRange,
+  makeFilter,
+  practiceCounts,
+  setId,
+} from '../lib/questionBrowse';
 import { Empty, ErrorBox, SkeletonList } from './ui';
 
 const plural = (n, word) => `${n.toLocaleString()} ${word}${n === 1 ? '' : 's'}`;
@@ -94,34 +107,112 @@ export default function QuestionBrowser({ bank, book = '', bookTitle = '', name 
 }
 
 /**
- * Practice sets for one book: repeated, similar, linked, unlinked and not
- * similar questions (counts from qbrowse/<bank>/books/<book>/flags), and the
- * ones you have not answered or answered wrongly (worked out when opened).
+ * Practice sets for one book, from two filters that combine: which questions
+ * (all, repeated, not repeated) and your answers (all, not answered yet,
+ * answered correctly, answered wrongly). Each repeated question is counted
+ * once; sets over 100 questions open in parts of 100.
  */
 export function PracticeSets({ bank, book, bookTitle = '', name = '' }) {
   const navigate = useNavigate();
-  const data = useAsync(() => getOne(`qbrowse/${bank}/books/${book}/flags`), [bank, book]);
-  const flags = data.data || {};
-  const open = (filter) => {
-    const f = { bank, book, filter };
-    navigate(quizPath('set', setId(f), { ...f, bookTitle, name }));
+  const { user } = useAuth();
+  const [link, setLink] = useState('');
+  const [answer, setAnswer] = useState('');
+  const data = useAsync(
+    () => Promise.all([loadBookQuestions(book), loadAllHistory(user?.uid)]).then(([list, history]) => practiceCounts(list, history)),
+    [book, user?.uid],
+  );
+  const counts = data.data;
+  const n = counts ? counts[link][answer] : 0;
+  const withCopies = counts ? counts.copies[link] : 0;
+  const filter = makeFilter({ link, answer });
+  const open = (part = 0) => {
+    const f = { bank, book, filter, part };
+    navigate(quizPath('set', setId(f), { ...f, part: part || '', bookTitle, name }));
   };
-  if (data.loading) return <SkeletonList rows={7} />;
-  return (
-    <div className="space-y-2">
-      <p className="text-sm text-slate-500">
-        Practise this book by how questions are linked, or by your own answers. A question asked in several sittings
-        appears once.
-      </p>
-      {PRACTICE.map((p) => (
-        <Row
-          key={p.key}
-          icon={p.mine ? (p.key === 'wrong' ? XCircle : CircleDashed) : p.key === 'repeated' ? Repeat2 : Link2}
-          title={p.label}
-          subtitle={`${p.hint}${flags[p.key] !== undefined ? ` · ${plural(Number(flags[p.key]) || 0, 'question')}` : ''}`}
-          onOpen={() => open(p.key)}
-        />
+
+  const Chips = ({ items, value, onChange, count }) => (
+    <div className="flex flex-wrap gap-2">
+      {items.map((f) => (
+        <button
+          key={f.key || 'all'}
+          onClick={() => onChange(f.key)}
+          title={f.hint || ''}
+          className={`rounded-full border px-3 py-1.5 text-sm font-medium transition ${
+            value === f.key ? 'border-brand-500 bg-brand-50 text-brand-800' : 'border-slate-200 bg-white text-slate-600 hover:border-brand-300'
+          }`}
+        >
+          {f.label}
+          {counts ? <span className="ml-1 text-xs text-slate-400">{count(f.key).toLocaleString()}</span> : null}
+        </button>
       ))}
+    </div>
+  );
+
+  if (data.error) return <ErrorBox error={data.error} onRetry={data.reload} />;
+  return (
+    <div className="space-y-4">
+      <p className="text-sm text-slate-500">
+        Choose which questions and which of your answers to practise. A question asked in several sittings counts once.
+      </p>
+      <div className="space-y-2">
+        <p className="text-xs font-semibold uppercase tracking-wide text-slate-500">Questions</p>
+        <Chips items={LINK_FILTERS} value={link} onChange={setLink} count={(k) => counts[k][answer]} />
+        {LINK_FILTERS.find((f) => f.key === link)?.hint && (
+          <p className="text-xs text-slate-500">{LINK_FILTERS.find((f) => f.key === link).hint}</p>
+        )}
+      </div>
+      <div className="space-y-2">
+        <p className="text-xs font-semibold uppercase tracking-wide text-slate-500">Your answers</p>
+        <Chips items={ANSWER_FILTERS} value={answer} onChange={setAnswer} count={(k) => counts[link][k]} />
+      </div>
+
+      <div className="rounded-2xl border border-slate-100 bg-white p-4 shadow-sm">
+        {data.loading ? (
+          <p className="text-sm text-slate-500">Counting questions…</p>
+        ) : (
+          <>
+            <p className="font-semibold text-slate-800">{plural(n, 'question')}</p>
+            {!answer && withCopies > n && (
+              <p className="text-xs text-slate-500 mt-0.5">
+                {withCopies.toLocaleString()} including repeats in other sittings — each counted once here
+              </p>
+            )}
+            {n === 0 ? (
+              <p className="text-sm text-slate-500 mt-2">No questions match these filters.</p>
+            ) : n <= BATCH ? (
+              <button
+                onClick={() => open(0)}
+                className="mt-3 w-full rounded-xl bg-brand-600 py-2.5 text-sm font-semibold text-white hover:bg-brand-700"
+              >
+                Open these questions
+              </button>
+            ) : (
+              <BatchButtons total={n} onOpen={open} />
+            )}
+          </>
+        )}
+      </div>
+    </div>
+  );
+}
+
+/** "Part 1 (1–100)", "Part 2 (101–200)"… for a set too long for one sitting. */
+export function BatchButtons({ total, onOpen }) {
+  return (
+    <div className="mt-3">
+      <p className="text-xs text-slate-500 mb-2">Answer them in parts of {BATCH}:</p>
+      <div className="grid grid-cols-2 gap-2 sm:grid-cols-3">
+        {Array.from({ length: batchCount(total) }, (_, i) => i + 1).map((part) => (
+          <button
+            key={part}
+            onClick={() => onOpen(part)}
+            className="rounded-xl border border-brand-200 bg-brand-50 px-3 py-2 text-left text-sm hover:bg-brand-100"
+          >
+            <span className="block font-semibold text-brand-800">Part {part}</span>
+            <span className="block text-xs text-slate-500">Questions {batchRange(part, total)}</span>
+          </button>
+        ))}
+      </div>
     </div>
   );
 }

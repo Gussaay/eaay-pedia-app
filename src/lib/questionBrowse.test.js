@@ -43,22 +43,34 @@ test('set ids are database-safe and stable', () => {
   assert.equal(setTitle({ chapter: 'Cardiology', science: 'Clinical' }), 'Cardiology · Clinical (bedside)');
 });
 
-test('practice sets use each repeated question once and read your answers', async () => {
-  const { practiceFilter, uniqueQuestions } = await import('./questionBrowse.js');
+test('practice filters combine and use each repeated question once', async () => {
+  const { practiceFilter, practiceCounts, uniqueQuestions, parseFilter, batchOf, batchCount, setId } = await import('./questionBrowse.js');
   const list = [
     { _key: 'a', same: { b: true } },
     { _key: 'b', same_as: 'a', same: { a: true } },
     { _key: 'c', similar: { d: true } },
     { _key: 'd' },
+    { _key: 'e' },
   ];
-  assert.deepEqual(uniqueQuestions(list).map((q) => q._key), ['a', 'c', 'd']);
-  assert.deepEqual(practiceFilter(list, 'repeated').map((q) => q._key), ['a']);
-  assert.deepEqual(practiceFilter(list, 'similar').map((q) => q._key), ['c']);
+  assert.deepEqual(uniqueQuestions(list).map((q) => q._key), ['a', 'c', 'd', 'e']);
+  // repeated = asked again or with a similar question
   assert.deepEqual(practiceFilter(list, 'linked').map((q) => q._key), ['a', 'c']);
-  assert.deepEqual(practiceFilter(list, 'unlinked').map((q) => q._key), ['d']);
-  assert.deepEqual(practiceFilter(list, 'notsimilar').map((q) => q._key), ['a', 'd']);
+  assert.deepEqual(practiceFilter(list, 'unlinked').map((q) => q._key), ['d', 'e']);
   // answering a copy counts for the original
-  const history = { b: 0, c: 1 };
-  assert.deepEqual(practiceFilter(list, 'unanswered', history).map((q) => q._key), ['d']);
-  assert.deepEqual(practiceFilter(list, 'wrong', history).map((q) => q._key), ['a']);
+  const history = { b: 0, c: 1, d: 1 };
+  assert.deepEqual(practiceFilter(list, 'unanswered', history).map((q) => q._key), ['e']);
+  assert.deepEqual(practiceFilter(list, 'linked+wrong', history).map((q) => q._key), ['a']);
+  assert.deepEqual(practiceFilter(list, 'unlinked+correct', history).map((q) => q._key), ['d']);
+  assert.deepEqual(practiceFilter(list, 'unlinked+unanswered', history).map((q) => q._key), ['e']);
+  // older names still work
+  assert.deepEqual(parseFilter('notsimilar'), { link: 'unlinked', answer: '' });
+  const c = practiceCounts(list, history);
+  assert.equal(c.linked[''], 2);
+  assert.equal(c.copies.linked, 3);
+  assert.equal(c[''].unanswered, 1);
+  // batches of 100
+  const many = Array.from({ length: 250 }, (_, i) => i);
+  assert.equal(batchCount(250), 3);
+  assert.deepEqual(batchOf(many, 3), many.slice(200));
+  assert.match(setId({ bank: 'mrcpch', book: 'tasrecall', filter: 'linked+wrong', part: 2 }), /_linked-wrong_p2$/);
 });

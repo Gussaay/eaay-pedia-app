@@ -601,14 +601,12 @@ export default function QuizPlay() {
                 current.title && <span className="rounded-full bg-amber-50 text-amber-800 px-2.5 py-1">{current.title}</span>
               ) : null}
               {current.category && <span className="rounded-full bg-slate-100 text-slate-700 px-2.5 py-1">{current.category}</span>}
-              {sameOf(current).length > 0 && (
-                <span className="rounded-full bg-violet-50 text-violet-800 px-2.5 py-1" title="The same question came up in other sittings">
-                  Repeated · {sameOf(current).length + 1} sittings
-                </span>
-              )}
-              {similarOf(current).length > 0 && (
-                <span className="rounded-full bg-amber-50 text-amber-800 px-2.5 py-1" title="There are similar questions on the same point">
-                  Similar · {similarOf(current).length}
+              {sameOf(current).length + similarOf(current).length > 0 && (
+                <span
+                  className="rounded-full bg-violet-50 text-violet-800 px-2.5 py-1"
+                  title="This question, or one on the same point, came up in other sittings"
+                >
+                  Repeated · {sameOf(current).length + similarOf(current).length + 1}×
                 </span>
               )}
               {mode === 'review' ? (

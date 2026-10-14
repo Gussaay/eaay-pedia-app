@@ -14,7 +14,7 @@ import { getOne, getWhere, toList, num } from './rtdb';
 import { listSpots, loadSpot } from './resume';
 import { matchesChapter } from './quiz';
 import { getQuiz, saveQuiz } from './offline';
-import { PRACTICE, practiceFilter, setTitle, uniqueQuestions } from './questionBrowse';
+import { batchOf, filterLabel, isPersonalFilter, parseFilter, practiceFilter, setTitle, uniqueQuestions } from './questionBrowse';
 import { loadAllHistory } from './quizHistory';
 
 const questionCache = new Map();
@@ -77,7 +77,7 @@ async function fetchMeta(kind, id, params) {
  */
 function setMeta(id, params) {
   const { bank = '', book = '', chapter = '', science = '', filter = '' } = params;
-  const hint = PRACTICE.find((p) => p.key === filter)?.hint;
+  const part = Number(params.part) || 0;
   return {
     kind: 'set',
     id,
@@ -88,12 +88,13 @@ function setMeta(id, params) {
     book,
     science,
     filter,
+    part,
     type: '',
     chapter: chapter || '?',
     filterChapter: chapter,
-    title: setTitle({ chapter, science, filter, bookTitle: params.bookTitle || '' }),
+    title: setTitle({ chapter, science, filter, part, bookTitle: params.bookTitle || '' }),
     des: filter
-      ? `${hint} — from ${params.bookTitle || 'this book'}. Each repeated question appears once.`
+      ? `${filterLabel(filter)} — from ${params.bookTitle || 'this book'}. Each repeated question appears once.`
       : book
       ? `Questions from ${params.bookTitle || 'this book'}, gathered by chapter and basic science.`
       : 'Questions from every book in this bank, gathered by chapter and basic science.',
@@ -131,11 +132,23 @@ async function findSavedByExamId(kind, id) {
   return rows.find((r) => r.kind === kind && r.id === id) || null;
 }
 
+// Every question of one book, kept for a few minutes so the practice screen's
+// counts and the sets opened from it read the book only once.
+const bookCache = new Map();
+export async function loadBookQuestions(book) {
+  const hit = bookCache.get(book);
+  if (hit && Date.now() - hit.at < 5 * 60 * 1000) return hit.list;
+  const list = (await getWhere('quizqq', 'source', book)).filter((q) => q.question !== undefined);
+  list.sort((a, b) => (a._key < b._key ? -1 : a._key > b._key ? 1 : 0));
+  bookCache.set(book, { at: Date.now(), list });
+  return list;
+}
+
 async function fetchQuestions(meta) {
   let list;
   if (meta.set) {
     list = meta.filter
-      ? await getWhere('quizqq', 'source', meta.book)
+      ? await loadBookQuestions(meta.book)
       : meta.filterChapter
       ? await getWhere('quizqq', 'bchap', `${meta.bank}|${meta.filterChapter}`)
       : await getWhere('quizqq', 'bsci', `${meta.bank}|${meta.science}`);
@@ -150,10 +163,9 @@ async function fetchQuestions(meta) {
     list.sort((a, b) => String(a.source).localeCompare(String(b.source)) || (a._key < b._key ? -1 : a._key > b._key ? 1 : 0));
     // A recall question repeated in several sittings has a copy in each
     // (quizqq/<id>/same_as on the copies); a set needs it only once.
-    if (!meta.filter) return uniqueQuestions(list);
-    const mine = PRACTICE.find((p) => p.key === meta.filter)?.mine;
-    const history = mine && auth.currentUser ? await loadAllHistory(auth.currentUser.uid) : {};
-    return practiceFilter(list, meta.filter, history);
+    if (!meta.filter) return batchOf(uniqueQuestions(list), meta.part);
+    const history = parseFilter(meta.filter).answer && auth.currentUser ? await loadAllHistory(auth.currentUser.uid) : {};
+    return batchOf(practiceFilter(list, meta.filter, history), meta.part);
   }
   if (meta.bysystem) {
     const [c1, c2] = await Promise.all([
@@ -191,7 +203,7 @@ async function fetchQuestions(meta) {
 export async function loadQuestions(meta, { fresh = false, manual = false } = {}) {
   const cacheKey = `${meta.kind}:${meta.pkey}`;
   // Sets built from your own answers change as you answer, so they are never served from the cache.
-  const personal = meta.set && PRACTICE.some((p) => p.mine && p.key === meta.filter);
+  const personal = meta.set && isPersonalFilter(meta.filter);
   if (!fresh && !manual && !personal && questionCache.has(cacheKey)) return questionCache.get(cacheKey);
 
   if (!isOffline()) {
