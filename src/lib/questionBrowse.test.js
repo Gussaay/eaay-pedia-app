@@ -63,7 +63,7 @@ test('practice filters combine and use each repeated question once', async () =>
   assert.deepEqual(practiceFilter(list, 'unlinked+correct', history).map((q) => q._key), ['d']);
   assert.deepEqual(practiceFilter(list, 'unlinked+unanswered', history).map((q) => q._key), ['e']);
   // older names still work
-  assert.deepEqual(parseFilter('notsimilar'), { link: 'unlinked', answer: '' });
+  assert.deepEqual(parseFilter('notsimilar'), { link: 'unlinked', answer: '', times: 0 });
   const c = practiceCounts(list, history);
   assert.equal(c.linked[''], 2);
   assert.equal(c.copies.linked, 3);
@@ -73,4 +73,22 @@ test('practice filters combine and use each repeated question once', async () =>
   assert.equal(batchCount(250), 3);
   assert.deepEqual(batchOf(many, 3), many.slice(200));
   assert.match(setId({ bank: 'mrcpch', book: 'tasrecall', filter: 'linked+wrong', part: 2 }), /_linked-wrong_p2$/);
+});
+
+test('repeated at least N times', async () => {
+  const { practiceFilter, timesAsked, parseFilter, makeFilter } = await import('./questionBrowse.js');
+  const list = [
+    { _key: 'a', same: { b: true, c: true }, similar: { x: true } },
+    { _key: 'b', same_as: 'a', same: { a: true, c: true } },
+    { _key: 'c', same_as: 'a', same: { a: true, b: true } },
+    { _key: 'd', similar: { a: true } },
+    { _key: 'e' },
+  ];
+  assert.equal(timesAsked(list[0]), 4);
+  assert.equal(timesAsked(list[3]), 2);
+  assert.equal(makeFilter({ times: 3, answer: 'wrong' }), 'linked+x3+wrong');
+  assert.deepEqual(parseFilter('x3'), { link: 'linked', answer: '', times: 3 });
+  assert.deepEqual(practiceFilter(list, 'x2').map((q) => q._key), ['a', 'd']);
+  assert.deepEqual(practiceFilter(list, 'x3').map((q) => q._key), ['a']);
+  assert.deepEqual(practiceFilter(list, 'x5').map((q) => q._key), []);
 });

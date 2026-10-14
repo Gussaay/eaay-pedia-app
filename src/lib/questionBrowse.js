@@ -250,24 +250,33 @@ export const ANSWER_FILTERS = [
 const OLD = { repeated: 'linked', similar: 'linked', notsimilar: 'unlinked' };
 
 /** { link, answer } from "linked+unanswered" (also accepts single and older names). */
+// "How many times": a repeated question asked at least this many times
+// (counting its copies in other sittings and its similar questions). Written
+// "x5" in a filter; it implies "repeated".
+export const TIMES_FILTERS = [2, 3, 4, 5, 10];
+
 export function parseFilter(filter = '') {
-  const out = { link: '', answer: '' };
+  const out = { link: '', answer: '', times: 0 };
   String(filter || '')
     .split('+')
     .map((p) => OLD[p] || p)
     .forEach((p) => {
       if (LINK_FILTERS.some((f) => f.key && f.key === p)) out.link = p;
       if (ANSWER_FILTERS.some((f) => f.key && f.key === p)) out.answer = p;
+      const m = /^x(\d+)$/.exec(p);
+      if (m) out.times = Number(m[1]);
     });
+  if (out.times > 1) out.link = 'linked';
   return out;
 }
-export const makeFilter = ({ link = '', answer = '' } = {}) => [link, answer].filter(Boolean).join('+');
+export const makeFilter = ({ link = '', answer = '', times = 0 } = {}) =>
+  [times > 1 ? 'linked' : link, times > 1 ? `x${times}` : '', answer].filter(Boolean).join('+');
 /** True when the set depends on your own answers (so it is worked out fresh each time). */
 export const isPersonalFilter = (filter) => !!parseFilter(filter).answer;
 export function filterLabel(filter) {
-  const { link, answer } = parseFilter(filter);
+  const { link, answer, times } = parseFilter(filter);
   return [
-    link ? `${LINK_FILTERS.find((f) => f.key === link).label} questions` : '',
+    times > 1 ? `Repeated ${times} times or more` : link ? `${LINK_FILTERS.find((f) => f.key === link).label} questions` : '',
     answer ? ANSWER_FILTERS.find((f) => f.key === answer).label.toLowerCase() : '',
   ]
     .filter(Boolean)
@@ -281,6 +290,11 @@ const keysOf = (v) => (v && typeof v === 'object' ? Object.keys(v).filter((k) =>
 /** The id shared by every copy of one question. */
 export const groupOf = (q) => String(q?.same_as || q?._key || '');
 export const isRepeated = (q) => hasKeys(q?.same) || keysOf(q?.similar).length > 0;
+/** How many times a question was asked: itself, its copies in other sittings, and its similar questions. */
+export const timesAsked = (q) => {
+  const same = new Set(keysOf(q?.same));
+  return 1 + same.size + keysOf(q?.similar).filter((k) => !same.has(k)).length;
+};
 
 /**
  * One question per group (the original where present), keeping order.
@@ -310,9 +324,10 @@ export function outcomeOf(q, history = {}) {
  * once). `history` is { questionId: 1 | 0 } across all your quizzes.
  */
 export function practiceFilter(list = [], filter, history = {}) {
-  const { link, answer } = parseFilter(filter);
+  const { link, answer, times } = parseFilter(filter);
   return uniqueQuestions(list).filter((q) => {
     if (link === 'linked' && !isRepeated(q)) return false;
+    if (times > 1 && timesAsked(q) < times) return false;
     if (link === 'unlinked' && isRepeated(q)) return false;
     if (!answer) return true;
     const o = outcomeOf(q, history);
@@ -327,6 +342,11 @@ export function practiceCounts(list = [], history = {}) {
   for (const l of LINK_FILTERS) {
     counts[l.key] = {};
     for (const a of ANSWER_FILTERS) counts[l.key][a.key] = practiceFilter(unique, makeFilter({ link: l.key, answer: a.key }), history).length;
+  }
+  counts.times = {};
+  for (const n of TIMES_FILTERS) {
+    counts.times[n] = {};
+    for (const a of ANSWER_FILTERS) counts.times[n][a.key] = practiceFilter(unique, makeFilter({ times: n, answer: a.key }), history).length;
   }
   // The same questions counted with every copy, to show how many repeats were folded in.
   const keep = new Set(practiceFilter(unique, 'linked').map(groupOf));

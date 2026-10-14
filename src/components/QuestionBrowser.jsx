@@ -20,6 +20,7 @@ import {
   CHAPTERS,
   LINK_FILTERS,
   SECTIONS,
+  TIMES_FILTERS,
   batchCount,
   batchRange,
   makeFilter,
@@ -117,14 +118,16 @@ export function PracticeSets({ bank, book, bookTitle = '', name = '' }) {
   const { user } = useAuth();
   const [link, setLink] = useState('');
   const [answer, setAnswer] = useState('');
+  const [times, setTimes] = useState(0);
   const data = useAsync(
     () => Promise.all([loadBookQuestions(book), loadAllHistory(user?.uid)]).then(([list, history]) => practiceCounts(list, history)),
     [book, user?.uid],
   );
   const counts = data.data;
-  const n = counts ? counts[link][answer] : 0;
-  const withCopies = counts ? counts.copies[link] : 0;
-  const filter = makeFilter({ link, answer });
+  const countFor = (ans, t = times) => (!counts ? 0 : t > 1 ? counts.times[t][ans] : counts[link][ans]);
+  const n = countFor(answer);
+  const withCopies = counts && !times ? counts.copies[link] : 0;
+  const filter = makeFilter({ link, answer, times });
   const open = (part = 0) => {
     const f = { bank, book, filter, part };
     navigate(quizPath('set', setId(f), { ...f, part: part || '', bookTitle, name }));
@@ -134,7 +137,7 @@ export function PracticeSets({ bank, book, bookTitle = '', name = '' }) {
     <div className="flex flex-wrap gap-2">
       {items.map((f) => (
         <button
-          key={f.key || 'all'}
+          key={String(f.key || 'all')}
           onClick={() => onChange(f.key)}
           title={f.hint || ''}
           className={`rounded-full border px-3 py-1.5 text-sm font-medium transition ${
@@ -156,14 +159,34 @@ export function PracticeSets({ bank, book, bookTitle = '', name = '' }) {
       </p>
       <div className="space-y-2">
         <p className="text-xs font-semibold uppercase tracking-wide text-slate-500">Questions</p>
-        <Chips items={LINK_FILTERS} value={link} onChange={setLink} count={(k) => counts[k][answer]} />
+        <Chips
+          items={LINK_FILTERS}
+          value={link}
+          onChange={(k) => {
+            setLink(k);
+            if (k !== 'linked') setTimes(0);
+          }}
+          count={(k) => counts[k][answer]}
+        />
         {LINK_FILTERS.find((f) => f.key === link)?.hint && (
           <p className="text-xs text-slate-500">{LINK_FILTERS.find((f) => f.key === link).hint}</p>
         )}
       </div>
+      {link === 'linked' && (
+        <div className="space-y-2">
+          <p className="text-xs font-semibold uppercase tracking-wide text-slate-500">Repeated at least</p>
+          <Chips
+            items={[{ key: 0, label: 'Any' }, ...TIMES_FILTERS.map((t) => ({ key: t, label: `${t} times` }))]}
+            value={times}
+            onChange={setTimes}
+            count={(t) => countFor(answer, t)}
+          />
+          <p className="text-xs text-slate-500">Counting its copies in other sittings and its similar questions.</p>
+        </div>
+      )}
       <div className="space-y-2">
         <p className="text-xs font-semibold uppercase tracking-wide text-slate-500">Your answers</p>
-        <Chips items={ANSWER_FILTERS} value={answer} onChange={setAnswer} count={(k) => counts[link][k]} />
+        <Chips items={ANSWER_FILTERS} value={answer} onChange={setAnswer} count={(k) => countFor(k)} />
       </div>
 
       <div className="rounded-2xl border border-slate-100 bg-white p-4 shadow-sm">
