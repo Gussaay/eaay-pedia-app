@@ -1,0 +1,9 @@
+{
+  "name": "easy-pedia-books",
+  "description": "Indexes textbook PDFs for the AI helper's \"From my textbooks\" mode",
+  "private": true,
+  "type": "module",
+  "dependencies": {
+    "pdfjs-dist": "^6.4.299"
+  }
+}

@@ -36,6 +36,19 @@
       ".write": false
     },
 
+    // ------------------------------------------------------------- textbooks
+    // Indexed textbook passages for the AI helper (tools/books/index-books.mjs
+    // writes them with the Firebase CLI, the aiStudy function reads them; both
+    // skip rules). Admins may see which books exist; nobody reads the text
+    // through the app, since the books are copyrighted.
+    "books": {
+      ".read": false,
+      ".write": false,
+      "list": {
+        ".read": "auth.token.email === 'gussaay@gmail.com' || auth.token.email === 'malazmuzamil55@gmail.com' || root.child('quizusers').child(auth.uid).child('admin').val() === 'true'"
+      }
+    },
+
     // ------------------------------------------------------- updates & pushes
     // Everyone reads which version to run; only admins decide it. Without this,
     // any signed-in user could point every installed app at a bundle of their

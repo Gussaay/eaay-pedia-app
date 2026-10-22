@@ -235,5 +235,5 @@ export const deliverPush = onValueWritten(
   },
 );
 
-// AI study helper (Gemini), admin-only — see ai.js.
+// AI study helper (Groq, Gemini as backup), admin-only — see ai.js.
 export { aiStudy } from './ai.js';

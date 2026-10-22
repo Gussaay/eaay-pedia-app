@@ -27,3 +27,6 @@ keystore-secrets.txt
 
 # Scratch payloads and undo manifests from scripts/upload-decks.mjs
 .tmp/
+
+# Textbook index progress (tools/books/index-books.mjs)
+tools/books/.cache/

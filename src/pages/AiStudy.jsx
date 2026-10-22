@@ -1,19 +1,19 @@
-// AI Study: a Gemini-powered tutor, practice quiz, flashcard and mnemonic
-// generator. Admin-only — the Gemini key is paid for by the app owner and lives
-// in the `aiStudy` Cloud Function (functions/ai.js), never in the app.
+// AI Study: an AI tutor, practice quiz, flashcard and mnemonic generator
+// (GPT-OSS on Groq, Gemini as backup). Admin-only — the API keys belong to the
+// app owner and live in the `aiStudy` Cloud Function (functions/ai.js), never in the app.
 //
 // Nothing generated here is saved to the question bank. An admin who wants to
 // keep a set downloads it as CSV and puts it through the normal Import, where
 // the preview and duplicate checks still apply.
 import { useEffect, useState } from 'react';
-import { ArrowLeft, ArrowRight, Brain, Download, Layers, Lightbulb, ListChecks, MessageCircle, RotateCcw, Sparkles, Gauge } from 'lucide-react';
+import { ArrowLeft, ArrowRight, BookOpen, Brain, Download, Layers, Lightbulb, ListChecks, MessageCircle, RotateCcw, Sparkles, Gauge } from 'lucide-react';
 import { askAi } from '../lib/ai';
 import { cardsToCsv, mcqsToCsv, normalizeCards, normalizeMcqs } from '../lib/aiFormat';
 import { OPTION_KEYS } from '../lib/quiz';
 import { LEVELS } from '../config';
 import { useAuth } from '../hooks/useAuth';
 import { subscribe } from '../lib/rtdb';
-import AiChat, { AiReply, ModelTag } from '../components/AiChat';
+import AiChat, { AiReply, ModelTag, useBooks } from '../components/AiChat';
 import { AppBar, Button, Card, Empty, Input, Page, Select } from '../components/ui';
 
 const TABS = [
@@ -263,6 +263,7 @@ function MnemonicTab() {
             key={result.text}
             context={{ kind: 'text', text: `Mnemonic for ${result.topic}` }}
             seed={[{ role: 'model', text: result.text, model: result.model }]}
+            seedRequest={{ task: 'mnemonic', topic: result.topic }}
             placeholder="Ask for another version, or what a letter means…"
           />
         </Card>
@@ -272,9 +273,10 @@ function MnemonicTab() {
 }
 
 // ------------------------------------------------------------------ usage
-// Gemini's free tier counts requests per model per day, and the day ends at
-// midnight Pacific time. The aiStudy function records each request and the
-// daily limit Google reports when a model runs out (functions/ai.js).
+// Groq's and Gemini's free tiers count requests per model per day. The aiStudy
+// function records each request, the daily limit Groq reports with every
+// reply, and the one Google reports when a model runs out (functions/ai.js).
+// The count here restarts at midnight Pacific time.
 const usageDay = () => new Date().toLocaleDateString('en-CA', { timeZone: 'America/Los_Angeles' });
 
 function hoursToPacificMidnight() {
@@ -297,7 +299,7 @@ function AiUsage() {
   return (
     <Card className="p-4 mb-4">
       <p className="text-sm font-semibold text-slate-800 flex items-center gap-1.5">
-        <Gauge size={16} className="text-brand-600" /> Gemini requests today
+        <Gauge size={16} className="text-brand-600" /> AI requests today
       </p>
       {!keys.length ? (
         <p className="text-sm text-slate-500 mt-2">No requests yet today.</p>
@@ -312,7 +314,7 @@ function AiUsage() {
             return (
               <div key={k}>
                 <div className="flex items-baseline justify-between gap-2 text-sm">
-                  <span className="text-slate-700 truncate">{k.replace(/_/g, '.')}</span>
+                  <span className="text-slate-700 truncate">{k.replace(/^openai_/, '').replace(/_/g, '.')}</span>
                   <span className={`shrink-0 font-semibold ${out ? 'text-red-600' : 'text-slate-600'}`}>
                     {out ? 'used up' : limit ? `${left} of ${limit} left` : `${used} used`}
                   </span>
@@ -328,9 +330,38 @@ function AiUsage() {
         </div>
       )}
       <p className="text-[11px] text-slate-400 mt-3">
-        Counts requests from this app on the free tier. Resets in {hoursToPacificMidnight()} (midnight US Pacific time).
-        A model's limit shows once Google has reported it.
+        Counts requests from this app on the free tiers. Resets in {hoursToPacificMidnight()} (midnight US Pacific time).
+        A Gemini model's limit shows once Google has reported it. Groq also caps tokens a day, which long answers can
+        use up before the request count.
       </p>
+    </Card>
+  );
+}
+
+// -------------------------------------------------------------- textbooks
+/** The books the tutor can answer from (indexed with tools/books/index-books.mjs). */
+function BooksCard() {
+  const [list] = useBooks();
+  const books = Object.values(list || {}).sort((a, b) => String(a.title).localeCompare(String(b.title)));
+  return (
+    <Card className="p-4 mb-4">
+      <p className="text-sm font-semibold text-slate-800 flex items-center gap-1.5">
+        <BookOpen size={16} className="text-emerald-600" /> Your textbooks
+      </p>
+      {!books.length ? (
+        <p className="text-sm text-slate-500 mt-2">
+          None yet. Index PDFs with tools/books/index-books.mjs to turn on "From my textbooks" in the tutor.
+        </p>
+      ) : (
+        <ul className="mt-2 space-y-1 text-sm text-slate-700">
+          {books.map((b) => (
+            <li key={b.title} className="flex justify-between gap-2">
+              <span className="truncate">{b.title}</span>
+              <span className="shrink-0 text-xs text-slate-400">{b.pages} pages</span>
+            </li>
+          ))}
+        </ul>
+      )}
     </Card>
   );
 }
@@ -342,7 +373,7 @@ export default function AiStudy() {
 
   return (
     <>
-      <AppBar title="AI Study" subtitle="Tutor, quizzes, flashcards and mnemonics (Gemini)" />
+      <AppBar title="AI Study" subtitle="Tutor, quizzes, flashcards and mnemonics" />
       <Page>
         {!isAdmin ? (
           <Empty icon={<Brain size={40} />} title="Admins only">
@@ -351,6 +382,7 @@ export default function AiStudy() {
         ) : (
           <>
             <AiUsage />
+            <BooksCard />
             <div className="grid grid-cols-4 gap-1 bg-slate-100 rounded-2xl p-1 mb-4">
               {TABS.map(({ key, label, icon: Icon }) => (
                 <button
@@ -376,7 +408,7 @@ export default function AiStudy() {
             <div className={tab === 'mnemonic' ? '' : 'hidden'}><MnemonicTab /></div>
 
             <p className="text-[11px] text-slate-400 text-center mt-6">
-              Generated by Google Gemini. AI can be wrong — check important facts against your references.
+              Generated by GPT-OSS on Groq, or Google Gemini as a backup. AI can be wrong — check important facts against your references.
             </p>
           </>
         )}

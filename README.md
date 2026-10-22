@@ -80,32 +80,64 @@ do), so offline support is built in `src/lib/offline.js` (IndexedDB) and
   server values at that moment so it never overwrites newer progress;
 - Profile > Offline shows what is stored, pending results and "Clear offline data".
 
-## AI Study helper (Gemini, admins only)
+## AI Study helper (Groq + Gemini, admins only)
 
 `/ai` (Home > **AI Study**, also in the side menu) has a tutor chat, "Quiz me"
 (generated MCQs), generated flashcards and a mnemonic maker. Every quiz
 explanation also gets an **Explain with AI** button with follow-up questions.
 
 A Gemini/Claude *chat subscription* cannot be connected to another app, so this
-uses a Gemini **API key**. The free tier from Google AI Studio is enough for personal study.
-The key is a Firebase secret read only by the `aiStudy` Cloud Function
-(`functions/ai.js`). It never ships in the APK, and the function refuses anyone
+uses **API keys**. Answers come from OpenAI's open GPT-OSS models on Groq's free tier
+(1,000 requests and 200K tokens a day per model), with Gemini from Google AI Studio as
+the backup. The keys are Firebase secrets read only by the `aiStudy` Cloud Function
+(`functions/ai.js`). They never ship in the APK, and the function refuses anyone
 who is not an admin (same emails as `src/config.js`, or the User manager's admin flag).
 
 One-time setup:
 
 ```bash
-# 1. create a key at https://aistudio.google.com/apikey
+# 1. create a key at https://console.groq.com/keys
+firebase functions:secrets:set GROQ_API_KEY     # paste the key
+# 2. backup: create a key at https://aistudio.google.com/apikey
 firebase functions:secrets:set GEMINI_API_KEY   # paste the key
 firebase deploy --only functions
 ```
 
-The model defaults to `gemini-flash-latest` (Google's current Flash model). The free tier
-caps each model separately (as low as 20 requests a day), so when its quota runs out the
-function falls back to `gemini-flash-lite-latest`, then `gemini-2.5-flash` and
-`gemini-2.5-flash-lite`. To pin one model instead, put `GEMINI_MODEL=...` in
-`functions/.env` and redeploy. Generated sets are not saved anywhere. The **CSV**
-button downloads them in the Import / "Upload a set" format if you want to keep them.
+Both secrets must exist before deploying (the deploy stops on a missing one),
+including the automatic functions deploy on a push to `main`.
+
+The order is `openai/gpt-oss-120b`, then `openai/gpt-oss-20b` when its daily allowance
+runs out, then `gemini-flash-latest`, `gemini-flash-lite-latest`, `gemini-2.5-flash` and
+`gemini-2.5-flash-lite`. To pin one model, put `GROQ_MODEL=...` or `GEMINI_MODEL=...` in
+`functions/.env` and redeploy. Under every reply a **Compare with Gemini / Groq** button
+asks the other provider the same thing and shows both answers. Generated sets are not
+saved anywhere. The **CSV** button downloads them in the Import / "Upload a set" format
+if you want to keep them.
+
+### Answering from your own textbooks
+
+Turn on **From my textbooks** under the tutor chat (it shows once a book is indexed) and
+explanations and tutor answers are built from passages of your PDFs, cited as [1], [2]
+with book and page listed under the reply. It is free: Gemini's embedding model turns
+each passage into a vector once, the vectors and passages live in the Realtime Database
+under `books/`, and each question searches them in the `aiStudy` function
+(`functions/books.js`) before Groq or Gemini answers.
+
+Indexing runs on your PC (PDFs with real text; scanned books need OCR first):
+
+```bash
+cd tools/books
+npm install
+set GEMINI_API_KEY=...                     # PowerShell: $env:GEMINI_API_KEY="..."
+node index-books.mjs D:\Books              # dry run: pages, passages, time per book
+node index-books.mjs D:\Books --commit     # embed and upload (uses your firebase login)
+node index-books.mjs --list
+node index-books.mjs --remove <id>
+```
+
+The free embedding tier allows about 30,000 tokens a minute and 1,000 requests a day,
+so a 1,500-page book takes about an hour and several books may need two days. The script
+paces itself and an interrupted or quota-stopped run carries on where it left off.
 
 ## ⚠️ Things to do in the Firebase console
 

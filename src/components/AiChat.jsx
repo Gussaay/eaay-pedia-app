@@ -1,8 +1,9 @@
 // Pieces of the AI study helper shared by the AI Study page and the quiz
 // explanation: a safe renderer for a reply, and a small tutor chat.
 import { useEffect, useRef, useState } from 'react';
-import { ChevronRight, Cpu, RotateCcw, Send, Sparkles } from 'lucide-react';
+import { BookOpen, ChevronRight, Cpu, GitCompare, RotateCcw, Send, Sparkles } from 'lucide-react';
 import { askAi } from '../lib/ai';
+import { subscribe } from '../lib/rtdb';
 import { getTutorChat, saveTutorChat } from '../lib/aiCache';
 import { parseReply } from '../lib/aiFormat';
 import { Button, Modal } from './ui';
@@ -22,7 +23,7 @@ export function AiReply({ text, className = '' }) {
   );
 }
 
-/** Which Gemini model wrote a reply, e.g. "gemini-2.5-flash". */
+/** Which model wrote a reply, e.g. "openai/gpt-oss-120b" or "gemini-2.5-flash". */
 export function ModelTag({ model, className = '' }) {
   if (!model) return null;
   return (
@@ -33,10 +34,10 @@ export function ModelTag({ model, className = '' }) {
 }
 
 const WAIT_HINTS = [
-  [0, 'Sending to Gemini…'],
-  [4, 'Gemini is writing the answer…'],
+  [0, 'Sending to the AI…'],
+  [4, 'The AI is writing the answer…'],
   [15, 'Still writing — longer answers take a little while…'],
-  [30, 'Gemini is busy, retrying — this can take up to a minute…'],
+  [30, 'The AI is busy, retrying — this can take up to a minute…'],
 ];
 
 /**
@@ -94,13 +95,127 @@ function StreamingReply({ text, onCancel }) {
   );
 }
 
+// ------------------------------------------------------------- textbooks
+// "From my textbooks": the books indexed with tools/books/index-books.mjs. The
+// choice is remembered on the device and shared by the tutor and explanations.
+const BOOKS_PREF = 'aiBooks.v1';
+const readPref = () => {
+  try {
+    return localStorage.getItem(BOOKS_PREF) === '1';
+  } catch {
+    return false;
+  }
+};
+
+/** [indexed books ({ id: meta }) or null, on, setOn]. `on` is false while there are none. */
+export function useBooks() {
+  const [list, setList] = useState(null);
+  const [on, setOnState] = useState(readPref);
+  useEffect(() => subscribe('books/list', setList), []);
+  const setOn = (v) => {
+    setOnState(v);
+    try {
+      localStorage.setItem(BOOKS_PREF, v ? '1' : '0');
+    } catch {
+      /* private mode: remembered for this screen only */
+    }
+  };
+  const has = !!list && Object.keys(list).length > 0;
+  return [list, has && on, setOn, has];
+}
+
+function BooksToggle({ on, setOn }) {
+  return (
+    <button
+      type="button"
+      onClick={() => setOn(!on)}
+      aria-pressed={on}
+      className={`inline-flex items-center gap-1.5 rounded-full border px-2.5 py-1 text-xs font-medium transition ${
+        on ? 'border-emerald-300 bg-emerald-50 text-emerald-700' : 'border-slate-200 bg-white text-slate-500'
+      }`}
+    >
+      <BookOpen size={14} /> From my textbooks{on ? ': on' : ''}
+    </button>
+  );
+}
+
+/** The passages a reply was built from, by number; tap one to read it. */
+export function Sources({ sources }) {
+  if (!sources?.length) return null;
+  return (
+    <div className="mt-2 space-y-1">
+      <p className="text-[11px] font-semibold uppercase tracking-wide text-emerald-700 flex items-center gap-1">
+        <BookOpen size={12} /> From your textbooks
+      </p>
+      {sources.map((s) => (
+        <details key={s.n} className="text-xs text-slate-600">
+          <summary className="cursor-pointer">
+            [{s.n}] {s.title}, p. {s.page}
+          </summary>
+          <p className="mt-1 ml-3 pl-2 border-l-2 border-emerald-100 text-slate-500 leading-relaxed">{s.text}</p>
+        </details>
+      ))}
+    </div>
+  );
+}
+
+const isGemini = (model) => /gemini/i.test(model || '');
+
+/**
+ * Under a reply: asks the other provider (Groq or Gemini) the same request and
+ * shows its answer below, to compare the two. Not saved with the chat.
+ */
+function CompareReply({ model, request }) {
+  const other = isGemini(model) ? 'groq' : 'gemini';
+  const [busy, setBusy] = useState(false);
+  const [error, setError] = useState('');
+  const [reply, setReply] = useState(null);
+  const abort = useRef(null);
+
+  const compare = async () => {
+    abort.current = new AbortController();
+    setBusy(true);
+    setError('');
+    try {
+      setReply(await askAi({ ...request, provider: other }, { signal: abort.current.signal }));
+    } catch (e) {
+      if (!abort.current.signal.aborted) setError(e.message);
+    } finally {
+      setBusy(false);
+    }
+  };
+
+  if (reply) {
+    return (
+      <div className="mt-2.5 pt-2.5 border-t border-dashed border-slate-200">
+        <p className="text-[11px] font-semibold uppercase tracking-wide text-violet-600 mb-1">
+          {other === 'gemini' ? 'Gemini' : 'Groq'}'s answer
+        </p>
+        <AiReply text={reply.text} />
+        <Sources sources={reply.sources} />
+        <ModelTag model={reply.model} className="mt-1.5" />
+      </div>
+    );
+  }
+  if (busy) return <AiWaiting className="mt-2.5" label={`Asking ${other === 'gemini' ? 'Gemini' : 'Groq'}…`} onCancel={() => abort.current?.abort()} />;
+  return (
+    <>
+      <button onClick={compare} className="mt-1.5 inline-flex items-center gap-1 text-[11px] font-medium text-violet-600 hover:text-violet-800">
+        <GitCompare size={12} /> Compare with {other === 'gemini' ? 'Gemini' : 'Groq'}
+      </button>
+      {error && <p className="text-xs text-red-600 mt-1">{error}</p>}
+    </>
+  );
+}
+
 /**
  * A tutor conversation. `context` (a question, card or topic) is sent with
  * every turn so follow-ups stay about the thing being studied; `seed` starts
  * the chat with an earlier reply, e.g. the AI explanation of a question;
- * `ask` sends a first question as soon as the chat opens.
+ * `ask` sends a first question as soon as the chat opens; `seedRequest` is
+ * the request that wrote the seed's first reply, so it can be compared too.
  */
-export default function AiChat({ context, seed = [], ask, onChange, placeholder = 'Ask anything about pediatrics…', className = '' }) {
+export default function AiChat({ context, seed = [], seedRequest, ask, onChange, placeholder = 'Ask anything about pediatrics…', className = '' }) {
   const [messages, setMessages] = useState(seed);
   const [text, setText] = useState('');
   const [busy, setBusy] = useState(false);
@@ -110,6 +225,7 @@ export default function AiChat({ context, seed = [], ask, onChange, placeholder 
   const request = useRef(0); // bumped on send and cancel; a stale reply is dropped
   const abort = useRef(null);
   const [partial, setPartial] = useState(''); // the reply so far, while it streams
+  const [, booksOn, setBooksOn, hasBooks] = useBooks();
 
   useEffect(() => {
     endRef.current?.scrollIntoView({ behavior: 'smooth', block: 'nearest' });
@@ -128,11 +244,11 @@ export default function AiChat({ context, seed = [], ask, onChange, placeholder 
     abort.current = new AbortController();
     try {
       const res = await askAi(
-        { task: 'chat', messages: next, context },
+        { task: 'chat', messages: next.map(({ role, text: t }) => ({ role, text: t })), context, books: booksOn },
         { signal: abort.current.signal, onText: (t) => id === request.current && setPartial((p) => p + t) },
       );
       if (id !== request.current) return;
-      const done = [...next, { role: 'model', text: res.text, model: res.model }];
+      const done = [...next, { role: 'model', text: res.text, model: res.model, ...(res.sources ? { sources: res.sources } : {}) }];
       setMessages(done);
       onChange?.(done);
     } catch (e) {
@@ -169,6 +285,16 @@ export default function AiChat({ context, seed = [], ask, onChange, placeholder 
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
+  // What wrote reply i, to ask the other provider the same thing.
+  const requestFor = (i) => {
+    if (i === 0 && seedRequest) return seedRequest;
+    if (messages[i - 1]?.role === 'user') {
+      const before = messages.slice(0, i).map(({ role, text: t }) => ({ role, text: t }));
+      return { task: 'chat', messages: before, context, books: !!messages[i].sources };
+    }
+    return null;
+  };
+
   // Once the keyboard has opened, bring the box back into view above it.
   const revealInput = () => setTimeout(() => inputRef.current?.scrollIntoView({ block: 'nearest', behavior: 'smooth' }), 350);
 
@@ -183,7 +309,9 @@ export default function AiChat({ context, seed = [], ask, onChange, placeholder 
           ) : (
             <div key={i} className="mr-4 rounded-2xl rounded-bl-md bg-slate-50 border border-slate-100 px-3 py-2">
               <AiReply text={m.text} />
+              <Sources sources={m.sources} />
               <ModelTag model={m.model} className="mt-1.5" />
+              {m.model && requestFor(i) && <CompareReply key={m.text} model={m.model} request={requestFor(i)} />}
             </div>
           ),
         )}
@@ -192,6 +320,11 @@ export default function AiChat({ context, seed = [], ask, onChange, placeholder 
         {error && <p className="text-sm text-red-600">{error}</p>}
         <div ref={endRef} />
       </div>
+      {hasBooks && (
+        <div className="mt-3">
+          <BooksToggle on={booksOn} setOn={setBooksOn} />
+        </div>
+      )}
       <div className="flex gap-2 mt-3 items-end">
         <textarea
           ref={inputRef}
@@ -232,6 +365,7 @@ export function AiExplain({ question }) {
   const [partial, setPartial] = useState('');
   const request = useRef(0);
   const abort = useRef(null);
+  const [, booksOn] = useBooks();
 
   useEffect(() => {
     request.current++;
@@ -255,11 +389,11 @@ export function AiExplain({ question }) {
     try {
       const { _key, ...q } = question;
       const res = await askAi(
-        { task: 'explain', question: q },
+        { task: 'explain', question: q, books: booksOn },
         { signal: abort.current.signal, onText: (t) => id === request.current && setPartial((p) => p + t) },
       );
       if (id !== request.current) return;
-      const first = [{ role: 'model', text: res.text, model: res.model }];
+      const first = [{ role: 'model', text: res.text, model: res.model, ...(res.sources ? { sources: res.sources } : {}) }];
       setMessages(first);
       setAsk('');
       setRound((r) => r + 1);
@@ -362,6 +496,7 @@ export function AiExplain({ question }) {
               key={`${_key}-${round}`}
               context={{ kind: 'question', question: plain }}
               seed={messages || []}
+              seedRequest={{ task: 'explain', question: plain, books: !!messages?.[0]?.sources }}
               ask={ask}
               onChange={(m) => {
                 setAsk('');
