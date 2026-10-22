@@ -5,6 +5,8 @@
 //               quizqq where category1/category2 == chapter name and type == sub-type.
 // and one the web app added:
 //  - "set":     a slice of a whole bank by chapter and/or basic science (lib/questionBrowse.js).
+//  - "ai":      a practice quiz the AI tutor picked for you, aiquiz/<uid>/<id> = { title, keys }
+//               (functions/agent.js); questions are quizqq/<key> in that order.
 //
 // Everything opened online is also saved for offline play (src/lib/offline.js),
 // and reads fall back to that copy when the device has no connection.
@@ -31,6 +33,29 @@ function withTimeout(promise, ms = 20000) {
 
 async function fetchMeta(kind, id, params) {
   if (kind === 'set') return setMeta(id, params);
+  if (kind === 'ai') {
+    const uid = auth.currentUser?.uid;
+    const q = uid && (await getOne(`aiquiz/${uid}/${id}`));
+    if (!q) throw new Error('This quiz no longer exists.');
+    const keys = toKeys(q.keys);
+    return {
+      kind,
+      id,
+      pkey: `ai-${id}`,
+      ai: true,
+      keys,
+      bysystem: false,
+      type: '',
+      chapter: '?',
+      title: q.title || 'AI practice quiz',
+      des: 'Picked from the question bank by the AI tutor.',
+      uploader: 'AI tutor',
+      img: '',
+      source: params.source || '',
+      name: params.name || '',
+      number: keys.length,
+    };
+  }
   if (kind === 'chapter') {
     const ch = (await getOne(`chapters/${id}`)) || {};
     const type = params.type || '';
@@ -144,8 +169,15 @@ export async function loadBookQuestions(book) {
   return list;
 }
 
+// Stored by the function as an array, which the database may hand back as an object.
+const toKeys = (keys) => (Array.isArray(keys) ? keys : Object.values(keys || {})).map(String).filter(Boolean);
+
 async function fetchQuestions(meta) {
   let list;
+  if (meta.ai) {
+    const rows = await Promise.all(meta.keys.map((id) => getOne(`quizqq/${id}`).then((q) => q && { ...q, _key: id })));
+    return rows.filter((q) => q && q.question !== undefined);
+  }
   if (meta.set) {
     list = meta.filter
       ? await loadBookQuestions(meta.book)

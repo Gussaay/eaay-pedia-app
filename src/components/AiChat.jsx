@@ -1,22 +1,79 @@
 // Pieces of the AI study helper shared by the AI Study page and the quiz
 // explanation: a safe renderer for a reply, and a small tutor chat.
 import { useEffect, useRef, useState } from 'react';
-import { BookOpen, ChevronRight, Cpu, GitCompare, RotateCcw, Send, Sparkles } from 'lucide-react';
+import { Link } from 'react-router-dom';
+import { BookOpen, Check, ChevronRight, Cpu, GitCompare, ListChecks, Play, RotateCcw, Send, Sparkles } from 'lucide-react';
 import { askAi } from '../lib/ai';
 import { subscribe } from '../lib/rtdb';
 import { getTutorChat, saveTutorChat } from '../lib/aiCache';
 import { parseReply } from '../lib/aiFormat';
+import { quizPath } from '../lib/quizSource';
 import { Button, Modal } from './ui';
 
-/** Renders Gemini's light markdown as React nodes (never innerHTML). */
+// Inline text, with textbook citations like [2] shown as small tags.
+function Inline({ parts }) {
+  return parts.map((p, j) => {
+    const bits = p.text.split(/(\[\d{1,2}(?:\s*[,\u2013-]\s*\d{1,2})*\])/g).map((t, k) =>
+      k % 2 === 1 ? (
+        <sup key={k} className="ml-0.5 rounded bg-emerald-50 px-1 text-[10px] font-semibold text-emerald-700">
+          {t.slice(1, -1)}
+        </sup>
+      ) : (
+        t
+      ),
+    );
+    if (p.bold) return <b key={j} className="text-slate-900">{bits}</b>;
+    if (p.italic) return <i key={j}>{bits}</i>;
+    return <span key={j}>{bits}</span>;
+  });
+}
+
+/** Renders the models' light markdown as React nodes (never innerHTML). */
 export function AiReply({ text, className = '' }) {
   return (
     <div className={`text-slate-700 leading-relaxed space-y-1.5 ${className}`}>
       {parseReply(text).map((b, i) => {
-        const body = b.parts.map((p, j) => (p.bold ? <b key={j} className="text-slate-900">{p.text}</b> : <span key={j}>{p.text}</span>));
+        const body = <Inline parts={b.parts} />;
         if (b.type === 'hr') return <hr key={i} className="border-slate-200 !my-3" />;
         if (b.type === 'h') return <p key={i} className="font-semibold text-slate-900 pt-1">{body}</p>;
+        if (b.type === 'li' && b.num) {
+          return (
+            <p key={i} className="pl-6 relative">
+              <span className="absolute left-0 min-w-[1.25rem] text-right font-semibold text-brand-600 tabular-nums">{b.num}.</span>
+              {body}
+            </p>
+          );
+        }
         if (b.type === 'li') return <p key={i} className="pl-4 relative before:content-['•'] before:absolute before:left-0 before:text-brand-500">{body}</p>;
+        if (b.type === 'table') {
+          const [head, ...rows] = b.rows;
+          return (
+            <div key={i} className="overflow-x-auto -mx-1 !my-2">
+              <table className="min-w-full text-sm border-collapse">
+                <thead>
+                  <tr>
+                    {head.map((c, k) => (
+                      <th key={k} className="text-left font-semibold text-slate-900 bg-slate-100 border border-slate-200 px-2 py-1 align-top">
+                        <Inline parts={c} />
+                      </th>
+                    ))}
+                  </tr>
+                </thead>
+                <tbody>
+                  {rows.map((r, n) => (
+                    <tr key={n} className={n % 2 ? 'bg-slate-50/60' : ''}>
+                      {head.map((_, k) => (
+                        <td key={k} className="border border-slate-200 px-2 py-1 align-top">
+                          <Inline parts={r[k] || []} />
+                        </td>
+                      ))}
+                    </tr>
+                  ))}
+                </tbody>
+              </table>
+            </div>
+          );
+        }
         return <p key={i}>{body}</p>;
       })}
     </div>
@@ -208,14 +265,79 @@ function CompareReply({ model, request }) {
   );
 }
 
+// ---------------------------------------------------------------- agent
+/** What the agent did before answering: one line per tool it used. */
+function AgentSteps({ steps }) {
+  if (!steps?.length) return null;
+  return (
+    <ul className="mb-2 space-y-0.5">
+      {steps.map((st, i) => (
+        <li key={i} className="flex items-start gap-1.5 text-[11px] text-slate-500">
+          <Check size={12} className="mt-0.5 shrink-0 text-emerald-500" /> {st.label}
+        </li>
+      ))}
+    </ul>
+  );
+}
+
+/** The practice quizzes the agent built, each opening like any quiz. */
+function AgentQuizzes({ quizzes }) {
+  if (!quizzes?.length) return null;
+  return (
+    <div className="mt-2 space-y-1.5">
+      {quizzes.map((q) => (
+        <Link
+          key={q.id}
+          to={quizPath('ai', q.id)}
+          className="flex items-center gap-2 rounded-xl border border-brand-200 bg-white px-3 py-2 text-sm hover:bg-brand-50"
+        >
+          <ListChecks size={18} className="text-brand-600 shrink-0" />
+          <span className="flex-1 min-w-0">
+            <span className="block font-semibold text-slate-900 truncate">{q.title}</span>
+            <span className="block text-xs text-slate-500">{q.count} questions from the bank</span>
+          </span>
+          <span className="inline-flex items-center gap-1 text-xs font-semibold text-brand-700">
+            <Play size={14} /> Open quiz
+          </span>
+        </Link>
+      ))}
+    </div>
+  );
+}
+
+/** A choice the agent asked for; tapping one sends it as the next message. */
+function AgentAsk({ ask, onPick, disabled }) {
+  if (!ask?.options?.length) return null;
+  return (
+    <div className="mt-2">
+      {ask.question && <p className="text-sm font-medium text-slate-800 mb-1.5">{ask.question}</p>}
+      <div className="flex flex-wrap gap-1.5">
+        {ask.options.map((o) => (
+          <button
+            key={o}
+            type="button"
+            disabled={disabled}
+            onClick={() => onPick(o)}
+            className="rounded-full border border-violet-200 bg-white px-3 py-1 text-xs font-medium text-violet-700 hover:bg-violet-50 disabled:opacity-50"
+          >
+            {o}
+          </button>
+        ))}
+      </div>
+    </div>
+  );
+}
+
 /**
  * A tutor conversation. `context` (a question, card or topic) is sent with
  * every turn so follow-ups stay about the thing being studied; `seed` starts
  * the chat with an earlier reply, e.g. the AI explanation of a question;
  * `ask` sends a first question as soon as the chat opens; `seedRequest` is
  * the request that wrote the seed's first reply, so it can be compared too.
+ * With `agent`, each message goes to the tutor with tools (functions/agent.js),
+ * which may search the bank and the textbooks, build a quiz or ask back.
  */
-export default function AiChat({ context, seed = [], seedRequest, ask, onChange, placeholder = 'Ask anything about pediatrics…', className = '' }) {
+export default function AiChat({ context, seed = [], seedRequest, ask, agent = false, onChange, placeholder = 'Ask anything about pediatrics…', className = '' }) {
   const [messages, setMessages] = useState(seed);
   const [text, setText] = useState('');
   const [busy, setBusy] = useState(false);
@@ -243,12 +365,21 @@ export default function AiChat({ context, seed = [], seedRequest, ask, onChange,
     const id = ++request.current;
     abort.current = new AbortController();
     try {
-      const res = await askAi(
-        { task: 'chat', messages: next.map(({ role, text: t }) => ({ role, text: t })), context, books: booksOn },
-        { signal: abort.current.signal, onText: (t) => id === request.current && setPartial((p) => p + t) },
-      );
+      const history = next.map(({ role, text: t }) => ({ role, text: t }));
+      // The agent's answer arrives whole, after its tool steps.
+      const res = agent
+        ? await askAi({ task: 'agent', messages: history }, { signal: abort.current.signal })
+        : await askAi(
+            { task: 'chat', messages: history, context, books: booksOn },
+            { signal: abort.current.signal, onText: (t) => id === request.current && setPartial((p) => p + t) },
+          );
       if (id !== request.current) return;
-      const done = [...next, { role: 'model', text: res.text, model: res.model, ...(res.sources ? { sources: res.sources } : {}) }];
+      const reply = { role: 'model', text: res.text || res.ask?.question || '', model: res.model };
+      if (res.sources?.length) reply.sources = res.sources;
+      if (res.steps?.length) reply.steps = res.steps;
+      if (res.quizzes?.length) reply.quizzes = res.quizzes;
+      if (res.ask?.options?.length) reply.ask = res.ask;
+      const done = [...next, reply];
       setMessages(done);
       onChange?.(done);
     } catch (e) {
@@ -287,6 +418,7 @@ export default function AiChat({ context, seed = [], seedRequest, ask, onChange,
 
   // What wrote reply i, to ask the other provider the same thing.
   const requestFor = (i) => {
+    if (agent) return null; // tools ran and a quiz may have been saved: not repeated on the other model
     if (i === 0 && seedRequest) return seedRequest;
     if (messages[i - 1]?.role === 'user') {
       const before = messages.slice(0, i).map(({ role, text: t }) => ({ role, text: t }));
@@ -308,7 +440,10 @@ export default function AiChat({ context, seed = [], seedRequest, ask, onChange,
             </div>
           ) : (
             <div key={i} className="mr-4 rounded-2xl rounded-bl-md bg-slate-50 border border-slate-100 px-3 py-2">
-              <AiReply text={m.text} />
+              <AgentSteps steps={m.steps} />
+              <AiReply text={m.ask && m.text === m.ask.question ? '' : m.text} />
+              <AgentAsk ask={m.ask} disabled={busy || i !== messages.length - 1} onPick={send} />
+              <AgentQuizzes quizzes={m.quizzes} />
               <Sources sources={m.sources} />
               <ModelTag model={m.model} className="mt-1.5" />
               {m.model && requestFor(i) && <CompareReply key={m.text} model={m.model} request={requestFor(i)} />}
@@ -316,11 +451,13 @@ export default function AiChat({ context, seed = [], seedRequest, ask, onChange,
           ),
         )}
         {busy && partial && <StreamingReply text={partial} onCancel={cancel} />}
-        {busy && !partial && <AiWaiting className="mr-4" onCancel={cancel} />}
+        {busy && !partial && (
+          <AiWaiting className="mr-4" label={agent ? 'The tutor is working: it may search the bank and your textbooks first…' : undefined} onCancel={cancel} />
+        )}
         {error && <p className="text-sm text-red-600">{error}</p>}
         <div ref={endRef} />
       </div>
-      {hasBooks && (
+      {hasBooks && !agent && (
         <div className="mt-3">
           <BooksToggle on={booksOn} setOn={setBooksOn} />
         </div>

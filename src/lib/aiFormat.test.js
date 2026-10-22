@@ -56,3 +56,14 @@ test('questionFingerprint changes when the question is edited', () => {
   assert.equal(questionFingerprint(q), questionFingerprint({ ...q, exp: 'new explanation' }));
   assert.notEqual(questionFingerprint(q), questionFingerprint({ ...q, answer: 'b' }));
 });
+
+test('parseReply keeps list numbers, italics and tables', () => {
+  const blocks = parseReply('1. first *step*\n| Sign | Meaning |\n|---|:--:|\n| **Koplik** | measles |\n| rash | late |\nafter');
+  assert.deepEqual(blocks.map((b) => b.type), ['li', 'table', 'p']);
+  assert.equal(blocks[0].num, '1');
+  assert.deepEqual(blocks[0].parts[1], { text: 'step', bold: false, italic: true });
+  assert.equal(blocks[1].rows.length, 3);
+  assert.deepEqual(blocks[1].rows[1][0], [{ text: 'Koplik', bold: true }]);
+  assert.equal(blocks[1].rows[2][1][0].text, 'late');
+  assert.equal(parseReply('a_b_c and 2 * 3 * 4')[0].parts.length, 1);
+});

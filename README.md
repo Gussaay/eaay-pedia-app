@@ -114,6 +114,16 @@ asks the other provider the same thing and shows both answers. Generated sets ar
 saved anywhere. The **CSV** button downloads them in the Import / "Upload a set" format
 if you want to keep them.
 
+### The Agent tab (a tutor with tools)
+
+The **Agent** tab is a tutor that can act, not only answer (`functions/agent.js`). For each
+message the model may, a few steps at most, search the whole question bank, search your
+indexed textbooks (cited as [1], [2]), read your own quiz history to find weak topics,
+save a practice quiz from questions it found (`aiquiz/<uid>/<id>`, opened with an
+**Open quiz** button like any quiz), or ask you a multiple-choice question back. The steps
+it took are listed above its reply. Each step is one AI request, so an agent message can
+use 2 to 5 of the day's allowance.
+
 ### Answering from your own textbooks
 
 Turn on **From my textbooks** under the tutor chat (it shows once a book is indexed) and

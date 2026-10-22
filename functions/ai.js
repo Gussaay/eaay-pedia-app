@@ -22,6 +22,8 @@
 //   quiz      topic, count, level  new practice MCQs (JSON)
 //   cards     topic, count         new flashcards (JSON)
 //   mnemonic  topic                a memory aid
+//   agent     messages             the tutor with tools (agent.js): searches the
+//                                  bank and textbooks, builds quizzes, asks back
 // `explain` and `chat` may add `books: true` to answer from the indexed
 // textbooks (books.js); the reply then carries `sources`.
 // Any task may add `provider: 'groq' | 'gemini'` to ask that one only (the
@@ -31,6 +33,7 @@ import { defineSecret } from 'firebase-functions/params';
 import { logger } from 'firebase-functions';
 import { getDatabase } from 'firebase-admin/database';
 import { findPassages } from './books.js';
+import { runAgent } from './agent.js';
 
 const GROQ_API_KEY = defineSecret('GROQ_API_KEY');
 const GEMINI_API_KEY = defineSecret('GEMINI_API_KEY');
@@ -358,7 +361,7 @@ async function isAdmin(auth) {
 }
 
 export const aiStudy = onCall(
-  { secrets: [GROQ_API_KEY, GEMINI_API_KEY], timeoutSeconds: 120, memory: '512MiB', maxInstances: 3 },
+  { secrets: [GROQ_API_KEY, GEMINI_API_KEY], timeoutSeconds: 120, memory: '1GiB', maxInstances: 3 },
   async (request, response) => {
     if (!request.auth) throw new HttpsError('unauthenticated', 'Sign in first.');
     if (!(await isAdmin(request.auth))) {
@@ -376,6 +379,22 @@ export const aiStudy = onCall(
     const useGemini = key && provider !== 'groq';
     if (provider === 'gemini' && !key) throw new HttpsError('failed-precondition', 'GEMINI_API_KEY is not set on the server.');
     if (provider === 'groq' && !groqKey) throw new HttpsError('failed-precondition', 'GROQ_API_KEY is not set on the server.');
+
+    if (request.data?.task === 'agent') {
+      return runAgent(request.data, request.auth.uid, {
+        SYSTEM,
+        groqKey: useGroq ? groqKey : '',
+        geminiKey: key,
+        useGemini: !!useGemini,
+        groqModels: GROQ_MODELS,
+        geminiModels: MODELS,
+        GROQ_URL,
+        thinkingFor,
+        countRequest,
+        recordLimit,
+        findPassages,
+      });
+    }
 
     let { contents, schema } = buildRequest(request.data);
     let sources;

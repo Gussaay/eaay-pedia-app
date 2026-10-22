@@ -599,7 +599,7 @@ export default function QuizPlay() {
           <>
             {/* One line: the quiz name and category shrink (with …) before the counts do. */}
             <div className="flex items-center gap-2 text-xs whitespace-nowrap">
-              {meta.source === 'smsb' || meta.bysystem || meta.set ? (
+              {meta.source === 'smsb' || meta.bysystem || meta.set || meta.ai ? (
                 current.title && <span className="min-w-0 truncate rounded-full bg-amber-50 text-amber-800 px-2.5 py-1">{current.title}</span>
               ) : null}
               {current.category && <span className="min-w-0 truncate rounded-full bg-slate-100 text-slate-700 px-2.5 py-1">{current.category}</span>}

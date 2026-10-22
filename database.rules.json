@@ -155,6 +155,15 @@
       }
     },
 
+    // Practice quizzes the AI tutor built for you (functions/agent.js writes
+    // them; the app only reads, and may delete, its own).
+    "aiquiz": {
+      "$uid": {
+        ".read": "auth.uid === $uid",
+        ".write": "auth.uid === $uid && !newData.exists()"
+      }
+    },
+
     // ---------------------------------------------------------------- interest
     // Who asked to be told when a coming-soon section opens. Readable by any
     // signed-in user because the page shows the running count and whether you

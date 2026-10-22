@@ -1,4 +1,4 @@
-// AI Study: an AI tutor, practice quiz, flashcard and mnemonic generator
+// AI Study: an AI agent (tutor with tools), tutor, practice quiz, flashcard and mnemonic generator
 // (GPT-OSS on Groq, Gemini as backup). Admin-only — the API keys belong to the
 // app owner and live in the `aiStudy` Cloud Function (functions/ai.js), never in the app.
 //
@@ -6,7 +6,7 @@
 // keep a set downloads it as CSV and puts it through the normal Import, where
 // the preview and duplicate checks still apply.
 import { useEffect, useState } from 'react';
-import { ArrowLeft, ArrowRight, BookOpen, Brain, Download, Layers, Lightbulb, ListChecks, MessageCircle, RotateCcw, Sparkles, Gauge } from 'lucide-react';
+import { ArrowLeft, ArrowRight, BookOpen, Bot, Brain, Download, Layers, Lightbulb, ListChecks, MessageCircle, RotateCcw, Sparkles, Gauge } from 'lucide-react';
 import { askAi } from '../lib/ai';
 import { cardsToCsv, mcqsToCsv, normalizeCards, normalizeMcqs } from '../lib/aiFormat';
 import { OPTION_KEYS } from '../lib/quiz';
@@ -17,6 +17,7 @@ import AiChat, { AiReply, ModelTag, useBooks } from '../components/AiChat';
 import { AppBar, Button, Card, Empty, Input, Page, Select } from '../components/ui';
 
 const TABS = [
+  { key: 'agent', label: 'Agent', icon: Bot },
   { key: 'tutor', label: 'Tutor', icon: MessageCircle },
   { key: 'quiz', label: 'Quiz me', icon: ListChecks },
   { key: 'cards', label: 'Flashcards', icon: Layers },
@@ -366,14 +367,25 @@ function BooksCard() {
   );
 }
 
+// ------------------------------------------------------------------ agent
+function AgentIntro() {
+  return (
+    <div className="mb-3 rounded-xl bg-violet-50/60 border border-violet-100 px-3 py-2 text-xs text-slate-600 leading-relaxed">
+      <p className="font-semibold text-violet-800 mb-0.5">A tutor that can do things</p>
+      It searches the question bank and your textbooks, looks at how you are doing, builds practice quizzes you can
+      open right away, and asks you when it needs a choice. Each message can use a few AI requests.
+    </div>
+  );
+}
+
 // ------------------------------------------------------------------- page
 export default function AiStudy() {
   const { isAdmin } = useAuth();
-  const [tab, setTab] = useState('tutor');
+  const [tab, setTab] = useState('agent');
 
   return (
     <>
-      <AppBar title="AI Study" subtitle="Tutor, quizzes, flashcards and mnemonics" />
+      <AppBar title="AI Study" subtitle="Agent, tutor, quizzes, flashcards and mnemonics" />
       <Page>
         {!isAdmin ? (
           <Empty icon={<Brain size={40} />} title="Admins only">
@@ -383,7 +395,7 @@ export default function AiStudy() {
           <>
             <AiUsage />
             <BooksCard />
-            <div className="grid grid-cols-4 gap-1 bg-slate-100 rounded-2xl p-1 mb-4">
+            <div className="grid grid-cols-5 gap-1 bg-slate-100 rounded-2xl p-1 mb-4">
               {TABS.map(({ key, label, icon: Icon }) => (
                 <button
                   key={key}
@@ -398,6 +410,12 @@ export default function AiStudy() {
             </div>
 
             {/* Kept mounted so switching tabs does not throw away a chat or a set. */}
+            <div className={tab === 'agent' ? '' : 'hidden'}>
+              <Card className="p-4">
+                <AgentIntro />
+                <AiChat agent placeholder="e.g. Quiz me on my weak topics, or 10 questions on Kawasaki" />
+              </Card>
+            </div>
             <div className={tab === 'tutor' ? '' : 'hidden'}>
               <Card className="p-4">
                 <AiChat placeholder="Ask anything — e.g. approach to a child with stridor" />
