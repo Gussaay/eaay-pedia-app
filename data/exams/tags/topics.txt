@@ -1,0 +1,644 @@
+# The standard topic list for quiz questions (lib/topicTags.js), with the words
+# that find each topic in a question's stem and answer (scripts/autotag.mjs).
+#
+#   Label                      matched by the label itself
+#   Label = alias | alias      also matched by each alias (a regular expression,
+#                              case-insensitive, whole words)
+#   Label !                    never matched automatically; set by hand only
+#   … ~                        a broad topic (a drug, a test, a sign): it can be
+#                              a tag but is the main topic only when nothing
+#                              more specific matches
+#
+# Lines are grouped by chapter only for reading; the order does not matter.
+
+## Cardiology
+Atrial septal defect = ASD secundum | ostium (primum|secundum) | atrial septal
+Atrioventricular septal defect = AVSD | AV canal | atrioventricular canal | endocardial cushion
+Cardiac rhabdomyoma = rhabdomyomas?
+Cardiac tamponade = tamponade | pulsus paradoxus
+Cardiogenic shock
+Cardioversion = DC shock | synchroni[sz]ed shock | defibrillat\w*
+Coarctation of the aorta = coarctation
+Congenital heart block = complete heart block | third[- ]degree heart block | heart block
+Congenital heart disease
+Coronary artery aneurysm = coronary (artery )?aneurysms?
+Cyanotic congenital heart disease = cyanotic (congenital )?heart | tetralogy | Fallot | transposition of the great | TGA | tricuspid atresia | truncus arteriosus | TAPVD | total anomalous pulmonary venous
+Duct-dependent congenital heart disease = duct[- ]dependent | ductal[- ]dependent
+Ebstein anomaly = Ebstein
+Eisenmenger syndrome = Eisenmenger
+Heart failure = cardiac failure | congestive heart ~
+Heart murmurs = murmurs? | innocent murmur | venous hum | Still'?s murmur ~
+Hypertension = hypertensive | high blood pressure | raised blood pressure ~
+Hypoplastic left heart syndrome = hypoplastic left heart | HLHS
+Infective endocarditis = endocarditis | Duke criteria
+Long QT syndrome = long QT | prolonged QT | QTc | torsades?
+Myocarditis
+Patent ductus arteriosus = PDA | ductus arteriosus | machinery murmur
+Pericarditis = pericardial effusion
+Pulmonary stenosis = pulmonary (valve )?stenosis
+Aortic stenosis = aortic (valve )?stenosis | bicuspid aortic
+Rheumatic fever = rheumatic (heart|carditis|fever) | Jones criteria
+Supraventricular tachycardia = SVT | supraventricular | re-?entr\w+ tachycardia
+Syncope = faint(ed|ing)? | collapsed? during (exercise|sport) ~
+Tetralogy of Fallot = tetralogy | Fallot | hypercyanotic spell | tet spell
+Transposition of the great arteries = transposition | TGA
+Ventricular septal defect = VSD | ventricular septal
+Wolff-Parkinson-White syndrome = WPW | Wolff | delta wave | pre-?excitation
+Neonatal ECG !
+Normal vital signs !
+
+## Respiratory
+Acute severe asthma = acute severe asthma | life[- ]threatening asthma | status asthmaticus
+Allergic rhinitis = hay fever
+Asthma = asthmatic
+Bronchiectasis
+Bronchiolitis
+Bronchopulmonary dysplasia = BPD | chronic lung disease of prematurity | chronic lung disease
+Choanal atresia = choanal
+Chronic wet cough = wet cough | productive cough | protracted bacterial bronchitis
+Cough !
+Croup = laryngotracheobronchitis | barking cough
+Cystic fibrosis = CFTR | \bCF\b
+Epiglottitis = epiglottis
+Inhaled foreign body = foreign body (aspiration|inhal\w+) | inhaled (a )?foreign body | aspirated (a |an )?(peanut|foreign)
+Nasal polyps = nasal polyp
+Obstructive sleep apnoea = sleep apnoea | sleep apnea | OSA | polysomnograph\w* | snor(es|ing)
+Pertussis = whooping cough | Bordetella
+Pneumonia = pneumonias? | consolidation | lobar
+Pneumothorax
+Primary ciliary dyskinesia = ciliary dyskinesia | Kartagener | situs inversus
+Recurrent chest infections = recurrent chest infections? | recurrent pneumonias?
+Respiratory failure = intubat\w+ and ventilat\w+ ~
+Spirometry = FEV1 | FVC | peak flow | spirogram
+Stridor ~
+Subglottic stenosis = subglottic
+Tonsillitis = tonsill\w+ | quinsy | peritonsillar ~
+Streptococcal pharyngitis = strep throat | streptococcal (pharyngitis|sore throat|tonsillitis) | Centor | FeverPAIN | rapid strep
+Upper respiratory tract infection = URTI | common cold | coryza ~
+Wheeze = wheez\w* ~
+Sinusitis = sinusitis
+Otitis media = otitis media | glue ear | middle ear effusion | grommets?
+
+## Neurology
+Acute cerebellar ataxia = cerebellar ataxia
+Acute disseminated encephalomyelitis = ADEM | disseminated encephalomyelitis
+Autoimmune encephalitis = NMDA | anti-NMDA
+Bacterial meningitis = meningitis
+Bell palsy = Bell'?s palsy | facial (nerve )?palsy | facial weakness
+Brain abscess = cerebral abscess | ring[- ]enhancing
+Brain tumours = brain tumou?r | medulloblastoma | astrocytoma | ependymoma | glioma | posterior fossa (tumou?r|mass)
+Brainstem death = brain[- ]?stem death | brain[- ]dead | brain death
+Breath-holding spells = breath[- ]holding | reflex anoxic
+Cerebral oedema = cerebral oedema | cerebral edema
+Cerebral palsy = \bCP\b | spastic (diplegia|quadriplegia|hemiplegia)
+Concussion
+Craniosynostosis = synostosis | fused (cranial )?sutures?
+CT head = CT (head|brain|scan of the head) ~
+Duchenne muscular dystrophy = Duchenne | Gowers?'? sign | dystrophin
+EEG = electroencephalogra\w+ ~
+Epilepsy = epileptic | antiepileptic | anticonvulsant | absence seizures? | juvenile myoclonic | rolandic | benign childhood epilepsy
+Febrile seizures = febrile (seizure|convulsion)s?
+First seizure = first (afebrile )?(seizure|fit|convulsion)
+Functional neurological disorder = conversion disorder | functional (weakness|neurological|paralysis)
+Guillain-Barre syndrome = Guillain | GBS polyneuropathy | ascending (weakness|paralysis) | areflexi\w+
+Headache = headaches? | migraine ~
+Herpes simplex encephalitis = HSV encephalitis | herpes encephalitis
+Hydrocephalus = ventriculomegaly | hydrocephal\w+
+Hypoxic-ischaemic encephalopathy = HIE | hypoxic[- ]isch(a)?emic | birth asphyxia | perinatal asphyxia
+Infantile spasms = West syndrome | hypsarrhythmia | salaam
+Intraventricular haemorrhage = IVH | intraventricular h(a)?emorrhage | germinal matrix
+Lumbar puncture = \bLP\b | CSF ~
+Microcephaly = small head | head circumference (below|under)
+Muscular dystrophy = muscular dystroph\w+ | Becker
+Myasthenia gravis = myasthenia | myasthenic
+Neural tube defects = spina bifida | myelomeningocele | neural tube | anencephaly
+Nystagmus
+Opsoclonus-myoclonus = opsoclonus
+Periventricular leukomalacia = PVL | periventricular leukomalacia
+Primitive reflexes = Moro | primitive reflex\w* | asymmetric tonic neck | grasp reflex
+Raised intracranial pressure = raised ICP | intracranial pressure | papilloedema | Cushing'?s triad | herniation ~
+Rett syndrome = Rett | MECP2
+Seizures = seizures? | convuls\w+ | fits?\b ~
+Spinal muscular atrophy = SMA | spinal muscular atrophy | Werdnig
+Status epilepticus = status epilepticus | prolonged seizure | convulsing for
+Sydenham chorea = Sydenham | chorea
+Tic disorders (Tourette syndrome) = Tourette | tics?\b
+Transverse myelitis = myelitis
+VP shunt complications = shunt
+Nocturnal enuresis = enuresis | bed[- ]?wetting
+Tuberous sclerosis = tuberous | ash[- ]leaf | shagreen | adenoma sebaceum | angiofibromas
+Neurofibromatosis type 1 = neurofibromatosis | NF1 | NF-1 | neurofibromas? | Lisch | axillary freckling
+Sturge-Weber syndrome = Sturge
+
+## Nephrology & urology
+Acute kidney injury = AKI | acute renal failure | acute kidney
+Antenatal hydronephrosis = antenatal(ly)? (diagnosed )?hydronephrosis | renal pelvi\w* dilat\w+ | pelvi[- ]?calyceal dilat\w+
+Chronic kidney disease = CKD | chronic renal failure | chronic kidney
+Duplex kidney = duplex | ureterocele
+Fanconi syndrome (renal) = Fanconi syndrome | proximal tubulopathy
+Glomerulonephritis = glomerulonephritis | nephritic
+Haematuria = haematuria | hematuria ~
+Haemolytic uraemic syndrome = HUS | haemolytic ur(a)?emic | hemolytic uremic
+Haemorrhagic cystitis = haemorrhagic cystitis | hemorrhagic cystitis
+Hypercalciuria = hypercalciuria | calcium:creatinine | calcium creatinine ratio
+Hypospadias = hypospadias
+IgA nephropathy = Berger | IgA nephropathy
+Membranoproliferative glomerulonephritis = membranoproliferative | MPGN
+Nephrotic syndrome = nephrotic | minimal change
+Phimosis = phimosis | foreskin | balanitis
+Balanitis xerotica obliterans = BXO | lichen sclerosus
+Polycystic kidney disease = polycystic kidney | ARPKD | ADPKD
+Post-streptococcal glomerulonephritis = post[- ]?streptococcal | PSGN | ASO titre
+Posterior urethral valves = urethral valves | PUV
+Proteinuria = protein:creatinine | albumin:creatinine | proteinuria ~
+Renal imaging = DMSA | MCUG | MAG3 | micturating cystourethrogra\w+ ~
+Renal tubular acidosis = renal tubular acidosis
+Testicular torsion = torsion | acute scrotum
+Undescended testes = undescended | cryptorchidism | orchidopexy | impalpable test\w+
+Urinary tract infection = UTI | urinary tract infection | pyelonephritis | cystitis
+Vesicoureteric reflux = vesicoureteric | VUR | ureteric reflux
+Wilms tumour = Wilms | nephroblastoma
+
+## Gastroenterology & hepatology
+Abdominal mass ~
+Appendicitis = appendic\w+
+Biliary atresia = biliary atresia | Kasai
+Coeliac disease = coeliac | celiac | tTG | anti[- ]?endomysial | gluten
+Constipation = constipat\w+ | faecal impaction | soiling | encopresis
+Crohn disease = Crohn
+Duodenal atresia = double bubble | duodenal atresia
+Dysphagia = dysphagia | odynophagia ~
+Eosinophilic oesophagitis = eosinophilic oesophagitis | eosinophilic esophagitis
+Foreign body ingestion = swallowed (a |an )?(coin|battery|magnet|foreign) | button batter\w+ | ingested (a |an )?(coin|battery|magnet)
+Gallstones = gallstones? | cholecystitis | cholelithiasis
+Gastro-oesophageal reflux = reflux | GORD | GERD | GOR\b ~
+Gastroenteritis = gastroenteritis | rotavirus | norovirus
+Giardiasis = Giardia
+Hepatitis B = hepatitis B | HBsAg | HBeAg
+Hepatitis A = hepatitis A
+Hirschsprung disease = Hirschsprung | aganglionic
+Inflammatory bowel disease = IBD | inflammatory bowel | calprotectin
+Intussusception = intussusception | redcurrant jelly
+Malabsorption = malabsorption | steatorrh(o)?ea
+Malrotation = malrotation | volvulus | bilious vomiting
+Meckel diverticulum = Meckel
+Necrotising enterocolitis = NEC | necroti[sz]ing enterocolitis | pneumatosis
+Pancreatitis = pancreatitis | amylase | lipase
+Pyloric stenosis = pyloric | pyloromyotomy
+Rectal bleeding = rectal bleeding | blood per rectum | bloody stools? ~
+Spontaneous bacterial peritonitis = peritonitis
+Ulcerative colitis = ulcerative colitis
+Wilson disease = Wilson | Kayser | caeruloplasmin | ceruloplasmin
+Liver disease coagulopathy = liver (failure|disease) .{0,40}(INR|clotting|coagul)
+Oesophageal atresia = oesophageal atresia | esophageal atresia | tracheo-?oesophageal fistula | TOF\b
+Gastroschisis and exomphalos = gastroschisis | exomphalos | omphalocele
+
+## Endocrinology & growth
+Acanthosis nigricans = acanthosis
+Adrenal insufficiency = Addison | adrenal insufficiency | adrenal crisis | hypoadrenal\w*
+Ambiguous genitalia = ambiguous genitalia | clitoromegaly | disorder of sex development | DSD
+Amenorrhoea = amenorrh(o)?ea | no periods ~
+Congenital adrenal hyperplasia = CAH | adrenal hyperplasia | 21-hydroxylase | 17-OHP | 17-hydroxyprogesterone
+Congenital hypothyroidism = congenital hypothyroidism
+Constitutional delay of growth and puberty = constitutional delay
+Craniopharyngioma
+Cushing syndrome = Cushing'?s? (syndrome|disease) | Cushingoid | hypercortisol\w*
+Delayed puberty = delayed puberty | no signs of puberty | not (yet )?entered puberty
+Diabetes insipidus = diabetes insipidus | DDAVP | water deprivation
+Diabetic ketoacidosis = DKA | ketoacidosis
+Familial short stature = familial short stature
+Graves disease = Graves | TRAb | thyroid stimulating (immuno|anti)
+Growth hormone = growth hormone | GH deficiency | IGF-?1 ~
+Gynaecomastia = gyn(a)?ecomastia
+Hyperinsulinism = hyperinsulin\w+
+Hyperthyroidism = hyperthyroid\w* | thyrotoxicosis
+Hypocalcaemia = hypocalc(a)?emi\w+ | tetany
+Hypoglycaemia = hypoglyc(a)?emi\w+ | low (blood )?glucose ~
+Hypogonadism = hypogonad\w+ | Kallmann
+Hypopituitarism = hypopituitar\w+ | panhypopituitar\w+
+Hypothyroidism = hypothyroid\w*
+Insulin = insulin regimen | basal[- ]bolus | insulin pump | insulin dose ~
+Insulin resistance = insulin resistance
+Neonatal thyrotoxicosis = neonatal thyrotoxicosis | neonatal Graves
+Obesity = obes\w+ | overweight | BMI ~
+Phaeochromocytoma = ph(a)?eochromocytoma | metanephrines | catecholamines
+Polycystic ovary syndrome = PCOS | polycystic ovar\w+
+Polyuria and polydipsia = polyuria | polydipsia ~
+Precocious puberty = precocious puberty | early puberty | central precocious
+Premature adrenarche = adrenarche | premature pubarche
+Premature thelarche = thelarche
+Puberty !
+Rickets = rickets | rachitic | vitamin D deficiency | osteomalacia
+Short stature = short stature | short (boy|girl|child) | height (on|below) the (0\.4|2nd|3rd) ~
+Sick euthyroid syndrome = sick euthyroid
+Tanner staging = Tanner | SMR ~
+Thyroid function tests = TSH | free T4 | thyroid function ~
+Type 1 diabetes = type 1 diabetes | T1DM | diabetes mellitus | diabetic
+Type 2 diabetes = type 2 diabetes | T2DM
+Hyperparathyroidism = hyperparathyroid\w* | parathyroid hormone
+Klinefelter syndrome = Klinefelter | 47,? ?XXY
+
+## Haematology & oncology
+Acute lymphoblastic leukaemia = ALL\b | acute lymphoblastic | leuk(a)?emia
+Acute myeloid leukaemia = AML | acute myeloid
+Agranulocytosis = agranulocytosis | neutropenia
+Aplastic anaemia = aplastic an(a)?emia | pancytopenia
+Aplastic crisis = aplastic crisis
+Beta thalassaemia = thalass(a)?emia
+Bleeding disorders !
+Coagulation tests = APTT | \bPT\b | prothrombin time | bleeding time | coagulation (profile|screen) ~
+Factor XII deficiency = factor XII\b
+Factor XIII deficiency = factor XIII
+Fetal haemoglobin = HbF | f(o)?etal h(a)?emoglobin ~
+G6PD deficiency = G6PD
+Haemolytic disease of the newborn = h(a)?emolytic disease of the (newborn|fetus) | rhesus (disease|isoimmuni\w+) | Rh incompatib\w+
+Haemophagocytic lymphohistiocytosis = HLH | haemophagocyt\w+ | hemophagocyt\w+
+Haemophilia = h(a)?emophilia | factor VIII deficiency | factor IX deficiency
+Hereditary spherocytosis = spherocytosis | spherocytes
+Hodgkin lymphoma = Hodgkin | Reed[- ]Sternberg
+Idiopathic thrombocytopenic purpura = ITP | immune thrombocytopeni\w+
+Iron deficiency anaemia = iron deficiency | microcytic | ferritin
+Langerhans cell histiocytosis = Langerhans | histiocytosis
+Late effects of cancer treatment = late effects | after (chemo|radio)therapy
+Lymphadenopathy = lymphadenopathy | lymph nodes? | lymphadenitis ~
+Lymphoma = lymphoma | Burkitt
+Mediastinal mass = mediastinal (mass|widening|nodes)
+Neuroblastoma = neuroblastoma | VMA | HVA
+Retinoblastoma = retinoblastoma
+Sickle cell disease = sickle | SCD | HbSS
+Splenic sequestration = sequestration
+Superior vena cava syndrome = SVC obstruction | superior vena cava
+Thrombocytopenia = thrombocytopeni\w+ | low platelets?
+Thrombosis = thrombosis | thrombus | DVT | thrombolysis | anticoagula\w+
+Transfusion reaction = transfusion reaction
+Tumour lysis syndrome = tumou?r lysis
+Von Willebrand disease = von Willebrand | vWF
+Red cell aplasia = red cell aplasia | Diamond[- ]Blackfan
+Bone tumours = osteosarcoma | Ewing
+Hydroxyurea = hydroxyur\w+ | hydroxycarbamide
+
+## Infection
+BCG vaccine = BCG
+Cat-scratch disease = cat[- ]scratch | Bartonella
+CMV retinitis = CMV retinitis | chorioretinitis
+Congenital CMV = congenital CMV | cytomegalovirus
+Congenital infection = TORCH | congenital infection
+Congenital rubella = rubella
+Congenital syphilis = syphilis | snuffles
+Cryptosporidium
+Dengue fever = dengue
+Group B streptococcus = GBS | group B strep\w*
+Hand, foot and mouth disease = hand,? foot and mouth | coxsackie\w*
+Herpangina
+Herpes simplex = HSV | herpes simplex | cold sores?
+Herpes zoster = shingles | zoster
+Herpetic gingivostomatitis = gingivostomatitis
+HIV infection = HIV | antiretroviral
+Immunisation = immunis\w+ | immuniz\w+ | vaccin\w+ ~
+Immunisation schedule = vaccination schedule | immunisation schedule | 8 weeks? .{0,20}vaccin
+Infection transmission = transmitted | transmission ~
+Infectious mononucleosis = EBV | Epstein[- ]Barr | glandular fever | mononucleosis | monospot
+Influenza vaccine = influenza vaccin\w+ | flu vaccin\w+
+Kawasaki disease = Kawasaki
+Listeria = Listeria
+Lyme disease = Lyme | erythema migrans | Borrelia
+Malaria = malaria | Plasmodium
+Measles = measles | Koplik
+Meningococcal disease = meningococc\w+ | Neisseria meningitidis | purpura fulminans
+Mumps = mumps | parotitis
+Neonatal herpes simplex = neonatal (herpes|HSV)
+Neonatal meningitis = neonatal meningitis
+Neonatal sepsis = neonatal sepsis | early[- ]onset sepsis | late[- ]onset sepsis
+Ophthalmia neonatorum = ophthalmia neonatorum | neonatal conjunctivitis
+Orbital cellulitis = orbital cellulitis | postseptal
+Osteomyelitis = osteomyelitis
+Parvovirus B19 = parvovirus | slapped cheek | erythema infectiosum | fifth disease
+Perinatal infection !
+Periorbital cellulitis = periorbital cellulitis | preseptal
+Returning traveller = returned from | travel(led)? to | arrived from ~
+Roseola infantum = roseola | HHV-?6 | herpesvirus 6 | exanthem subitum
+Scarlet fever = scarlet fever | strawberry tongue
+Schistosomiasis = schistosom\w+ | bilharzia
+Septic arthritis = septic arthritis | Kocher
+Staphylococcal scalded skin syndrome = scalded skin | SSSS
+Toxic shock syndrome = toxic shock
+Toxocariasis = toxocar\w+
+Tuberculosis = TB\b | tubercul\w+ | Mantoux | IGRA | isoniazid
+Tuberculous arthritis = tuberculous arthritis
+Typhoid fever = typhoid | enteric fever | Salmonella typhi
+Varicella = varicella | chickenpox | chicken pox | VZIG
+
+## Immunology & allergy
+Anaphylaxis = anaphyla\w+
+Atopic eczema = atopic | eczema
+Chronic granulomatous disease = CGD | chronic granulomatous | NADPH | nitroblue | DHR
+Chronic mucocutaneous candidiasis = mucocutaneous candidiasis
+Cow's milk protein allergy = cow'?s milk (protein )?allergy | CMPA | milk protein allergy | extensively hydroly\w+
+DiGeorge syndrome = DiGeorge | 22q11 | velocardiofacial | CATCH-?22
+Egg allergy = egg allergy | allergic to egg
+Food allergy = food allergy | peanut allergy | nut allergy
+Hereditary angioedema = angioedema | C1[- ]?esterase
+Hypersensitivity reactions = hypersensitivity
+IgA deficiency = IgA deficiency
+Immunology tests !
+Leucocyte adhesion deficiency = leu[ck]ocyte adhesion | delayed separation of the umbilical cord
+Neutrophil disorders = neutrophil (function|disorder)
+Primary immunodeficiency = immunodeficiency | SCID | severe combined
+Urticaria = urticari\w+ | hives | wheals
+Wiskott-Aldrich syndrome = Wiskott
+X-linked agammaglobulinaemia = agammaglobulin\w+ | Bruton
+Ataxia telangiectasia = ataxia[- ]telangiectasia
+
+## Genetics & syndromes
+Aicardi syndrome = Aicardi
+Alagille syndrome = Alagille
+Angelman syndrome = Angelman
+Autosomal dominant inheritance = autosomal dominant
+Autosomal recessive inheritance = autosomal recessive
+Beckwith-Wiedemann syndrome = Beckwith | hemihypertrophy | hemihyperplasia
+Chromosomal deletion = deletion
+Cri du chat syndrome = cri du chat | 5p
+Down syndrome = Down'?s? syndrome | trisomy 21
+Edwards syndrome (trisomy 18) = Edwards | trisomy 18
+Fragile X syndrome = fragile X
+Genomic imprinting = imprinting | uniparental disomy
+Marfan syndrome = Marfan
+Noonan syndrome = Noonan
+Non-disjunction = non-?disjunction
+Patau syndrome (trisomy 13) = Patau | trisomy 13
+Prader-Willi syndrome = Prader
+Predictive genetic testing = predictive (genetic )?testing | carrier testing
+Turner syndrome = Turner | 45,? ?X\b
+Williams syndrome = Williams syndrome | supravalvular
+X-linked inheritance = X-linked
+CHARGE syndrome = CHARGE
+Huntington disease = Huntington
+
+## Neonatology
+ABO incompatibility = ABO
+Aplasia cutis congenita = aplasia cutis
+Birth injury = birth (injury|trauma) | cephalh(a)?ematoma | caput | subgaleal
+Erb palsy = Erb | brachial plexus | waiter'?s tip | Klumpke
+CPAP = CPAP ~
+Infant of diabetic mother = diabetic mother | gestational diabetes | maternal diabetes
+Kernicterus = kernicterus | bilirubin encephalopathy
+Meconium aspiration syndrome = meconium aspiration | meconium[- ]stained
+Neonatal abstinence syndrome = abstinence | neonatal withdrawal | opiate withdrawal
+Neonatal hypocalcaemia !
+Neonatal hypoglycaemia = neonatal hypoglyc(a)?emia
+Neonatal jaundice = jaundice | hyperbilirubin\w+ | phototherapy | exchange transfusion | bilirubin ~
+Neonatal lupus = neonatal lupus | anti-?Ro | anti-?La
+Neonatal resuscitation = newborn life support | neonatal resuscitation | inflation breaths
+Neonatal seizures = neonatal seizures?
+Persistent pulmonary hypertension of the newborn = PPHN | persistent pulmonary hypertension
+Pneumoperitoneum = pneumoperitoneum | air under the diaphragm | free air
+Preterm infant = preterm | premature | prematurity ~
+Prolonged neonatal jaundice = prolonged jaundice | jaundiced at (2|3|4|5) weeks | jaundice beyond 2 weeks
+Respiratory distress syndrome = RDS | respiratory distress syndrome | hyaline membrane
+Retinopathy of prematurity = ROP | retinopathy of prematurity
+Surfactant
+Therapeutic hypothermia = therapeutic hypothermia | cooling
+Transient tachypnoea of the newborn = transient tachyp(n)?(o)?ea | TTN
+Vitamin K deficiency bleeding = vitamin K deficiency | h(a)?emorrhagic disease of the newborn
+Vitamin K = vitamin K ~
+Newborn hearing screening = otoacoustic | hearing screen\w*
+Newborn screening = newborn (blood spot )?screening | Guthrie | heel prick | blood spot
+Developmental dysplasia of the hip = DDH | dysplasia of the hip | Barlow | Ortolani
+Cleft lip and palate = cleft (lip|palate)
+Umbilical problems = umbilical (granuloma|hernia)
+
+## Development, behaviour & safeguarding
+Abusive head trauma = shaken baby | abusive head | non-accidental head injury
+ADHD = ADHD | attention deficit | methylphenidate | hyperactiv\w+
+Anorexia nervosa = anorexia
+Autism spectrum disorder = autis\w+ | ASD\b | social communication
+Bereavement = bereave\w+ | grief | died .{0,20}(weeks|months) ago
+Bruising = bruis\w+ ~
+Bulimia nervosa = bulimia | binge
+Depression = depress\w+
+Developmental milestones = milestones? | developmental age | sits? (unsupported|with support) | pincer grasp | tower of \d+ (cubes|bricks)
+Global developmental delay = developmental delay | global delay
+Language delay = speech delay | language delay | delayed speech
+Neglect = neglect\w*
+Non-accidental injury = NAI | non-?accidental | child abuse | physical abuse | safeguarding concern | skeletal survey
+Obsessive-compulsive disorder = OCD | obsessive
+Pica = pica
+Safeguarding = safeguarding | child protection | social worker | social services ~
+Self-harm = self[- ]harm | overdose to harm | suicid\w+
+Self-injurious behaviour = head[- ]banging | self[- ]injur\w+
+Sexual abuse = sexual abuse
+Sleep problems = sleep (problem|difficult)\w* | night terrors | nightmares
+School difficulties !
+Screen time = screen time
+Weight faltering = faltering growth | failure to thrive | weight faltering | poor weight gain
+Fabricated or induced illness = fabricated | induced illness | Munchausen
+
+## Dermatology
+Cafe-au-lait macules = caf[ée][- ]au[- ]lait
+Eczema herpeticum = eczema herpeticum
+Epidermolysis bullosa = epidermolysis bullosa
+Erythema multiforme = erythema multiforme | target lesions?
+Erythema nodosum = erythema nodosum
+Impetigo = impetigo
+Incontinentia pigmenti = incontinentia | Blaschko
+Infantile haemangioma = h(a)?emangioma | strawberry na(e)?vus
+Molluscum contagiosum = molluscum
+Napkin dermatitis = napkin | nappy (rash|dermatitis)
+Port-wine stain = port[- ]wine
+Psoriasis = psoria\w+
+Scabies = scabies | burrows
+Stevens-Johnson syndrome = Stevens[- ]Johnson | SJS | toxic epidermal necrolysis | TEN\b
+Tinea capitis = tinea capitis | kerion | scalp ringworm
+Tinea corporis = tinea corporis | ringworm
+Topical steroids = topical (cortico)?steroids? ~
+Vascular birthmarks = vascular (birthmark|malformation)
+Acne = acne | isotretinoin
+Seborrhoeic dermatitis = seborrh(o)?eic | cradle cap
+Vitiligo = vitiligo
+Alopecia = alopecia | hair loss ~
+
+## Rheumatology & musculoskeletal
+Avascular necrosis = avascular necrosis | osteonecrosis
+Fractures = fractures? | broken ~
+Hand injury !
+IgA vasculitis (Henoch-Schonlein purpura) = Henoch | HSP | IgA vasculitis | anaphylactoid purpura
+Juvenile dermatomyositis = dermatomyositis | heliotrope | Gottron
+Juvenile idiopathic arthritis = JIA | juvenile idiopathic | juvenile (chronic|rheumatoid) arthritis | oligoarticular | polyarticular
+Kohler disease = K[öo]hler
+Limp = limp\w* ~
+Macrophage activation syndrome = macrophage activation | MAS\b
+Osgood-Schlatter disease = Osgood
+Perthes disease = Perthes | Legg
+Psoriatic arthritis = psoriatic arthritis | dactylitis
+Reactive arthritis = reactive arthritis
+Salter-Harris fractures = Salter
+Scoliosis = scoliosis
+Slipped capital femoral epiphysis = SCFE | SUFE | slipped (capital|upper) femoral | slipped epiphysis
+Sports injuries = sports injur\w+ | shin splints | stress fracture
+Supracondylar fracture = supracondylar
+Systemic JIA = systemic (onset )?JIA | Still'?s disease | systemic juvenile
+Systemic lupus erythematosus = SLE | lupus | anti-?dsDNA
+Transient synovitis = transient synovitis | irritable hip
+Wrist injury = wrist
+Hypermobility = hypermobil\w+ | Ehlers | joint laxity
+
+## Metabolic medicine
+Cystinosis = cystinosis | cysteamine
+Galactosaemia = galactos(a)?emia
+Gaucher disease = Gaucher | glucocerebrosidase
+Glycogen storage disease = glycogen storage | von Gierke
+Homocystinuria = homocystin\w+ | homocysteine
+Hyperammonaemia = hyperammon(a)?emi\w+ | ammonia
+Lysosomal storage disease = lysosomal
+Maple syrup urine disease = maple syrup | MSUD
+Mucopolysaccharidoses = mucopolysacchar\w+ | MPS\b | Hurler | Hunter | Sanfilippo | Morquio
+Organic acidaemias = organic acid\w* | methylmalonic | propionic
+Phenylketonuria = PKU | phenylketon\w+ | musty
+Pompe disease = Pompe | acid maltase | acid (alpha|α)-?(1,4-)?glucosidase
+Tyrosinaemia = tyrosin(a)?emia | succinylacetone | nitisinone
+Urea cycle disorders = urea cycle | OTC deficiency | ornithine transcarbamylase
+Fatty acid oxidation disorders = MCAD | fatty acid oxidation
+Mitochondrial disease = mitochondrial
+
+## Emergency medicine & toxicology
+Activated charcoal = charcoal
+Adenosine ~
+Adrenaline = adrenaline | epinephrine ~
+Anticholinergic toxicity = anticholinergic
+Burns = burns? | scald\w*
+Carbon monoxide poisoning = carbon monoxide | carboxyh(a)?emoglobin
+Drowning = drown\w+
+Endotracheal intubation = endotracheal | ET tube
+Fluid therapy = fluid (bolus|deficit|maintenance|resuscitation) | maintenance fluids? | mL/kg ~
+Haemorrhagic shock = h(a)?emorrhagic shock
+Head injury = head injur\w+ | GCS
+Inotropes = inotrop\w+ | dobutamine | dopamine | milrinone | noradrenaline ~
+Intraosseous access = intraosseous | IO access
+Iron poisoning = iron (poisoning|overdose|tablets)
+Ketamine
+Lead poisoning = lead (poisoning|level) | basophilic stippling
+Opioid poisoning = opioid | opiate | naloxone | pinpoint pupils
+Paediatric resuscitation = CPR | cardiac arrest | basic life support | advanced life support | resuscitat\w+ ~
+Paracetamol poisoning = paracetamol (overdose|poisoning|level) | N-acetylcysteine | NAC\b | acetaminophen
+Rapid sequence intubation = rapid sequence
+Salicylate poisoning = salicylate | aspirin (overdose|tablets)
+Septic shock = septic shock | sepsis ~
+Shock = shock ~
+Smoke inhalation = smoke inhalation | house fire
+Snake bite = snake | antivenom
+Trauma = trauma | road traffic | RTA | RTC ~
+Tricyclic antidepressant poisoning = tricyclic
+Abdominal trauma = abdominal trauma | blunt abdominal
+Cardiac arrest rhythms = asystole | ventricular fibrillation | pulseless electrical | VF\b
+
+## Pain, anaesthesia & palliative care
+Palliative care = palliat\w+ | end of life
+Pain management = analges\w+ | morphine | pain (relief|management|score) ~
+Postoperative care = post-?operative
+Sedation = sedation | midazolam | chloral
+
+## Clinical pharmacology & therapeutics
+Aciclovir = acyclovir | aciclovir ~
+Amitriptyline
+Antibiotic stewardship = antibiotic (policy|guideline|stewardship)
+Antiepileptic drugs = antiepileptic | anticonvulsant | carbamazepine | valproate | phenytoin | levetiracetam | lamotrigine ~
+Cyclophosphamide
+Desmopressin = desmopressin | DDAVP
+Diazoxide
+Drug rash = drug rash | rash after (taking )?(amoxicillin|ampicillin)
+Drug side effects = side[- ]effects? | adverse (effects?|reactions?) ~
+Drug-induced haemolysis !
+Inhaled corticosteroids = inhaled (cortico)?steroids? | ICS\b | beclometasone | budesonide | fluticasone
+Prostaglandin E1 = prostaglandin | alprostadil | PGE1?
+SSRIs = SSRI | fluoxetine | sertraline
+Steroid side effects = steroid side effects?
+Neuroleptic malignant syndrome = neuroleptic malignant
+Drug interactions = interaction | enzyme induc\w+ | enzyme inhibit\w+ ~
+Pharmacokinetics = pharmacokinetic\w* | half-life | first-order | zero-order | volume of distribution
+
+## Research & statistics
+Cohort study = cohort
+Cross-sectional study = cross-sectional
+Diagnostic test accuracy = sensitivity | specificity | predictive value | likelihood ratio ~
+Epidemiology = incidence | prevalence ~
+P value = p[- ]value | p ?[<=] ?0\.\d+
+Randomised controlled trial = randomi[sz]ed | RCT
+Research types = basic research | translational research | qualitative research
+Statistical tests = t-test | chi-squared? | Mann-Whitney | ANOVA | Wilcoxon | correlation coefficient
+Statistics = standard deviation | confidence interval | odds ratio | relative risk | number needed to treat | median | normal distribution ~
+Study design = study design | case-control | case control | meta-analysis | systematic review
+Audit = audit | quality improvement
+
+## Ethics & law
+Breaking bad news = bad news | break(ing)? the news
+Burnout = burnout | burn-out
+Communication with parents !
+Consent = consent | Gillick | Fraser | competen(t|ce) | capacity ~
+Ethics = ethic\w* | beneficence | non-maleficence | autonomy | justice ~
+Research ethics = research ethics | ethics committee
+Resuscitation decisions = DNACPR | do not resuscitate | stop(ped)? CPR
+Withdrawing life-sustaining treatment = withdraw\w* (life[- ]sustaining|treatment|support|care) | withholding
+Confidentiality = confidential\w*
+
+## Ophthalmology
+Leukocoria = leu[ck]ocoria | white (pupil|pupillary|reflex) | absent red reflex
+Squint = squint | strabismus | amblyopia
+Cataract = cataracts?
+Conjunctivitis = conjunctivitis
+
+## Adolescent health
+Adolescent consultation = HEADSS | HEEADSSS | adolescent consultation
+Heavy menstrual bleeding = menorrhagia | heavy (menstrual|periods)
+Normal adolescence !
+Relative energy deficiency in sport = RED-?S | relative energy deficiency | female athlete triad
+Substance misuse = cannabis | alcohol | cocaine | substance (misuse|abuse) ~
+Contraception = contracept\w+
+
+## Nutrition
+Breastfeeding contraindications = contraindications? to breast[- ]?feeding
+Breastfeeding = breast[- ]?fe(e)?d\w* | breast milk ~
+Cow's milk = cow'?s milk ~
+Infant feeding = formula fe(e)?d\w* | weaning | feeds?\b ~
+Kwashiorkor = kwashiorkor | oedematous malnutrition
+Malnutrition = malnutrition | marasmus | MUAC | severe acute malnutrition ~
+Niacin deficiency (pellagra) = niacin | pellagra
+Refeeding syndrome = refeeding
+Vitamin deficiencies = vitamin (A|B12|C|E) deficiency | scurvy | beriberi | thiamine
+Zinc deficiency = zinc | acrodermatitis enteropathica
+Feed intolerance = feed intolerance | gastric residuals?
+
+## Other
+Bacterial classification = gram[- ](positive|negative) | Gram stain ~
+Chronic fatigue syndrome = chronic fatigue | post-viral fatigue
+Cyanosis = cyanos\w+ | cyanotic ~
+Acrocyanosis = acrocyanosis | circumoral cyanosis
+Functional disorders = psychogenic | somati[sz]\w+ | functional (abdominal )?pain
+Hearing assessment = hearing (test|assessment|loss) ~
+Hyperkalaemia = hyperkal(a)?emi\w+ | high potassium | peaked T ~
+Hyperlipidaemia = hyperlipid\w+ | cholesterol | triglycerides ~
+Hypokalaemic alkalosis = hypokal(a)?emic (metabolic )?alkalosis | hypochlor(a)?emic alkalosis
+Hyponatraemia = hyponatr(a)?emi\w+ | SIADH | low sodium ~
+Hyposplenism = hyposplen\w+ | asplenia | splenectomy | functional asplenia
+Immunosuppressed child = immunosuppress\w+ | immunocompromis\w+ ~
+Jervell and Lange-Nielsen syndrome = Jervell
+Mechanical ventilation = ventilat(ed|or|ion)\b | PEEP | tidal volume ~
+Oxygen dissociation curve = dissociation curve
+Paediatric ARDS = ARDS | PALICC | acute respiratory distress syndrome
+PANDAS = PANDAS
+Polyhydramnios = polyhydramnios
+Antenatal screening = triple test | combined test | nuchal | antenatal screening | PAPP-A
+Rhabdomyolysis = rhabdomyolysis | myoglobin
+School exclusion = return to (school|nursery) | exclusion from (school|nursery)
+Brief resolved unexplained event (BRUE) = BRUE | ALTE | apparent life[- ]threatening
+Sandifer syndrome = Sandifer
+Dehydration = dehydrat\w+ ~
+Hypernatraemia = hypernatr(a)?emi\w+
+Metabolic acidosis = metabolic acidosis | anion gap ~
+Acid-base balance = blood gas | acid[- ]base ~
+Atlantoaxial instability = atlanto-?axial
+Drooling = drool\w*
+Gonorrhoea = gonorrh\w+ | gonococc\w+ | Gram-negative (intracellular )?diplococci
+McCune-Albright syndrome = McCune
+Prevention of mother-to-child transmission = mother-to-child | vertical transmission
+RSV = RSV | respiratory syncytial
+Sweat test = sweat (test|chloride)

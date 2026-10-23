@@ -1,0 +1,67 @@
+name: AI tags and links
+
+# Gives every quiz question open, standardised topic tags and judges its
+# candidate links with AI (scripts/ai-tag.mjs). Progress is kept in the
+# database (aitag/), so the job runs in rounds: when the free daily quota is
+# used up it waits and tries again, and after ~5 h it starts itself again,
+# until every question is tagged and every candidate pair judged.
+# Nothing reaches the questions until WRITE is "commit".
+on:
+  push:
+    branches:
+      - claude/project-thread-cop9he
+    paths:
+      - 'scripts/ai-tag.mjs'
+      - '.github/workflows/ai-tag.yml'
+  workflow_dispatch:
+
+concurrency:
+  group: ai-tag
+  cancel-in-progress: false
+
+permissions:
+  contents: read
+  actions: write
+
+jobs:
+  tag:
+    runs-on: ubuntu-latest
+    timeout-minutes: 350
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+      - name: Install Firebase CLI
+        run: npm i -g firebase-tools@14
+      - name: Tag, merge names, judge links
+        env:
+          FIREBASE_SERVICE_ACCOUNT: ${{ secrets.FIREBASE_SERVICE_ACCOUNT_EASY_PEDIA }}
+          GEMINI_API_KEY: ${{ secrets.GEMINI_API_KEY }}
+          GROQ_API_KEY: ${{ secrets.GROQ_API_KEY }}
+          GH_TOKEN: ${{ github.token }}
+          WRITE: dry
+        run: |
+          set +e
+          printf '%s' "$FIREBASE_SERVICE_ACCOUNT" > "$RUNNER_TEMP/sa.json"
+          export GOOGLE_APPLICATION_CREDENTIALS="$RUNNER_TEMP/sa.json"
+          run() { node --max-old-space-size=6000 scripts/ai-tag.mjs "$@" 2>&1 | tee "$RUNNER_TEMP/out.txt"; return ${PIPESTATUS[0]}; }
+          finished=no
+          end=$((SECONDS + 18500))
+          while [ $SECONDS -lt $end ]; do
+            idle=0; spent=0
+            for ph in tag merge link; do
+              run --phase $ph --max-calls 250 | grep -v '^  [0-9]*/[0-9]* ('
+              [ "${PIPESTATUS[0]}" = 3 ] && spent=1
+              grep -q 'NOTHING TO DO' "$RUNNER_TEMP/out.txt" && idle=$((idle + 1))
+            done
+            if [ $idle = 3 ]; then finished=yes; break; fi
+            if [ $spent = 1 ]; then echo "Quota used up; waiting 30 minutes."; sleep 1800; fi
+          done
+          run --phase report --sample 80
+          if [ "$WRITE" = commit ]; then run --phase write --commit; else run --phase write; fi
+          rm -f "$RUNNER_TEMP/sa.json"
+          if [ $finished = no ]; then
+            echo "Not finished: starting the next round."
+            gh workflow run ai-tag.yml --ref "$GITHUB_REF_NAME" -R "$GITHUB_REPOSITORY"
+          fi
