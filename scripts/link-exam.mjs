@@ -13,7 +13,11 @@
 //   node scripts/link-exam.mjs --book doh_haad --apply <links.json> [--commit]
 //       Writes the picked links. links.json is
 //       { "<n>": { "similar": [ids], "cards": [refs], "mnemonics": [refs] } },
-//       n being the question's 1-based position in its quiz (stable push-key order).
+//       n being the question's 1-based position in the book (stable push-key order).
+//
+//   --quiz "<title>"  works on one quiz of the book only (positions count within
+//                     that quiz), and lets the book's other quizzes be suggested
+//                     as similar questions.
 import fs from 'node:fs';
 import path from 'node:path';
 import { execFileSync } from 'node:child_process';
@@ -40,10 +44,20 @@ const read = (node) => JSON.parse(fb(['database:get', `/${node}`, '--project', p
 
 console.log('Reading quizqq…');
 const all = read('quizqq');
+const quizTitle = value('quiz');
+let quizKey = null;
+if (quizTitle) {
+  const hit = Object.values(read('allquiz')).find(
+    (q) => q && q.source === book && String(q.title || '').trim().toLowerCase() === quizTitle.trim().toLowerCase(),
+  );
+  if (!hit) throw new Error(`No quiz "${quizTitle}" in ${book}`);
+  quizKey = hit.key;
+}
+const isMine = (q) => q && q.source === book && (!quizKey || q.key === quizKey);
 const mine = Object.entries(all)
-  .filter(([, q]) => q && q.source === book)
+  .filter(([, q]) => isMine(q))
   .sort(([a], [b]) => (a < b ? -1 : 1));
-console.log(`  ${mine.length} questions in ${book}`);
+console.log(`  ${mine.length} questions in ${book}${quizTitle ? ` / ${quizTitle}` : ''}`);
 
 // ---------------------------------------------------------------- apply
 const applyFile = value('apply');
@@ -108,7 +122,7 @@ const words = (s) =>
 const docs = [];
 for (const [id, q] of Object.entries(all)) {
   if (!q || !q.question) continue;
-  docs.push({ kind: q.source === book ? 'mine' : 'q', id, text: `${q.question} ${q[q.answer] || ''}`, label: `${q.source} | ${String(q.question).replace(/\s+/g, ' ').slice(0, 110)} → ${String(q[q.answer] || '').slice(0, 50)}` });
+  docs.push({ kind: isMine(q) ? 'mine' : 'q', id, text: `${q.question} ${q[q.answer] || ''}`, label: `${q.source} | ${String(q.question).replace(/\s+/g, ' ').slice(0, 110)} → ${String(q[q.answer] || '').slice(0, 50)}` });
 }
 for (const [deckId, cards] of Object.entries(items)) {
   const kind = isMnemonicDeck(decks[deckId]) ? 'm' : 'c';

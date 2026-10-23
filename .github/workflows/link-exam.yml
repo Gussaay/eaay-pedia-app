@@ -1,14 +1,16 @@
 name: Link exam questions
 
-# Without data/exams/doh-haad-links.json: prints link candidates for the DOH
-# (HAAD) book in the log. With it: writes the picked links.
+# For each new DOH (HAAD) quiz: without its links file, prints link candidates
+# in the log; with it, writes the picked links. (The Jan + Feb 2024 paper was
+# linked from data/exams/doh-haad-links.json in an earlier run.)
 on:
   push:
     branches:
       - claude/project-thread-cop9he
     paths:
       - 'scripts/link-exam.mjs'
-      - 'data/exams/doh-haad-links.json'
+      - 'data/exams/doh-haad-pv-2024-03-links.json'
+      - 'data/exams/doh-haad-pv-33-links.json'
       - '.github/workflows/link-exam.yml'
   workflow_dispatch:
 
@@ -32,10 +34,14 @@ jobs:
         run: |
           printf '%s' "$FIREBASE_SERVICE_ACCOUNT" > "$RUNNER_TEMP/sa.json"
           export GOOGLE_APPLICATION_CREDENTIALS="$RUNNER_TEMP/sa.json"
-          if [ -f data/exams/doh-haad-links.json ]; then
-            node --max-old-space-size=6000 scripts/link-exam.mjs --book doh_haad --apply data/exams/doh-haad-links.json --commit
-          else
-            node --max-old-space-size=6000 scripts/link-exam.mjs --book doh_haad > candidates.txt
-            tail -n +1 candidates.txt
-          fi
+          # One quiz at a time: a links file applies the picks, no file prints candidates.
+          link() {
+            if [ -f "$2" ]; then
+              node --max-old-space-size=6000 scripts/link-exam.mjs --book doh_haad --quiz "$1" --apply "$2" --commit
+            else
+              node --max-old-space-size=6000 scripts/link-exam.mjs --book doh_haad --quiz "$1"
+            fi
+          }
+          link "Pearson VUE 5 Mar 2024" data/exams/doh-haad-pv-2024-03-links.json
+          link "Pearson VUE recall 33" data/exams/doh-haad-pv-33-links.json
           rm -f "$RUNNER_TEMP/sa.json"
