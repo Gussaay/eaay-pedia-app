@@ -117,7 +117,7 @@ for (const [id, q] of Object.entries(all)) {
   add(stats, f.chapter, f.science);
   add((stats.books[q.source] ||= empty()), f.chapter, f.science);
 }
-updates[`qbrowse/${bank}`] = stats;
+updates[`qbrowse/${bank}`] = { ...stats, updated: Date.now() };
 
 console.log(`${stats.total} questions; chapter from similar questions for ${voted}; ${changed} fields change.`);
 Object.entries(stats.chapters)

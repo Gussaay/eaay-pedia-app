@@ -1,0 +1,40 @@
+name: Tag exam questions
+
+# Writes the standard topic tags of the DOH (HAAD) questions
+# (scripts/tag-exam.mjs, data/exams/tags/). MODE in the step: dry or commit.
+on:
+  push:
+    branches:
+      - claude/project-thread-cop9he
+    paths:
+      - 'scripts/tag-exam.mjs'
+      - 'data/exams/tags/**'
+      - '.github/workflows/tag-exam.yml'
+  workflow_dispatch:
+
+concurrency:
+  group: link-exam
+  cancel-in-progress: false
+
+jobs:
+  tag:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+      - name: Install Firebase CLI
+        run: npm i -g firebase-tools@14
+      - name: Tag
+        env:
+          FIREBASE_SERVICE_ACCOUNT: ${{ secrets.FIREBASE_SERVICE_ACCOUNT_EASY_PEDIA }}
+          MODE: dry
+        run: |
+          printf '%s' "$FIREBASE_SERVICE_ACCOUNT" > "$RUNNER_TEMP/sa.json"
+          export GOOGLE_APPLICATION_CREDENTIALS="$RUNNER_TEMP/sa.json"
+          extra=""
+          if [ "$MODE" = commit ]; then extra="--commit"; fi
+          node --max-old-space-size=6000 scripts/tag-exam.mjs --book doh_haad \
+            --tags data/exams/tags/doh-haad.txt --papers data/exams/tags/doh-haad-papers.json $extra
+          rm -f "$RUNNER_TEMP/sa.json"

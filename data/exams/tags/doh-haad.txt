@@ -1,0 +1,749 @@
+00.1 Respiratory distress syndrome; Surfactant
+00.2 Infant of diabetic mother; Neonatal hypoglycaemia
+00.3 Varicella; Perinatal infection
+00.4 Neonatal thyrotoxicosis; Graves disease
+00.5 Subglottic stenosis; Stridor
+00.6 Necrotising enterocolitis
+00.7 Necrotising enterocolitis
+00.8 Wolff-Parkinson-White syndrome; Supraventricular tachycardia
+00.9 Long QT syndrome; Jervell and Lange-Nielsen syndrome
+00.10 Neonatal hypoglycaemia; Neonatal resuscitation
+00.11 Diabetic ketoacidosis
+00.12 Diabetic ketoacidosis; Fluid therapy
+00.13 Diabetic ketoacidosis; Fluid therapy
+00.14 Burns; Fluid therapy
+00.15 Type 1 diabetes; Adolescent consultation
+00.16 Diabetic ketoacidosis; Communication with parents
+00.17 Polycystic ovary syndrome; Amenorrhoea
+00.18 Acanthosis nigricans; Obesity
+00.19 Hypopituitarism; Craniopharyngioma
+00.20 Late effects of cancer treatment; Short stature
+00.21 Hypopituitarism; Late effects of cancer treatment
+00.22 Predictive genetic testing; Huntington disease
+00.23 Autosomal dominant inheritance; Chromosomal deletion
+00.24 Head injury; Raised intracranial pressure
+00.25 DiGeorge syndrome; Hypocalcaemia
+00.26 Turner syndrome; Short stature
+00.27 Fragile X syndrome
+00.28 Haemolytic uraemic syndrome
+00.29 Systemic lupus erythematosus
+00.30 Juvenile dermatomyositis
+00.31 Nephrotic syndrome; Spontaneous bacterial peritonitis
+00.32 IgA vasculitis (Henoch-Schonlein purpura)
+00.33 Nephrotic syndrome
+00.34 Nephrotic syndrome; Varicella; Immunosuppressed child
+00.35 Desmopressin; Hyponatraemia
+00.36 Obsessive-compulsive disorder
+00.37 ADHD
+00.38 Neuroleptic malignant syndrome; Rhabdomyolysis
+00.39 Coeliac disease
+00.40 Ulcerative colitis
+00.41 Ataxia telangiectasia; Primary immunodeficiency
+00.42 Sickle cell disease; Hyposplenism
+00.43 Wiskott-Aldrich syndrome; Primary immunodeficiency
+00.44 IgA deficiency; Transfusion reaction
+00.45 Acute disseminated encephalomyelitis
+00.46 Lymphadenopathy
+00.47 Lyme disease
+00.48 Perthes disease
+00.49 Sports injuries
+00.50 Sickle cell disease; Osteomyelitis
+00.51 McCune-Albright syndrome; Cafe-au-lait macules
+00.52 Lymphadenopathy; Lymphoma
+00.53 Posterior urethral valves
+00.54 Concussion; Head injury
+00.55 Tricyclic antidepressant poisoning
+00.56 Klinefelter syndrome
+00.57 Lyme disease
+00.58 G6PD deficiency; Drug-induced haemolysis
+00.59 Bacterial classification
+00.60 Anorexia nervosa
+00.61 Nocturnal enuresis
+00.62 Epidermolysis bullosa; Autosomal dominant inheritance
+01.1 Acute severe asthma
+01.2 Intraosseous access; Paediatric resuscitation
+01.3 Adrenaline; Paediatric resuscitation
+01.4 Pneumothorax; Pneumoperitoneum
+01.5 Duchenne muscular dystrophy; Steroid side effects
+01.6 Retinopathy of prematurity
+01.7 Crohn disease; Erythema nodosum
+01.8 Inflammatory bowel disease; Erythema nodosum
+01.9 Anorexia nervosa
+01.10 Non-accidental injury; Fractures
+01.11 Wrist injury
+01.12 Eosinophilic oesophagitis; Dysphagia
+01.13 Paediatric ARDS; Infant of diabetic mother
+01.14 Constitutional delay of growth and puberty; Delayed puberty
+01.15 Precocious puberty
+01.16 Klinefelter syndrome; Gynaecomastia
+01.17 Polyuria and polydipsia; Diabetes insipidus
+01.18 Anorexia nervosa; Long QT syndrome
+01.19 Refeeding syndrome; Anorexia nervosa
+01.20 Retinopathy of prematurity
+01.21 Hypogonadism; Undescended testes
+01.22 Turner syndrome; Short stature
+01.23 Pyloric stenosis; Hypokalaemic alkalosis
+01.24 Tuberous sclerosis
+01.25 Systemic lupus erythematosus
+01.26 Cystinosis; Fanconi syndrome (renal)
+01.27 Pompe disease; Glycogen storage disease
+01.28 Gaucher disease; Lysosomal storage disease
+01.29 Long QT syndrome
+01.30 Ventricular septal defect; Congenital heart disease
+01.31 Wolff-Parkinson-White syndrome
+01.32 Salicylate poisoning; Activated charcoal
+01.33 Tricyclic antidepressant poisoning; Anticholinergic toxicity
+01.34 ADHD; School difficulties
+01.35 Respiratory distress syndrome; Surfactant
+01.36 Respiratory distress syndrome; Neonatal resuscitation
+01.37 Factor XIII deficiency; Bleeding disorders
+01.38 Foreign body ingestion
+01.39 Septic shock; Inotropes
+01.40 Varicella; Infection transmission
+01.41 Pneumothorax; Mechanical ventilation
+01.42 Sickle cell disease; Hyposplenism
+01.43 Sickle cell disease; Hydroxyurea
+01.44 Neutrophil disorders; Primary immunodeficiency
+01.45 Chronic granulomatous disease; Primary immunodeficiency
+01.46 Congenital syphilis; Congenital infection
+01.47 Membranoproliferative glomerulonephritis; Glomerulonephritis
+01.48 Transverse myelitis
+01.49 Brainstem death
+01.50 Proteinuria
+01.51 Down syndrome; Atlantoaxial instability
+01.52 Hypertension
+01.53 Cerebral palsy; Drooling
+01.54 Ophthalmia neonatorum; Gonorrhoea
+01.55 Neonatal herpes simplex; Aciclovir
+02.1 Respiratory distress syndrome; CPAP
+02.2 ABO incompatibility; Neonatal jaundice
+02.3 G6PD deficiency; Neonatal jaundice
+02.4 Duct-dependent congenital heart disease; Prostaglandin E1
+02.5 Neonatal resuscitation
+02.6 Study design
+02.7 Ophthalmia neonatorum
+02.8 Palliative care
+02.9 Cat-scratch disease; Lymphadenopathy
+02.10 Meningococcal disease
+02.11 Paediatric ARDS
+02.12 Chronic wet cough; Inhaled foreign body
+02.13 Anaphylaxis; Adrenaline
+02.14 Urticaria
+02.15 Brief resolved unexplained event (BRUE)
+02.16 Vitamin K deficiency bleeding
+02.17 Haemophilia
+02.18 Factor XIII deficiency
+02.19 Nephrotic syndrome; Proteinuria
+02.20 Homocystinuria
+02.21 Urea cycle disorders; Hyperammonaemia
+02.22 Opioid poisoning
+02.23 Kawasaki disease
+02.24 Kawasaki disease; Coronary artery aneurysm
+02.25 Supraventricular tachycardia; Adenosine
+02.26 Myocarditis
+02.27 Cardiac tamponade; Trauma
+02.28 Consent
+02.29 Study design; Randomised controlled trial
+02.30 Parvovirus B19
+02.31 Herpetic gingivostomatitis
+02.32 Rett syndrome
+02.33 Neonatal abstinence syndrome
+02.34 Dengue fever; Returning traveller
+02.35 Haemolytic disease of the newborn; Neonatal jaundice
+02.36 Mucopolysaccharidoses
+02.37 Tinea capitis
+02.38 Tuberous sclerosis; Brain tumours
+02.39 Thrombosis
+02.40 Hypertension
+02.41 Screen time
+02.42 Wolff-Parkinson-White syndrome; Supraventricular tachycardia
+02.43 Refeeding syndrome; Anorexia nervosa
+02.44 Tanner staging; Puberty
+02.45 Tyrosinaemia
+02.46 Obsessive-compulsive disorder; SSRIs
+02.47 Depression
+02.48 Kwashiorkor; Malnutrition
+03.1 Raised intracranial pressure; Head injury
+03.2 Abdominal trauma
+03.3 Snake bite
+03.4 Haemorrhagic shock; Trauma
+03.5 Carbon monoxide poisoning; Smoke inhalation
+03.6 Cystic fibrosis; Sweat test
+03.7 Cystic fibrosis; Pancreatitis
+03.8 Long QT syndrome; Jervell and Lange-Nielsen syndrome
+03.9 Neonatal ECG
+03.10 Brain abscess; Cyanotic congenital heart disease
+03.11 Breath-holding spells; Iron deficiency anaemia
+03.12 Turner syndrome; Short stature
+03.13 McCune-Albright syndrome; Precocious puberty
+03.14 Congenital adrenal hyperplasia; Premature adrenarche
+03.15 Phaeochromocytoma; Hypertension
+03.16 Hypertension
+03.17 Muscular dystrophy
+03.18 IgA vasculitis (Henoch-Schonlein purpura)
+03.19 Roseola infantum
+03.20 Chronic granulomatous disease
+03.21 HIV infection
+03.22 Intraventricular haemorrhage
+03.23 Periventricular leukomalacia; Cerebral palsy
+03.24 Bronchopulmonary dysplasia
+03.25 Normal adolescence
+03.26 Autism spectrum disorder; Hearing assessment
+03.27 Retinoblastoma; Leukocoria
+03.28 Galactosaemia; Newborn screening
+03.29 Tyrosinaemia
+03.30 Cystic fibrosis; Rickets
+03.31 Zinc deficiency
+03.32 Niacin deficiency (pellagra)
+03.33 Paracetamol poisoning
+03.34 Factor XII deficiency; Coagulation tests
+03.35 Tumour lysis syndrome
+03.36 Breaking bad news
+03.37 Burnout
+03.38 Study design; Cohort study
+03.39 Transient synovitis; Limp
+03.40 Osgood-Schlatter disease
+03.41 Herpangina
+03.42 Kawasaki disease; Immunisation
+04.1 Sickle cell disease; Hyposplenism
+04.2 Meningococcal disease; Bacterial meningitis
+04.3 Meningococcal disease; Bacterial meningitis
+04.4 Tinea capitis
+04.5 Tinea corporis
+04.6 Retinopathy of prematurity
+04.7 Long QT syndrome
+04.8 Intraosseous access; Paediatric resuscitation
+04.9 Non-accidental injury; Bruising
+04.10 Non-accidental injury; Fractures
+04.11 Acute severe asthma
+04.12 Supraventricular tachycardia; Adenosine
+04.13 Supraventricular tachycardia; Cardioversion
+04.14 Wolff-Parkinson-White syndrome; Ebstein anomaly
+04.15 Neonatal lupus; Congenital heart block
+04.16 Endotracheal intubation
+04.17 Rapid sequence intubation; Ketamine
+04.18 Postoperative care; Shock
+04.19 Shock
+04.20 Cardiogenic shock; Inotropes
+04.21 Septic shock; Inotropes
+04.22 Egg allergy; Influenza vaccine
+04.23 Immunisation; Preterm infant
+04.24 Respiratory distress syndrome; CPAP
+04.25 Bulimia nervosa
+04.26 Study design; Cross-sectional study
+04.27 Predictive genetic testing; Ethics
+04.28 Refeeding syndrome; Anorexia nervosa
+04.29 Edwards syndrome (trisomy 18)
+04.30 Noonan syndrome
+04.31 Aicardi syndrome
+04.32 Prader-Willi syndrome; Genomic imprinting
+04.33 Meckel diverticulum; Rectal bleeding
+04.34 Precocious puberty
+04.35 Tanner staging; Puberty
+04.36 Leucocyte adhesion deficiency
+04.37 X-linked agammaglobulinaemia
+04.38 Liver disease coagulopathy; Vitamin K
+04.39 Haemophilia
+04.40 Breaking bad news
+04.41 Immunisation
+04.42 Necrotising enterocolitis; Feed intolerance
+04.43 Pneumothorax; Mechanical ventilation
+04.44 Pompe disease; Glycogen storage disease
+04.45 Homocystinuria
+04.46 Down syndrome; Atlantoaxial instability
+04.47 Status epilepticus
+04.48 Lymphadenopathy
+04.49 Superior vena cava syndrome; Lymphoma
+04.50 Urticaria
+04.51 Macrophage activation syndrome; Juvenile idiopathic arthritis
+04.52 Kawasaki disease; Coronary artery aneurysm
+05.1 Safeguarding; Neglect
+05.2 VP shunt complications; Hydrocephalus
+05.3 Kohler disease
+05.4 Acute kidney injury; Haemolytic uraemic syndrome
+05.5 Developmental milestones
+05.6 Wiskott-Aldrich syndrome
+05.7 Non-accidental injury; Fractures
+05.8 Perthes disease
+05.9 Perthes disease
+05.10 Perthes disease
+05.11 Sickle cell disease; Avascular necrosis
+05.12 Osteomyelitis
+05.13 Abusive head trauma; Non-accidental injury
+05.14 Diabetic ketoacidosis; Cerebral oedema
+05.15 Type 1 diabetes; Insulin
+05.16 Vitamin K deficiency bleeding
+05.17 Hepatitis B; Perinatal infection
+05.18 Immunisation schedule
+05.19 Erb palsy; Birth injury
+05.20 Bell palsy
+05.21 HIV infection; Prevention of mother-to-child transmission
+05.22 Developmental dysplasia of the hip
+05.23 Supraventricular tachycardia
+05.24 Systemic lupus erythematosus; Pericarditis
+05.25 Wheeze
+05.26 Bronchiolitis
+05.27 Cyanosis
+05.28 Bacterial meningitis; Lumbar puncture
+05.29 Varicella; Toxic shock syndrome
+05.30 Periorbital cellulitis
+05.31 Orbital cellulitis
+05.32 Lyme disease
+05.33 Retinoblastoma
+05.34 Coeliac disease; IgA deficiency
+05.35 Coeliac disease
+05.36 Group B streptococcus; Neonatal sepsis
+05.37 Urinary tract infection; Renal imaging
+05.38 Renal imaging; Urinary tract infection
+05.39 Haemorrhagic cystitis; Cyclophosphamide
+05.40 Cow's milk protein allergy
+05.41 Atopic eczema
+05.42 Atopic eczema; Topical steroids
+05.43 Eczema herpeticum; Atopic eczema
+05.44 Asthma
+05.45 Incontinentia pigmenti
+05.46 Tinea capitis
+05.47 Chronic fatigue syndrome; Infectious mononucleosis
+05.48 Infectious mononucleosis
+05.49 Turner syndrome; Short stature
+05.50 Constitutional delay of growth and puberty; Short stature
+05.51 Patent ductus arteriosus
+05.52 Ventricular septal defect; Heart failure
+05.53 Urinary tract infection; Diagnostic test accuracy
+05.54 Anorexia nervosa
+05.55 Refeeding syndrome; Anorexia nervosa
+05.56 Congenital adrenal hyperplasia; Hyperkalaemia
+05.57 Paracetamol poisoning
+05.58 Oxygen dissociation curve; Fetal haemoglobin
+05.59 Transverse myelitis
+05.60 Guillain-Barre syndrome
+05.61 Brainstem death
+05.62 Ethics; Resuscitation decisions
+05.63 Tic disorders (Tourette syndrome)
+05.64 Respiratory distress syndrome; Surfactant
+05.65 Patau syndrome (trisomy 13)
+05.66 IgA vasculitis (Henoch-Schonlein purpura)
+05.67 Aplasia cutis congenita
+05.68 Infantile spasms; Tuberous sclerosis
+05.69 Listeria; Neonatal meningitis
+05.70 Congenital CMV
+05.71 Newborn hearing screening
+05.72 Iron deficiency anaemia; Cow's milk
+05.73 Napkin dermatitis
+05.74 Amitriptyline; Drug side effects
+05.75 Bronchiolitis
+05.76 Septic shock
+05.77 Septic shock
+05.78 Antenatal hydronephrosis; Renal imaging
+05.79 Congenital rubella; Patent ductus arteriosus
+05.80 Anaphylaxis; Adrenaline
+05.81 Incontinentia pigmenti
+05.82 Relative energy deficiency in sport; Thyroid function tests
+05.83 Consent; Research ethics
+05.84 Toxocariasis
+05.85 Necrotising enterocolitis
+05.86 Systemic JIA; Juvenile idiopathic arthritis
+05.87 Salter-Harris fractures; Fractures
+05.88 Kernicterus; Neonatal jaundice
+06.1 Supracondylar fracture
+06.2 Cryptosporidium; Gastroenteritis
+06.3 Developmental milestones
+06.4 Cough; Upper respiratory tract infection
+06.5 Antibiotic stewardship
+06.6 Varicella; Perinatal infection; Neonatal meningitis
+06.7 Hyperlipidaemia; Obesity
+06.8 Sinusitis
+06.9 Heavy menstrual bleeding
+06.10 Hypoxic-ischaemic encephalopathy; Therapeutic hypothermia
+06.11 Nocturnal enuresis
+06.12 Obstructive sleep apnoea; Obesity
+06.13 ADHD
+06.14 Short stature; Constitutional delay of growth and puberty
+06.15 Posterior urethral valves
+06.16 Tonsillitis
+06.17 Infectious mononucleosis; Drug rash
+06.18 Autosomal dominant inheritance; Cystic fibrosis
+06.19 Crohn disease
+06.20 Sickle cell disease; Splenic sequestration
+06.21 Prolonged neonatal jaundice
+06.22 Transient synovitis; Limp
+06.23 Down syndrome; Antenatal screening
+07.1 Amitriptyline; Drug side effects
+07.2 Infantile spasms
+07.3 Craniosynostosis; Microcephaly
+07.4 Zinc deficiency
+07.5 Constitutional delay of growth and puberty; Short stature
+07.6 IgA nephropathy; Haematuria
+07.7 Bereavement
+07.8 Periorbital cellulitis
+07.9 Urinary tract infection; Renal imaging
+07.10 Non-accidental injury; Bruising; Cerebral palsy
+07.11 Non-accidental injury; Fractures
+07.12 Type 1 diabetes; Hypothyroidism
+07.13 Diabetic ketoacidosis
+07.14 Weight faltering; Infant feeding
+07.15 Agranulocytosis; Drug side effects
+07.16 Craniopharyngioma; Hypopituitarism; Late effects of cancer treatment
+07.17 Acrocyanosis; Cyanosis
+07.18 Gastro-oesophageal reflux
+07.19 Cleft lip and palate
+07.20 Croup; Stridor
+07.21 Brainstem death; Ethics
+07.22 Hand, foot and mouth disease
+07.23 Inflammatory bowel disease; Coagulation tests
+07.24 Atrial septal defect
+07.25 Congenital adrenal hyperplasia; Ambiguous genitalia
+07.26 Autism spectrum disorder; Self-injurious behaviour
+07.27 Craniopharyngioma
+07.28 Haematuria; Hypercalciuria
+07.29 Haemorrhagic cystitis; Urinary tract infection
+07.30 Infantile spasms; EEG
+07.31 Bronchiectasis; Recurrent chest infections
+07.32 Atrioventricular septal defect; Down syndrome
+07.33 McCune-Albright syndrome; Precocious puberty
+07.34 Congenital rubella; Congenital infection
+07.35 Meconium aspiration syndrome; Persistent pulmonary hypertension of the newborn
+07.36 Neonatal seizures; Hypoxic-ischaemic encephalopathy
+07.37 Autism spectrum disorder
+07.38 Pica; Lead poisoning
+07.39 Paracetamol poisoning
+07.40 Varicella; School exclusion
+07.41 Autoimmune encephalitis
+07.42 Pyloric stenosis; Hypokalaemic alkalosis
+07.43 Head injury; CT head
+07.44 Congenital CMV
+07.45 Staphylococcal scalded skin syndrome
+07.46 Wilms tumour; Abdominal mass
+07.47 Post-streptococcal glomerulonephritis
+07.48 Respiratory failure; Mechanical ventilation
+07.49 G6PD deficiency
+07.50 G6PD deficiency; Drug-induced haemolysis
+07.51 Septic arthritis
+07.52 Balanitis xerotica obliterans; Phimosis
+07.53 DiGeorge syndrome; Cleft lip and palate
+07.54 Chronic granulomatous disease
+07.55 Juvenile dermatomyositis
+07.56 Non-accidental injury; Fractures
+07.57 Constitutional delay of growth and puberty; Delayed puberty
+07.58 Alagille syndrome
+07.59 Down syndrome; Duodenal atresia
+07.60 Schistosomiasis; Haematuria
+07.61 Sandifer syndrome; Gastro-oesophageal reflux
+07.62 Functional neurological disorder
+07.63 Von Willebrand disease
+07.64 Diabetic ketoacidosis
+07.65 Septic arthritis
+08.1 Juvenile dermatomyositis
+08.2 Kawasaki disease
+08.3 Transient synovitis; Limp
+08.4 Prolonged neonatal jaundice
+08.5 Herpes simplex
+08.6 Posterior urethral valves
+08.7 Sickle cell disease; Aplastic crisis
+08.8 Obesity; Hyperlipidaemia
+08.9 Streptococcal pharyngitis; Tonsillitis
+08.10 Antibiotic stewardship
+08.11 Chronic granulomatous disease; Chronic mucocutaneous candidiasis
+08.12 Macrophage activation syndrome; Systemic JIA
+08.13 Streptococcal pharyngitis; Tonsillitis
+08.14 Infectious mononucleosis; Drug rash
+08.15 Short stature; Familial short stature
+08.16 Varicella; Perinatal infection; Tuberculosis
+08.17 Long QT syndrome; Drug side effects
+08.18 Crohn disease
+08.19 Brain tumours; Raised intracranial pressure
+08.20 ADHD
+08.21 Obstructive sleep apnoea; Obesity
+08.22 Lymphoma; Lymphadenopathy
+08.23 HIV infection; Immunisation; BCG vaccine
+08.24 Anaphylaxis; Adrenaline
+08.25 Red cell aplasia
+08.26 Hypoglycaemia; Seizures
+08.27 Heavy menstrual bleeding
+08.28 Non-accidental injury; Bruising
+08.29 Port-wine stain; Vascular birthmarks
+08.30 Nystagmus
+08.31 Hyperinsulinism; Diazoxide
+08.32 Bronchiolitis
+08.33 Giardiasis; Malabsorption
+08.34 Neonatal sepsis; Tuberculosis
+08.35 Statistics; P value
+08.36 Research types
+08.37 Allergic rhinitis
+08.38 Statistics; Statistical tests
+08.39 Hypoplastic left heart syndrome; Duct-dependent congenital heart disease
+08.40 Anorexia nervosa; Epidemiology
+08.41 Antenatal hydronephrosis; Renal imaging
+08.42 Withdrawing life-sustaining treatment; Ethics
+08.43 Patau syndrome (trisomy 13); Ethics
+08.44 Breastfeeding contraindications
+08.45 Sickle cell disease; Aplastic crisis
+08.46 Polycystic ovary syndrome
+08.47 Graves disease; Hyperthyroidism
+08.48 PANDAS
+08.49 Transient synovitis
+08.50 Juvenile idiopathic arthritis
+08.51 Slipped capital femoral epiphysis
+08.52 Long QT syndrome; Syncope
+08.53 Adolescent consultation; Self-harm
+08.54 Paracetamol poisoning; Self-harm
+08.55 Wilms tumour
+08.56 Neuroblastoma; Opsoclonus-myoclonus
+08.57 Eisenmenger syndrome; Down syndrome
+08.58 Patau syndrome (trisomy 13); Edwards syndrome (trisomy 18)
+08.59 Coarctation of the aorta; Turner syndrome; Hypertension
+08.60 Ambiguous genitalia; Congenital adrenal hyperplasia
+08.61 Fanconi syndrome (renal); Renal tubular acidosis
+08.62 Phenylketonuria
+08.63 Newborn screening; Galactosaemia
+08.64 Maple syrup urine disease
+08.65 Down syndrome; Antenatal screening
+08.66 Neonatal sepsis; Thrombocytopenia
+08.67 Heart failure
+08.68 Tuberous sclerosis; Cardiac rhabdomyoma
+08.69 Neonatal hypocalcaemia
+08.70 Bronchiolitis
+08.71 Asthma; Inhaled corticosteroids
+08.72 Prolonged neonatal jaundice
+08.73 Biliary atresia
+08.74 Cafe-au-lait macules; Neurofibromatosis type 1
+08.75 Epilepsy; First seizure
+08.76 Epidermolysis bullosa; Autosomal dominant inheritance
+08.77 Cystic fibrosis; Nasal polyps
+08.78 Erb palsy; Birth injury
+09.1 Asthma
+09.2 Consent; Research ethics
+09.3 Wheeze
+09.4 Diagnostic test accuracy; Urinary tract infection
+09.5 Necrotising enterocolitis
+09.6 Incontinentia pigmenti
+09.7 Pericarditis; Systemic lupus erythematosus
+09.8 Immunisation schedule
+09.9 Developmental milestones
+09.10 Normal vital signs
+09.11 Cyanosis
+09.12 Nephrotic syndrome; Varicella
+09.13 Haemorrhagic cystitis; Cyclophosphamide
+09.14 Prolonged neonatal jaundice
+09.15 Brainstem death; Withdrawing life-sustaining treatment
+09.16 Supraventricular tachycardia
+09.17 Ventricular septal defect; Heart murmurs
+09.18 Patent ductus arteriosus; Heart murmurs
+09.19 Iron deficiency anaemia; Cow's milk
+09.20 Vitamin K deficiency bleeding
+09.21 Abusive head trauma; Non-accidental injury
+09.22 Orbital cellulitis
+09.23 Anaphylaxis; Adrenaline
+09.24 Atopic eczema; Topical steroids
+09.25 Cystic fibrosis; Gallstones
+09.26 CMV retinitis
+09.27 Incontinentia pigmenti
+09.28 Tinea capitis
+09.29 Functional disorders; Dysphagia
+09.30 Tic disorders (Tourette syndrome)
+09.31 Staphylococcal scalded skin syndrome
+09.32 Cerebral palsy; Primitive reflexes
+09.33 Down syndrome; Non-disjunction
+09.34 Group B streptococcus; Neonatal sepsis
+09.35 Bell palsy
+09.36 Atopic eczema
+09.37 Hereditary angioedema
+09.38 Newborn hearing screening
+09.39 Hypersensitivity reactions
+09.40 Kernicterus; Neonatal jaundice
+09.41 Retinoblastoma; Leukocoria
+09.42 Patau syndrome (trisomy 13)
+09.43 Eczema herpeticum; Atopic eczema
+09.44 Diabetic ketoacidosis; Cerebral oedema
+09.45 Aplasia cutis congenita
+09.46 Chronic fatigue syndrome; Infectious mononucleosis
+09.47 Choanal atresia
+09.48 Meningococcal disease
+09.49 Acute kidney injury; Haemolytic uraemic syndrome
+09.50 Turner syndrome; Hypothyroidism
+09.51 Ethics; Resuscitation decisions
+09.52 Bacterial meningitis
+09.53 Type 1 diabetes; Insulin
+09.54 Wilms tumour; Beckwith-Wiedemann syndrome
+09.55 IgA vasculitis (Henoch-Schonlein purpura)
+09.56 IgA vasculitis (Henoch-Schonlein purpura)
+09.57 Acute lymphoblastic leukaemia
+09.58 Asthma
+09.59 Bronchiolitis; RSV
+09.60 Congenital CMV
+09.61 Lyme disease
+09.62 Iron deficiency anaemia; Cow's milk
+09.63 Sickle cell disease; Avascular necrosis
+09.64 Osteomyelitis
+09.65 Urinary tract infection; Renal imaging
+09.66 Hyperkalaemia
+09.67 Renal imaging; Duplex kidney
+09.68 Erb palsy; Birth injury
+09.69 Spirometry
+09.70 Safeguarding; Neglect; Weight faltering
+09.71 Anorexia nervosa
+09.72 Anorexia nervosa; Sick euthyroid syndrome
+09.73 Refeeding syndrome; Anorexia nervosa
+09.74 Developmental dysplasia of the hip
+09.75 Constitutional delay of growth and puberty; Delayed puberty
+09.76 HIV infection; Prevention of mother-to-child transmission
+09.77 Slipped capital femoral epiphysis
+09.78 Hepatitis B; Perinatal infection
+09.79 Varicella; Herpes zoster
+09.80 Cow's milk protein allergy
+09.81 Respiratory failure
+09.82 Guillain-Barre syndrome
+09.83 Meningococcal disease; Septic shock
+09.84 Coeliac disease
+09.85 Coeliac disease
+10.1 Atrioventricular septal defect; Down syndrome
+10.2 Duodenal atresia
+10.3 Juvenile dermatomyositis
+10.4 Croup; Stridor
+10.5 Croup
+10.6 Croup; Stridor
+10.7 Varicella; School exclusion
+10.8 Hand, foot and mouth disease
+10.9 Polycystic ovary syndrome
+10.10 Periorbital cellulitis
+10.11 Brainstem death; Ethics
+10.12 Bereavement
+10.13 Paracetamol poisoning
+10.14 Sandifer syndrome; Gastro-oesophageal reflux
+10.15 Pneumothorax; CPAP
+10.16 Inhaled foreign body
+10.17 Edwards syndrome (trisomy 18)
+10.18 Septic arthritis
+10.19 Acute lymphoblastic leukaemia
+10.20 Inflammatory bowel disease; Coagulation tests
+10.21 Factor XIII deficiency
+10.22 IgA vasculitis (Henoch-Schonlein purpura)
+10.23 Haemolytic uraemic syndrome
+10.24 Atrial septal defect
+10.25 Brain tumours; Raised intracranial pressure
+10.26 Acute cerebellar ataxia; Varicella
+10.27 Infantile spasms; EEG
+10.28 Infantile spasms
+10.29 Bronchiolitis; Infant feeding
+10.30 Respiratory failure; Mechanical ventilation
+10.31 Autism spectrum disorder; Hearing assessment
+10.32 Autoimmune encephalitis
+10.33 Turner syndrome; Short stature
+10.34 Cushing syndrome
+10.35 Relative energy deficiency in sport; Amenorrhoea
+10.36 Craniosynostosis
+10.37 Cri du chat syndrome; Chromosomal deletion
+10.38 Prader-Willi syndrome; Obesity
+10.39 Pica; Lead poisoning
+10.40 Meconium aspiration syndrome; Persistent pulmonary hypertension of the newborn
+10.41 Congenital rubella
+10.42 DiGeorge syndrome; Cleft lip and palate
+10.43 Congenital adrenal hyperplasia; Ambiguous genitalia
+10.44 Congenital CMV
+10.45 Primary ciliary dyskinesia
+10.46 Bronchiectasis; Recurrent chest infections
+10.47 Constitutional delay of growth and puberty; Delayed puberty
+10.48 Schistosomiasis; Haematuria
+10.49 Haemorrhagic cystitis; Urinary tract infection; Neglect
+10.50 Urinary tract infection; Renal imaging
+10.51 Non-accidental injury; Bruising; Cerebral palsy
+10.52 Non-accidental injury; Fractures
+10.53 Head injury; CT head
+10.54 Craniopharyngioma
+10.55 Hypopituitarism; Late effects of cancer treatment
+10.56 Congenital hypothyroidism; Newborn screening
+10.57 Wilms tumour; Abdominal mass
+10.58 Hereditary spherocytosis; Aplastic crisis; Parvovirus B19
+10.59 G6PD deficiency
+10.60 Diabetic ketoacidosis
+10.61 Diabetic ketoacidosis
+10.62 Supraventricular tachycardia; Adenosine
+10.63 Pyloric stenosis
+10.64 Acanthosis nigricans; Insulin resistance
+10.65 Hyperthyroidism; Graves disease
+10.66 Weight faltering
+10.67 Alagille syndrome
+10.68 Type 1 diabetes; Hypothyroidism
+10.69 Non-accidental injury; Abusive head trauma
+10.70 Von Willebrand disease
+10.71 Herpes simplex encephalitis
+10.72 Non-accidental injury; Fractures
+10.73 Down syndrome; Breaking bad news
+10.74 Staphylococcal scalded skin syndrome
+10.75 Zinc deficiency
+10.76 Agranulocytosis; Antiepileptic drugs
+10.77 Amitriptyline; Drug side effects
+10.78 Functional neurological disorder
+10.79 Nephrotic syndrome
+10.80 McCune-Albright syndrome; Precocious puberty
+10.81 IgA nephropathy; Haematuria
+11.1 Long QT syndrome; Syncope
+11.2 Kawasaki disease; Coronary artery aneurysm
+11.3 Obesity
+11.4 Kawasaki disease
+11.5 Neonatal sepsis; Thrombocytopenia
+11.6 Anorexia nervosa; Epidemiology
+11.7 Cyanotic congenital heart disease
+11.8 Heart failure
+11.9 Transient synovitis; Limp
+11.10 Septic arthritis; Limp
+11.11 Tuberculous arthritis; Tuberculosis
+11.12 Slipped capital femoral epiphysis; Growth hormone
+11.13 Lymphoma; Mediastinal mass
+11.14 Infectious mononucleosis; Drug rash
+11.15 PANDAS; Sydenham chorea
+11.16 Eisenmenger syndrome; Down syndrome
+11.17 Withdrawing life-sustaining treatment; Ethics
+11.18 Haemophagocytic lymphohistiocytosis; Systemic lupus erythematosus
+11.19 Statistics; P value
+11.20 Status epilepticus; Hypoglycaemia
+11.21 Hyperinsulinism; Diazoxide
+11.22 Haematuria; Hypercalciuria
+11.23 Diabetic ketoacidosis
+11.24 Cushing syndrome
+11.25 Down syndrome; Antenatal screening
+11.26 Marfan syndrome
+11.27 Phenylketonuria
+11.28 Newborn screening; Galactosaemia
+11.29 Tuberous sclerosis; Cardiac rhabdomyoma
+11.30 Obesity; Short stature
+11.31 Research types
+11.32 Streptococcal pharyngitis; Tonsillitis
+11.33 Eczema herpeticum; Atopic eczema
+11.34 Chronic granulomatous disease
+11.35 Primary immunodeficiency; Immunology tests
+11.36 Infant of diabetic mother
+11.37 Erb palsy; Birth injury
+11.38 Brain tumours; Raised intracranial pressure
+11.39 Graves disease; Hyperthyroidism
+11.40 Paracetamol poisoning; Anorexia nervosa; Self-harm
+11.41 Neonatal sepsis
+11.42 Neonatal herpes simplex; Neonatal sepsis
+11.43 Epilepsy; First seizure
+11.44 Anaphylaxis; Adrenaline
+11.45 Nystagmus
+11.46 Antenatal hydronephrosis; Renal imaging
+11.47 Posterior urethral valves
+11.48 Hypothyroidism; Thyroid function tests
+11.49 Biliary atresia
+11.50 Prolonged neonatal jaundice
+11.51 BCG vaccine; HIV infection; Immunisation
+11.52 Breastfeeding contraindications; Phenylketonuria
+11.53 Patau syndrome (trisomy 13); Edwards syndrome (trisomy 18)
+11.54 DiGeorge syndrome
+11.55 Edwards syndrome (trisomy 18); Palliative care
+11.56 Hypoplastic left heart syndrome; Duct-dependent congenital heart disease
+11.57 Varicella; Perinatal infection; Tuberculosis
+11.58 Epidermolysis bullosa; Autosomal dominant inheritance
+11.59 Sickle cell disease; Aplastic crisis; Parvovirus B19
+11.60 Neonatal lupus; Congenital heart block
+11.61 Psoriatic arthritis; Psoriasis
+11.62 Hand injury
+11.63 Cafe-au-lait macules; Neurofibromatosis type 1
+11.64 Port-wine stain; Vascular birthmarks
+11.65 Ambiguous genitalia; Congenital adrenal hyperplasia
+11.66 Lead poisoning; Pica
+11.67 Thyroid function tests
+11.68 Statistics; Statistical tests
+11.69 Fanconi syndrome (renal); Renal tubular acidosis
+11.70 Shock; Septic shock

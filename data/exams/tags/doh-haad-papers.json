@@ -1,0 +1,50 @@
+[
+ {
+  "file": "data/exams/doh-haad-2024-05.json",
+  "title": "May 2024"
+ },
+ {
+  "file": "data/exams/doh-haad-pv-2024-03.json",
+  "title": "5 Mar 2024 (Pearson VUE)"
+ },
+ {
+  "file": "data/exams/doh-haad-pv-2024-03-03a.json",
+  "title": "3 Mar 2024 (Pearson VUE, recall A)"
+ },
+ {
+  "file": "data/exams/doh-haad-pv-33.json",
+  "title": "3 Mar 2024 (Pearson VUE, recall B)"
+ },
+ {
+  "file": "data/exams/doh-haad-pv-2024-03-03c.json",
+  "title": "3 Mar 2024 (Pearson VUE, recall C)"
+ },
+ {
+  "file": "data/exams/doh-haad-2024.json",
+  "title": "31 Jan + Feb 2024"
+ },
+ {
+  "file": "data/exams/doh-haad-2024-01.json",
+  "title": "Jan 2024"
+ },
+ {
+  "file": "data/exams/doh-haad-2023-06-08.json",
+  "title": "8 Jun 2023"
+ },
+ {
+  "file": "data/exams/doh-haad-2023-05-10.json",
+  "title": "10 May 2023"
+ },
+ {
+  "file": "data/exams/doh-haad-2023-03-27.json",
+  "title": "27 Mar 2023"
+ },
+ {
+  "file": "data/exams/doh-haad-2023-02-ad.json",
+  "title": "Feb 2023 (Abu Dhabi)"
+ },
+ {
+  "file": "data/exams/doh-haad-2023-01-30.json",
+  "title": "30 Jan 2023"
+ }
+]
