@@ -29,12 +29,13 @@ jobs:
       - name: Tag
         env:
           FIREBASE_SERVICE_ACCOUNT: ${{ secrets.FIREBASE_SERVICE_ACCOUNT_EASY_PEDIA }}
-          MODE: dry
+          MODE: commit
         run: |
           printf '%s' "$FIREBASE_SERVICE_ACCOUNT" > "$RUNNER_TEMP/sa.json"
           export GOOGLE_APPLICATION_CREDENTIALS="$RUNNER_TEMP/sa.json"
           extra=""
           if [ "$MODE" = commit ]; then extra="--commit"; fi
           node --max-old-space-size=6000 scripts/tag-exam.mjs --book doh_haad \
-            --tags data/exams/tags/doh-haad.txt --papers data/exams/tags/doh-haad-papers.json $extra
+            --tags data/exams/tags/doh-haad.txt --papers data/exams/tags/doh-haad-papers.json \
+            --similar data/exams/tags/doh-haad-similar.txt $extra
           rm -f "$RUNNER_TEMP/sa.json"

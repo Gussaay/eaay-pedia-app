@@ -12,6 +12,11 @@
 //
 // --papers lists [{ "file": "data/exams/….json", "title": "<quiz title>" }].
 // Re-running replaces the book's tags, and drops qtags entries it no longer has.
+//
+// --similar <file.txt> also links pairs of questions found through their tags
+// ("<paper>.<n> <paper>.<n>" per line, # starts a comment) as similar
+// questions, written on both (quizqq/<id>/similar), next to the links that
+// scripts/link-exam.mjs finds from the wording.
 import fs from 'node:fs';
 import path from 'node:path';
 import { execFileSync } from 'node:child_process';
@@ -118,6 +123,23 @@ for (const l of lines) {
   }
   tagged += 1;
 }
+let pairs = 0;
+const similarFile = value('similar');
+if (similarFile) {
+  for (const raw of fs.readFileSync(similarFile, 'utf8').split('\n')) {
+    const l = raw.replace(/#.*/, '').trim();
+    if (!l) continue;
+    const [a, b] = l.split(/\s+/).map((k) => idOf[k]);
+    if (!a || !b) {
+      console.log(`! similar pair "${l}" has a question that was not found`);
+      problems += 1;
+      continue;
+    }
+    updates[`quizqq/${a}/similar/${b}`] = true;
+    updates[`quizqq/${b}/similar/${a}`] = true;
+    pairs += 1;
+  }
+}
 // Entries for this book's questions under tags they no longer carry.
 const mine = new Set(Object.values(idOf));
 let dropped = 0;
@@ -131,7 +153,7 @@ for (const [slug, ids] of Object.entries(qtags)) {
 }
 
 const counts = Object.entries(index).map(([s, ids]) => [s, ids.size]);
-console.log(`\n${tagged} questions tagged with ${counts.length} distinct tags; ${dropped} stale index entries dropped.`);
+console.log(`\n${tagged} questions tagged with ${counts.length} distinct tags; ${dropped} stale index entries dropped; ${pairs} similar pairs from tags.`);
 console.log('Most used:', counts.sort((a, b) => b[1] - a[1]).slice(0, 15).map(([s, n]) => `${s} ${n}`).join(', '));
 if (problems) {
   console.error(`\n${problems} problem(s) above; nothing written.`);

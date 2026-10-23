@@ -1,0 +1,461 @@
+# DOH (HAAD) questions linked as similar because they share a topic tag
+# (main topic and similar wording, or two tags), checked by hand. "<paper>.<n> <paper>.<n>"
+0.1 1.35  # Respiratory distress syndrome
+0.1 5.64  # Respiratory distress syndrome
+0.3 6.6  # Varicella
+0.3 8.16  # Varicella
+0.3 11.57  # Varicella
+0.6 5.85  # Necrotising enterocolitis
+0.6 9.5  # Necrotising enterocolitis
+0.7 5.85  # Necrotising enterocolitis
+0.7 9.5  # Necrotising enterocolitis
+0.8 1.31  # Wolff-Parkinson-White syndrome
+0.8 2.42  # Wolff-Parkinson-White syndrome
+0.9 3.8  # Long QT syndrome
+0.11 7.64  # Diabetic ketoacidosis
+0.11 10.60  # Diabetic ketoacidosis
+0.11 10.61  # Diabetic ketoacidosis
+0.13 5.14  # Diabetic ketoacidosis
+0.13 10.61  # Diabetic ketoacidosis
+0.19 7.16  # Hypopituitarism
+0.21 7.16  # Hypopituitarism
+0.21 10.55  # Hypopituitarism
+0.24 3.1  # Head injury
+0.25 7.53  # DiGeorge syndrome
+0.25 10.42  # DiGeorge syndrome
+0.26 1.22  # Turner syndrome
+0.26 3.12  # Turner syndrome
+0.26 5.49  # Turner syndrome
+0.26 9.50  # Turner syndrome
+0.26 10.33  # Turner syndrome
+0.28 10.23  # Haemolytic uraemic syndrome
+0.32 5.66  # IgA vasculitis (Henoch-Schonlein purpura)
+0.32 9.56  # IgA vasculitis (Henoch-Schonlein purpura)
+0.32 10.22  # IgA vasculitis (Henoch-Schonlein purpura)
+0.34 9.12  # Nephrotic syndrome
+0.37 6.13  # ADHD
+0.39 9.84  # Coeliac disease
+0.39 9.85  # Coeliac disease
+0.42 1.42  # Sickle cell disease
+0.42 4.1  # Sickle cell disease
+0.42 6.20  # Sickle cell disease
+0.42 8.7  # Sickle cell disease
+0.42 11.59  # Sickle cell disease
+0.43 5.6  # Wiskott-Aldrich syndrome
+0.48 5.8  # Perthes disease
+0.48 5.9  # Perthes disease
+0.48 5.10  # Perthes disease
+0.50 1.42  # Sickle cell disease
+0.50 4.1  # Sickle cell disease
+0.51 3.13  # McCune-Albright syndrome
+0.51 7.33  # McCune-Albright syndrome
+0.51 10.80  # McCune-Albright syndrome
+0.52 4.48  # Lymphadenopathy
+0.52 8.22  # Lymphadenopathy
+0.53 6.15  # Posterior urethral valves
+0.53 8.6  # Posterior urethral valves
+0.53 11.47  # Posterior urethral valves
+0.56 1.16  # Klinefelter syndrome
+0.58 7.49  # G6PD deficiency
+0.58 7.50  # G6PD deficiency
+0.58 10.59  # G6PD deficiency
+0.60 9.71  # Anorexia nervosa
+0.61 6.11  # Nocturnal enuresis
+0.62 8.76  # Epidermolysis bullosa
+0.62 11.58  # Epidermolysis bullosa
+1.2 4.8  # Intraosseous access
+1.10 4.10  # Non-accidental injury
+1.10 5.7  # Non-accidental injury
+1.10 7.11  # Non-accidental injury
+1.10 7.56  # Non-accidental injury
+1.10 10.52  # Non-accidental injury
+1.10 10.72  # Non-accidental injury
+1.13 2.11  # Paediatric ARDS
+1.14 5.50  # Constitutional delay of growth and puberty
+1.14 7.5  # Constitutional delay of growth and puberty
+1.14 7.57  # Constitutional delay of growth and puberty
+1.14 9.75  # Constitutional delay of growth and puberty
+1.14 10.47  # Constitutional delay of growth and puberty
+1.19 2.43  # Refeeding syndrome
+1.19 4.28  # Refeeding syndrome
+1.19 5.55  # Refeeding syndrome
+1.19 9.73  # Refeeding syndrome
+1.20 4.6  # Retinopathy of prematurity
+1.22 3.12  # Turner syndrome
+1.22 5.49  # Turner syndrome
+1.22 9.50  # Turner syndrome
+1.22 10.33  # Turner syndrome
+1.23 7.42  # Pyloric stenosis
+1.23 10.63  # Pyloric stenosis
+1.27 4.44  # Pompe disease
+1.29 3.8  # Long QT syndrome
+1.29 4.7  # Long QT syndrome
+1.29 8.17  # Long QT syndrome
+1.29 8.52  # Long QT syndrome
+1.29 11.1  # Long QT syndrome
+1.30 5.52  # Ventricular septal defect
+1.31 2.42  # Wolff-Parkinson-White syndrome
+1.31 4.14  # Wolff-Parkinson-White syndrome
+1.35 5.64  # Respiratory distress syndrome
+1.36 2.1  # Respiratory distress syndrome
+1.37 2.18  # Factor XIII deficiency
+1.37 10.21  # Factor XIII deficiency
+1.39 4.21  # Septic shock
+1.41 4.43  # Pneumothorax
+1.42 4.1  # Sickle cell disease
+1.45 3.20  # Chronic granulomatous disease
+1.45 8.11  # Chronic granulomatous disease
+1.51 4.46  # Down syndrome
+1.52 2.40  # Hypertension
+1.52 3.16  # Hypertension
+1.54 2.7  # Ophthalmia neonatorum
+2.1 4.24  # Respiratory distress syndrome
+2.6 4.26  # Study design
+2.10 9.48  # Meningococcal disease
+2.13 5.80  # Anaphylaxis
+2.13 8.24  # Anaphylaxis
+2.13 9.23  # Anaphylaxis
+2.13 11.44  # Anaphylaxis
+2.16 5.16  # Vitamin K deficiency bleeding
+2.16 9.20  # Vitamin K deficiency bleeding
+2.17 4.39  # Haemophilia
+2.18 10.21  # Factor XIII deficiency
+2.20 4.45  # Homocystinuria
+2.23 4.52  # Kawasaki disease
+2.23 11.4  # Kawasaki disease
+2.24 4.52  # Kawasaki disease
+2.24 11.2  # Kawasaki disease
+2.25 4.12  # Supraventricular tachycardia
+2.25 4.13  # Supraventricular tachycardia
+2.25 5.23  # Supraventricular tachycardia
+2.25 9.16  # Supraventricular tachycardia
+2.25 10.62  # Supraventricular tachycardia
+2.29 3.38  # Study design
+2.29 4.26  # Study design
+2.37 4.4  # Tinea capitis
+2.40 3.16  # Hypertension
+2.42 4.14  # Wolff-Parkinson-White syndrome
+2.43 4.28  # Refeeding syndrome
+2.43 5.55  # Refeeding syndrome
+2.43 9.73  # Refeeding syndrome
+2.44 4.35  # Tanner staging
+3.6 8.77  # Cystic fibrosis
+3.8 8.17  # Long QT syndrome
+3.8 8.52  # Long QT syndrome
+3.12 5.49  # Turner syndrome
+3.12 10.33  # Turner syndrome
+3.13 7.33  # McCune-Albright syndrome
+3.13 10.80  # McCune-Albright syndrome
+3.18 9.56  # IgA vasculitis (Henoch-Schonlein purpura)
+3.20 7.54  # Chronic granulomatous disease
+3.20 8.11  # Chronic granulomatous disease
+3.20 11.34  # Chronic granulomatous disease
+3.26 10.31  # Autism spectrum disorder
+3.27 9.41  # Retinoblastoma
+3.31 7.4  # Zinc deficiency
+3.31 10.75  # Zinc deficiency
+3.38 4.26  # Study design
+3.39 6.22  # Transient synovitis
+3.39 8.3  # Transient synovitis
+3.39 11.9  # Transient synovitis
+4.3 9.48  # Meningococcal disease
+4.7 8.52  # Long QT syndrome
+4.9 7.10  # Non-accidental injury
+4.9 7.11  # Non-accidental injury
+4.9 8.28  # Non-accidental injury
+4.9 10.51  # Non-accidental injury
+4.10 5.7  # Non-accidental injury
+4.10 7.11  # Non-accidental injury
+4.10 7.56  # Non-accidental injury
+4.10 10.52  # Non-accidental injury
+4.10 10.69  # Non-accidental injury
+4.10 10.72  # Non-accidental injury
+4.12 5.23  # Supraventricular tachycardia
+4.12 9.16  # Supraventricular tachycardia
+4.12 10.62  # Supraventricular tachycardia
+4.15 11.60  # Neonatal lupus
+4.28 5.55  # Refeeding syndrome
+4.28 9.73  # Refeeding syndrome
+4.29 10.17  # Edwards syndrome (trisomy 18)
+4.32 10.38  # Prader-Willi syndrome
+4.51 8.12  # Macrophage activation syndrome
+4.52 11.2  # Kawasaki disease
+4.52 11.4  # Kawasaki disease
+5.1 9.70  # Safeguarding
+5.4 9.49  # Acute kidney injury
+5.5 9.9  # Developmental milestones
+5.7 7.11  # Non-accidental injury
+5.7 7.56  # Non-accidental injury
+5.7 10.52  # Non-accidental injury
+5.7 10.72  # Non-accidental injury
+5.11 9.63  # Sickle cell disease
+5.12 9.64  # Osteomyelitis
+5.13 9.21  # Abusive head trauma
+5.13 10.69  # Abusive head trauma
+5.14 7.13  # Diabetic ketoacidosis
+5.14 9.44  # Diabetic ketoacidosis
+5.16 9.20  # Vitamin K deficiency bleeding
+5.17 9.78  # Hepatitis B
+5.18 9.8  # Immunisation schedule
+5.19 8.78  # Erb palsy
+5.19 9.68  # Erb palsy
+5.19 11.37  # Erb palsy
+5.20 9.35  # Bell palsy
+5.21 9.76  # HIV infection
+5.22 9.74  # Developmental dysplasia of the hip
+5.23 9.16  # Supraventricular tachycardia
+5.23 10.62  # Supraventricular tachycardia
+5.24 9.7  # Systemic lupus erythematosus
+5.25 9.3  # Wheeze
+5.27 9.11  # Cyanosis
+5.30 7.8  # Periorbital cellulitis
+5.30 10.10  # Periorbital cellulitis
+5.33 9.41  # Retinoblastoma
+5.34 9.84  # Coeliac disease
+5.34 9.85  # Coeliac disease
+5.35 9.85  # Coeliac disease
+5.36 9.34  # Group B streptococcus
+5.37 7.9  # Urinary tract infection
+5.37 9.65  # Urinary tract infection
+5.37 10.50  # Urinary tract infection
+5.38 7.9  # Renal imaging
+5.38 9.65  # Renal imaging
+5.38 9.67  # Renal imaging
+5.38 10.50  # Renal imaging
+5.39 9.13  # Haemorrhagic cystitis
+5.40 9.80  # Cow's milk protein allergy
+5.41 9.24  # Atopic eczema
+5.41 9.36  # Atopic eczema
+5.42 9.24  # Atopic eczema
+5.42 9.36  # Atopic eczema
+5.43 9.43  # Eczema herpeticum
+5.43 11.33  # Eczema herpeticum
+5.44 9.1  # Asthma
+5.45 9.6  # Incontinentia pigmenti
+5.45 9.27  # Incontinentia pigmenti
+5.46 9.28  # Tinea capitis
+5.47 9.46  # Chronic fatigue syndrome
+5.49 10.33  # Turner syndrome
+5.50 6.14  # Constitutional delay of growth and puberty
+5.50 7.5  # Constitutional delay of growth and puberty
+5.50 9.75  # Constitutional delay of growth and puberty
+5.51 9.18  # Patent ductus arteriosus
+5.52 9.17  # Ventricular septal defect
+5.53 9.4  # Urinary tract infection
+5.55 9.73  # Refeeding syndrome
+5.57 7.39  # Paracetamol poisoning
+5.57 8.54  # Paracetamol poisoning
+5.57 10.13  # Paracetamol poisoning
+5.57 11.40  # Paracetamol poisoning
+5.60 9.82  # Guillain-Barre syndrome
+5.62 9.51  # Ethics
+5.65 8.58  # Patau syndrome (trisomy 13)
+5.65 9.42  # Patau syndrome (trisomy 13)
+5.65 11.53  # Patau syndrome (trisomy 13)
+5.66 9.56  # IgA vasculitis (Henoch-Schonlein purpura)
+5.66 10.22  # IgA vasculitis (Henoch-Schonlein purpura)
+5.67 9.45  # Aplasia cutis congenita
+5.68 7.2  # Infantile spasms
+5.68 7.30  # Infantile spasms
+5.68 10.27  # Infantile spasms
+5.68 10.28  # Infantile spasms
+5.70 7.44  # Congenital CMV
+5.70 9.60  # Congenital CMV
+5.70 10.44  # Congenital CMV
+5.71 9.38  # Newborn hearing screening
+5.72 9.19  # Iron deficiency anaemia
+5.72 9.62  # Iron deficiency anaemia
+5.74 7.1  # Amitriptyline
+5.74 10.77  # Amitriptyline
+5.75 8.32  # Bronchiolitis
+5.75 9.59  # Bronchiolitis
+5.78 8.41  # Antenatal hydronephrosis
+5.78 11.46  # Antenatal hydronephrosis
+5.79 10.41  # Congenital rubella
+5.80 8.24  # Anaphylaxis
+5.80 9.23  # Anaphylaxis
+5.80 11.44  # Anaphylaxis
+5.81 9.27  # Incontinentia pigmenti
+5.82 10.35  # Relative energy deficiency in sport
+5.83 9.2  # Consent
+5.85 9.5  # Necrotising enterocolitis
+5.88 9.40  # Kernicterus
+6.5 8.10  # Antibiotic stewardship
+6.6 8.16  # Varicella
+6.6 11.57  # Varicella
+6.7 8.8  # Hyperlipidaemia
+6.9 8.27  # Heavy menstrual bleeding
+6.12 8.21  # Obstructive sleep apnoea
+6.13 8.20  # ADHD
+6.14 7.5  # Short stature
+6.14 8.15  # Short stature
+6.15 8.6  # Posterior urethral valves
+6.15 11.47  # Posterior urethral valves
+6.17 8.14  # Infectious mononucleosis
+6.17 11.14  # Infectious mononucleosis
+6.19 8.18  # Crohn disease
+6.20 8.7  # Sickle cell disease
+6.20 8.45  # Sickle cell disease
+6.20 11.59  # Sickle cell disease
+6.21 8.4  # Prolonged neonatal jaundice
+6.21 8.72  # Prolonged neonatal jaundice
+6.21 11.50  # Prolonged neonatal jaundice
+6.22 8.3  # Transient synovitis
+6.22 11.9  # Transient synovitis
+6.23 8.65  # Down syndrome
+6.23 11.25  # Down syndrome
+7.1 10.77  # Amitriptyline
+7.2 10.27  # Infantile spasms
+7.2 10.28  # Infantile spasms
+7.6 10.81  # IgA nephropathy
+7.7 10.12  # Bereavement
+7.8 10.10  # Periorbital cellulitis
+7.9 9.65  # Urinary tract infection
+7.9 10.50  # Urinary tract infection
+7.10 8.28  # Non-accidental injury
+7.10 10.51  # Non-accidental injury
+7.11 10.52  # Non-accidental injury
+7.11 10.72  # Non-accidental injury
+7.12 10.68  # Type 1 diabetes
+7.13 10.60  # Diabetic ketoacidosis
+7.14 10.66  # Weight faltering
+7.15 10.76  # Agranulocytosis
+7.16 10.55  # Hypopituitarism
+7.20 10.4  # Croup
+7.20 10.5  # Croup
+7.20 10.6  # Croup
+7.21 10.11  # Brainstem death
+7.22 10.8  # Hand, foot and mouth disease
+7.23 10.20  # Inflammatory bowel disease
+7.24 10.24  # Atrial septal defect
+7.25 8.60  # Congenital adrenal hyperplasia
+7.25 10.43  # Congenital adrenal hyperplasia
+7.25 11.65  # Congenital adrenal hyperplasia
+7.27 10.54  # Craniopharyngioma
+7.28 11.22  # Haematuria
+7.29 10.49  # Haemorrhagic cystitis
+7.30 10.27  # Infantile spasms
+7.30 10.28  # Infantile spasms
+7.31 10.46  # Bronchiectasis
+7.32 10.1  # Atrioventricular septal defect
+7.33 10.80  # McCune-Albright syndrome
+7.34 10.41  # Congenital rubella
+7.35 10.40  # Meconium aspiration syndrome
+7.37 10.31  # Autism spectrum disorder
+7.38 10.39  # Pica
+7.38 11.66  # Pica
+7.39 8.54  # Paracetamol poisoning
+7.39 10.13  # Paracetamol poisoning
+7.39 11.40  # Paracetamol poisoning
+7.40 10.7  # Varicella
+7.41 10.32  # Autoimmune encephalitis
+7.42 10.63  # Pyloric stenosis
+7.43 10.53  # Head injury
+7.44 9.60  # Congenital CMV
+7.44 10.44  # Congenital CMV
+7.45 9.31  # Staphylococcal scalded skin syndrome
+7.45 10.74  # Staphylococcal scalded skin syndrome
+7.46 8.55  # Wilms tumour
+7.46 9.54  # Wilms tumour
+7.46 10.57  # Wilms tumour
+7.48 10.30  # Respiratory failure
+7.49 10.59  # G6PD deficiency
+7.50 10.59  # G6PD deficiency
+7.51 11.10  # Septic arthritis
+7.53 10.42  # DiGeorge syndrome
+7.54 11.34  # Chronic granulomatous disease
+7.55 8.1  # Juvenile dermatomyositis
+7.56 10.52  # Non-accidental injury
+7.56 10.72  # Non-accidental injury
+7.57 9.75  # Constitutional delay of growth and puberty
+7.57 10.47  # Constitutional delay of growth and puberty
+7.58 10.67  # Alagille syndrome
+7.59 10.73  # Down syndrome
+7.60 10.48  # Schistosomiasis
+7.61 10.14  # Sandifer syndrome
+7.62 10.78  # Functional neurological disorder
+7.63 10.70  # Von Willebrand disease
+7.64 10.61  # Diabetic ketoacidosis
+7.65 10.18  # Septic arthritis
+8.1 10.3  # Juvenile dermatomyositis
+8.2 11.4  # Kawasaki disease
+8.3 11.9  # Transient synovitis
+8.4 11.50  # Prolonged neonatal jaundice
+8.6 11.47  # Posterior urethral valves
+8.7 11.59  # Sickle cell disease
+8.9 11.32  # Streptococcal pharyngitis
+8.11 11.34  # Chronic granulomatous disease
+8.13 11.32  # Streptococcal pharyngitis
+8.14 11.14  # Infectious mononucleosis
+8.16 11.57  # Varicella
+8.17 11.1  # Long QT syndrome
+8.19 10.25  # Brain tumours
+8.19 11.38  # Brain tumours
+8.22 11.13  # Lymphoma
+8.23 11.51  # HIV infection
+8.24 9.23  # Anaphylaxis
+8.24 11.44  # Anaphylaxis
+8.28 10.51  # Non-accidental injury
+8.29 11.64  # Port-wine stain
+8.30 11.45  # Nystagmus
+8.31 11.21  # Hyperinsulinism
+8.35 11.19  # Statistics
+8.36 11.31  # Research types
+8.38 11.68  # Statistics
+8.39 11.56  # Hypoplastic left heart syndrome
+8.40 11.6  # Anorexia nervosa
+8.41 11.46  # Antenatal hydronephrosis
+8.42 11.17  # Withdrawing life-sustaining treatment
+8.44 11.52  # Breastfeeding contraindications
+8.45 11.59  # Sickle cell disease
+8.46 10.9  # Polycystic ovary syndrome
+8.47 10.65  # Graves disease
+8.47 11.39  # Graves disease
+8.51 9.77  # Slipped capital femoral epiphysis
+8.51 11.12  # Slipped capital femoral epiphysis
+8.52 11.1  # Long QT syndrome
+8.54 10.13  # Paracetamol poisoning
+8.54 11.40  # Paracetamol poisoning
+8.55 9.54  # Wilms tumour
+8.55 10.57  # Wilms tumour
+8.57 11.16  # Eisenmenger syndrome
+8.58 9.42  # Patau syndrome (trisomy 13)
+8.58 11.53  # Patau syndrome (trisomy 13)
+8.60 10.43  # Ambiguous genitalia
+8.60 11.65  # Ambiguous genitalia
+8.61 11.69  # Fanconi syndrome (renal)
+8.62 11.27  # Phenylketonuria
+8.63 11.28  # Newborn screening
+8.65 11.25  # Down syndrome
+8.66 11.5  # Neonatal sepsis
+8.67 11.8  # Heart failure
+8.68 11.29  # Tuberous sclerosis
+8.71 9.1  # Asthma
+8.72 11.50  # Prolonged neonatal jaundice
+8.73 11.49  # Biliary atresia
+8.74 11.63  # Cafe-au-lait macules
+8.75 11.43  # Epilepsy
+8.76 11.58  # Epidermolysis bullosa
+8.78 9.68  # Erb palsy
+8.78 11.37  # Erb palsy
+9.15 10.11  # Brainstem death
+9.16 10.62  # Supraventricular tachycardia
+9.21 10.69  # Abusive head trauma
+9.23 11.44  # Anaphylaxis
+9.31 10.74  # Staphylococcal scalded skin syndrome
+9.42 11.53  # Patau syndrome (trisomy 13)
+9.43 11.33  # Eczema herpeticum
+9.50 10.33  # Turner syndrome
+9.54 10.57  # Wilms tumour
+9.56 10.22  # IgA vasculitis (Henoch-Schonlein purpura)
+9.60 10.44  # Congenital CMV
+9.65 10.50  # Urinary tract infection
+9.68 11.37  # Erb palsy
+9.75 10.47  # Constitutional delay of growth and puberty
+10.13 11.40  # Paracetamol poisoning
+10.25 11.38  # Brain tumours
+10.34 11.24  # Cushing syndrome
+10.39 11.66  # Pica
+10.43 11.65  # Congenital adrenal hyperplasia
+10.58 11.59  # Aplastic crisis
+10.65 11.39  # Hyperthyroidism

@@ -1,9 +1,8 @@
-// "Remember it" under a quiz explanation: the mnemonic, the flashcards, the
-// topic tags and the linked questions (quizqq/<id>/mnem_links, card_links,
-// tags, and same + similar), opened over the quiz so the session is not lost.
-// Linked questions are the copies of this question asked in other sittings,
-// the similar questions and other questions on the same topic (qtags/<slug>),
-// all answerable in one list.
+// "Remember it" under a quiz explanation: the topic tags, the mnemonic, the
+// flashcards and the linked questions (quizqq/<id>/tags, mnem_links,
+// card_links, and same + similar), opened over the quiz so the session is not
+// lost. Linked questions are the copies of this question asked in other
+// sittings and the similar questions, all answerable in one list.
 import { useState } from 'react';
 import { createPortal } from 'react-dom';
 import { ChevronRight, Layers, Lightbulb, Repeat2, Tag, X } from 'lucide-react';
@@ -18,10 +17,6 @@ import { tagsOf } from '../lib/topicTags';
 import MnemonicPeek from './MnemonicPeek';
 import { Spinner, ZoomImage } from './ui';
 
-// A topic shared by hundreds of questions would make a long list to load; this
-// many are shown per topic.
-const TOPIC_MAX = 30;
-
 export default function StudyLinks({ question }) {
   const { mnemonics, flashcards } = questionLinks(question);
   const [mnemonic, setMnemonic] = useState(null);
@@ -29,24 +24,8 @@ export default function StudyLinks({ question }) {
   const same = sameOf(question);
   const tags = tagsOf(question);
   const [cardsOpen, setCardsOpen] = useState(false);
-  // null when closed; otherwise the tag slug to show alone, or '' for every linked question.
-  const [linkedOpen, setLinkedOpen] = useState(null);
-  // The other questions under each tag: [{ slug, label, ids }].
-  const topicData = useAsync(
-    () =>
-      Promise.all(
-        tags.map((t) =>
-          getOne(`qtags/${t.slug}`)
-            .catch(() => null)
-            .then((v) => ({ ...t, ids: Object.keys(v || {}).filter((id) => v[id] && id !== question?._key) })),
-        ),
-      ),
-    [question?._key, tags.map((t) => t.slug).join(',')],
-  );
-  const topics = topicData.data || [];
-  const known = new Set([...same, ...similar]);
-  const topicIds = [...new Set(topics.flatMap((t) => t.ids.slice(0, TOPIC_MAX)))].filter((id) => !known.has(id));
-  const linked = same.length + similar.length + topicIds.length;
+  const [linkedOpen, setLinkedOpen] = useState(false);
+  const linked = same.length + similar.length;
   // Only the mnemonic titles are read up front; the flashcards wait for a tap.
   const titles = useAsync(
     () => (mnemonics.length ? loadByRefs(mnemonics) : Promise.resolve([])),
@@ -58,22 +37,13 @@ export default function StudyLinks({ question }) {
     <div className="mt-5 border-t border-slate-100 pt-4">
       <p className="text-sm font-semibold text-slate-700 mb-2">Remember it</p>
       {tags.length > 0 && (
-        <div className="mb-2 flex flex-wrap items-center gap-1.5">
-          <Tag size={14} className="shrink-0 text-sky-600" aria-label="Topics" />
-          {tags.map((t) => {
-            const n = topics.find((x) => x.slug === t.slug)?.ids.length || 0;
-            return (
-              <button
-                key={t.slug}
-                onClick={() => setLinkedOpen(t.slug)}
-                disabled={!n}
-                className="rounded-full border border-sky-200 bg-sky-50 px-2.5 py-1 text-xs font-medium text-sky-800 hover:bg-sky-100 disabled:hover:bg-sky-50"
-              >
-                {t.label}
-                {n > 0 && <span className="ml-1 text-sky-500">{n}</span>}
-              </button>
-            );
-          })}
+        <div className="mb-2 flex flex-wrap items-center gap-1.5" aria-label="Topics">
+          <Tag size={14} className="shrink-0 text-sky-600" />
+          {tags.map((t) => (
+            <span key={t.slug} className="rounded-full border border-sky-200 bg-sky-50 px-2.5 py-1 text-xs font-medium text-sky-800">
+              {t.label}
+            </span>
+          ))}
         </div>
       )}
       <div className="space-y-2">
@@ -111,7 +81,7 @@ export default function StudyLinks({ question }) {
         )}
         {linked > 0 && (
           <button
-            onClick={() => setLinkedOpen('')}
+            onClick={() => setLinkedOpen(true)}
             className="w-full flex items-center gap-3 rounded-xl border border-amber-200 bg-amber-50 px-3 py-2.5 text-left hover:bg-amber-100"
           >
             <Repeat2 size={18} className="shrink-0 text-amber-600" />
@@ -123,7 +93,6 @@ export default function StudyLinks({ question }) {
                 {[
                   same.length ? `Asked in ${same.length + 1} sittings` : '',
                   similar.length ? `${similar.length} similar` : '',
-                  topicIds.length ? `${topicIds.length} on the same topic` : '',
                 ]
                   .filter(Boolean)
                   .join(' · ')}
@@ -135,17 +104,7 @@ export default function StudyLinks({ question }) {
       </div>
       {mnemonic && <MnemonicPeek mnemonicRef={mnemonic} onClose={() => setMnemonic(null)} />}
       {cardsOpen && <FlashcardsPeek refs={flashcards} onClose={() => setCardsOpen(false)} />}
-      {linkedOpen !== null && (
-        <LinkedPeek
-          same={linkedOpen ? [] : same}
-          similar={linkedOpen ? [] : similar}
-          topics={topics
-            .filter((t) => !linkedOpen || t.slug === linkedOpen)
-            .map((t) => ({ ...t, ids: t.ids.slice(0, TOPIC_MAX) }))}
-          title={linkedOpen ? tags.find((t) => t.slug === linkedOpen)?.label : ''}
-          onClose={() => setLinkedOpen(null)}
-        />
-      )}
+      {linkedOpen && <LinkedPeek same={same} similar={similar} onClose={() => setLinkedOpen(false)} />}
     </div>
   );
 }
@@ -177,15 +136,11 @@ function Sheet({ icon, title, tone, onClose, children }) {
 }
 
 // The linked questions, each answerable in place: the copies of this same
-// question from other sittings first, then the similar questions, then other
-// questions on the same topic. Pick an option to see the answer and its
-// explanation. With a `title`, it lists one topic's questions.
-function LinkedPeek({ same, similar, topics = [], title = '', onClose }) {
+// question from other sittings first, then the similar questions. Pick an
+// option to see the answer and its explanation.
+function LinkedPeek({ same, similar, onClose }) {
+  const ids = [...same, ...similar];
   const isSame = new Set(same);
-  const isSimilar = new Set(similar);
-  const topicOf = new Map();
-  topics.forEach((t) => t.ids.forEach((id) => topicOf.has(id) || topicOf.set(id, t.label)));
-  const ids = [...new Set([...same, ...similar, ...topicOf.keys()])];
   const data = useAsync(
     () =>
       Promise.all(ids.map((id) => getOne(`quizqq/${id}`).then((q) => q && { ...q, _key: id }))).then((l) =>
@@ -196,7 +151,7 @@ function LinkedPeek({ same, similar, topics = [], title = '', onClose }) {
   const [picked, setPicked] = useState({});
   const list = data.data || [];
   return (
-    <Sheet icon={<Repeat2 size={18} className="shrink-0 text-amber-600" />} title={title ? `Topic: ${title}` : 'Linked questions'} tone="text-amber-700" onClose={onClose}>
+    <Sheet icon={<Repeat2 size={18} className="shrink-0 text-amber-600" />} title="Linked questions" tone="text-amber-700" onClose={onClose}>
       {data.loading ? (
         <div className="py-10">
           <Spinner />
@@ -208,9 +163,8 @@ function LinkedPeek({ same, similar, topics = [], title = '', onClose }) {
       ) : (
         <>
           <p className="text-xs text-slate-500 mb-3">
-            {title
-              ? 'Other questions tagged with this topic. Pick an answer to check it.'
-              : `${same.length ? `This question came up in ${same.length + 1} sittings. ` : ''}The same question from other sittings, similar questions and questions on the same topic. Pick an answer to check it.`}
+            {same.length ? `This question came up in ${same.length + 1} sittings. ` : ''}
+            The same question from other sittings and questions on the same point from other papers. Pick an answer to check it.
           </p>
           <ul className="space-y-3">
             {list.map((q, n) => {
@@ -223,10 +177,8 @@ function LinkedPeek({ same, similar, topics = [], title = '', onClose }) {
                     Question {n + 1}
                     {isSame.has(q._key) ? (
                       <span className="rounded-full bg-violet-100 px-2 py-0.5 text-violet-800">Same question</span>
-                    ) : isSimilar.has(q._key) ? (
-                      <span className="rounded-full bg-amber-100 px-2 py-0.5 text-amber-800">Similar</span>
                     ) : (
-                      <span className="rounded-full bg-sky-100 px-2 py-0.5 text-sky-800">Same topic · {topicOf.get(q._key)}</span>
+                      <span className="rounded-full bg-amber-100 px-2 py-0.5 text-amber-800">Similar</span>
                     )}
                     {from ? <span className="font-normal text-slate-500">{from}</span> : null}
                   </p>

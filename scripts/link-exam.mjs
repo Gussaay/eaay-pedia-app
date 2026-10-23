@@ -21,6 +21,7 @@
 import fs from 'node:fs';
 import path from 'node:path';
 import { execFileSync } from 'node:child_process';
+import { tagsOf } from '../src/lib/topicTags.js';
 
 const args = process.argv.slice(2);
 const value = (name) => {
@@ -128,7 +129,7 @@ const words = (s) =>
 const docs = [];
 for (const [id, q] of Object.entries(all)) {
   if (!q || !q.question) continue;
-  docs.push({ kind: isMine(q) ? 'mine' : 'q', id, text: `${q.question} ${q[q.answer] || ''}`, label: `${q.source} | ${String(q.question).replace(/\s+/g, ' ').slice(0, 110)} → ${String(q[q.answer] || '').slice(0, 50)}` });
+  docs.push({ kind: isMine(q) ? 'mine' : 'q', id, tags: tagsOf(q), text: `${q.question} ${q[q.answer] || ''}`, label: `${q.source} | ${String(q.question).replace(/\s+/g, ' ').slice(0, 110)} → ${String(q[q.answer] || '').slice(0, 50)}` });
 }
 for (const [deckId, cards] of Object.entries(items)) {
   const kind = isMnemonicDeck(decks[deckId]) ? 'm' : 'c';
@@ -136,7 +137,7 @@ for (const [deckId, cards] of Object.entries(items)) {
     if (!c) continue;
     const front = String(c.front || c.title || '').replace(/\s+/g, ' ');
     const back = String(c.back || '').replace(/\s+/g, ' ');
-    docs.push({ kind, id: `${deckId}~${cardId}`, text: `${front} ${back}`, label: `${decks[deckId]?.title || deckId} | ${front.slice(0, 90)} → ${back.slice(0, 70)}` });
+    docs.push({ kind, id: `${deckId}~${cardId}`, text: `${front} ${back}`, plain: `${front} ${back} ${c.tags || ''}`.toLowerCase(), label: `${decks[deckId]?.title || deckId} | ${front.slice(0, 90)} → ${back.slice(0, 70)}` });
   }
 }
 
@@ -168,9 +169,18 @@ const cos = (a, b) => {
 
 const pool = { q: docs.filter((d) => d.kind === 'q'), c: docs.filter((d) => d.kind === 'c'), m: docs.filter((d) => d.kind === 'm') };
 console.log(`Pool: ${pool.q.length} questions, ${pool.c.length} flashcards, ${pool.m.length} mnemonic cards\n`);
+// Standard topic tags (lib/topicTags.js) add to the wording match: a question
+// sharing a tag, or a card naming the question's main topic, scores higher
+// and is marked "#".
+const TAG_BONUS = 0.2;
+const tagBonus = (d, o) => {
+  if (!d.tags?.length) return 0;
+  if (o.tags) return o.tags.some((t) => d.tags.some((u) => u.slug === t.slug)) ? TAG_BONUS : 0;
+  return o.plain?.includes(d.tags[0].label.toLowerCase()) ? TAG_BONUS * 0.75 : 0;
+};
 const top = (d, list, k, min) =>
   list
-    .map((o) => ({ o, s: cos(d, o) }))
+    .map((o) => ({ o, s: cos(d, o) + tagBonus(d, o), tag: tagBonus(d, o) > 0 }))
     .filter((x) => x.s >= min)
     .sort((a, b) => b.s - a.s)
     .slice(0, k);
@@ -182,7 +192,7 @@ mine.forEach(([id], i) => {
   const d = byId.get(id);
   const show = (o) => (compact ? o.label.replace(/^[^|]*\| /, '').slice(0, 120) : o.label);
   console.log(`#${i + 1} ${show(d)}`);
-  for (const { o, s } of top(d, pool.q, compact ? 4 : 6, compact ? 0.25 : 0.18)) console.log(`  Q ${s.toFixed(2)} ${o.id} ${show(o)}`);
-  for (const { o, s } of top(d, pool.c, compact ? 3 : 5, compact ? 0.22 : 0.15)) console.log(`  C ${s.toFixed(2)} ${o.id} ${show(o)}`);
-  for (const { o, s } of top(d, pool.m, 2, compact ? 0.2 : 0.12)) console.log(`  M ${s.toFixed(2)} ${o.id} ${show(o)}`);
+  for (const { o, s, tag } of top(d, pool.q, compact ? 4 : 6, compact ? 0.25 : 0.18)) console.log(`  Q ${s.toFixed(2)}${tag ? '#' : ''} ${o.id} ${show(o)}`);
+  for (const { o, s, tag } of top(d, pool.c, compact ? 3 : 5, compact ? 0.22 : 0.15)) console.log(`  C ${s.toFixed(2)}${tag ? '#' : ''} ${o.id} ${show(o)}`);
+  for (const { o, s, tag } of top(d, pool.m, 2, compact ? 0.2 : 0.12)) console.log(`  M ${s.toFixed(2)}${tag ? '#' : ''} ${o.id} ${show(o)}`);
 });
