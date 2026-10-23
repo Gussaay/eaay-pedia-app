@@ -40,7 +40,13 @@ const fb = (cmdArgs) =>
     env: { ...process.env, NO_UPDATE_NOTIFIER: '1' },
     shell: true,
   });
-const read = (node) => JSON.parse(fb(['database:get', `/${node}`, '--project', project]) || 'null') || {};
+// Through a file: a large node piped from the CLI can arrive cut short.
+const read = (node) => {
+  fs.mkdirSync('.tmp', { recursive: true });
+  const out = path.join('.tmp', `get-${node}.json`);
+  fb(['database:get', `/${node}`, '--project', project, '--output', out]);
+  return JSON.parse(fs.readFileSync(out, 'utf8') || 'null') || {};
+};
 
 console.log('Reading quizqq…');
 const all = read('quizqq');
