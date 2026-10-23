@@ -4,15 +4,15 @@ name: Upload exam paper
 # scripts/upload-exam-json.mjs, using the same service account as the hosting
 # deploy. Runs only from this branch; the script skips a paper that is already
 # there, so a re-run cannot duplicate it. The undo manifest is kept as a run
-# artifact (node scripts/upload-exam-json.mjs --undo <file> --commit).
+# artifact (node scripts/upload-exam-json.mjs --undo <file> --commit). After the
+# upload, scripts/arrange-exams.mjs sorts the book's quizzes by exam date.
 on:
   push:
     branches:
       - claude/project-thread-cop9he
     paths:
-      - 'data/exams/doh-haad-2024.json'
-      - 'data/exams/doh-haad-pv-2024-03.json'
-      - 'data/exams/doh-haad-pv-33.json'
+      - 'data/exams/doh-haad-*.json'
+      - 'scripts/arrange-exams.mjs'
       - '.github/workflows/upload-exam.yml'
   workflow_dispatch:
 
@@ -36,17 +36,21 @@ jobs:
         run: |
           printf '%s' "$FIREBASE_SERVICE_ACCOUNT" > "$RUNNER_TEMP/sa.json"
           export GOOGLE_APPLICATION_CREDENTIALS="$RUNNER_TEMP/sa.json"
-          for paper in doh-haad-2024 doh-haad-pv-2024-03 doh-haad-pv-33; do
+          for paper in doh-haad-2024-05 doh-haad-pv-2024-03-03a doh-haad-pv-2024-03-03c doh-haad-2024-01 \
+            doh-haad-2023-06-08 doh-haad-2023-05-10 doh-haad-2023-03-27 doh-haad-2023-02-ad doh-haad-2023-01-30; do
             node scripts/upload-exam-json.mjs "data/exams/$paper.json" \
               --bank gulf_licensing --bank-title "Gulf Licensing Exams" \
               --book doh_haad --book-title "DOH (HAAD)" --commit
             if [ -f .tmp/exam-upload-keys-doh_haad.json ]; then mv .tmp/exam-upload-keys-doh_haad.json ".tmp/exam-upload-keys-$paper.json"; fi
           done
+          node scripts/arrange-exams.mjs --book doh_haad --order data/exams/doh-haad-order.json --commit
           rm -f "$RUNNER_TEMP/sa.json"
       - uses: actions/upload-artifact@v4
         if: always()
         with:
           name: exam-upload-keys
-          path: .tmp/exam-upload-keys-*.json
+          path: |
+            .tmp/exam-upload-keys-*.json
+            .tmp/arrange-doh_haad.json
           if-no-files-found: ignore
           include-hidden-files: true

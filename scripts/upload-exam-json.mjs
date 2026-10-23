@@ -168,8 +168,8 @@ const quiz = {
   preview: flag('preview') ? 'true' : 'false',
   number: String(paper.questions.length),
   type: '',
-  month: '',
-  year: '',
+  month: String(paper.month || ''),
+  year: String(paper.year || ''),
 };
 updates[`allquiz/${manifest.quizId}`] = quiz;
 
