@@ -176,10 +176,13 @@ const top = (d, list, k, min) =>
     .slice(0, k);
 
 const byId = new Map(docs.map((d) => [d.id, d]));
+// --compact: fewer, stronger candidates on shorter lines, for long books.
+const compact = args.includes('--compact');
 mine.forEach(([id], i) => {
   const d = byId.get(id);
-  console.log(`#${i + 1} ${d.label}`);
-  for (const { o, s } of top(d, pool.q, 6, 0.18)) console.log(`  Q ${s.toFixed(2)} ${o.id} ${o.label}`);
-  for (const { o, s } of top(d, pool.c, 5, 0.15)) console.log(`  C ${s.toFixed(2)} ${o.id} ${o.label}`);
-  for (const { o, s } of top(d, pool.m, 3, 0.12)) console.log(`  M ${s.toFixed(2)} ${o.id} ${o.label}`);
+  const show = (o) => (compact ? o.label.replace(/^[^|]*\| /, '').slice(0, 120) : o.label);
+  console.log(`#${i + 1} ${show(d)}`);
+  for (const { o, s } of top(d, pool.q, compact ? 4 : 6, compact ? 0.25 : 0.18)) console.log(`  Q ${s.toFixed(2)} ${o.id} ${show(o)}`);
+  for (const { o, s } of top(d, pool.c, compact ? 3 : 5, compact ? 0.22 : 0.15)) console.log(`  C ${s.toFixed(2)} ${o.id} ${show(o)}`);
+  for (const { o, s } of top(d, pool.m, 2, compact ? 0.2 : 0.12)) console.log(`  M ${s.toFixed(2)} ${o.id} ${show(o)}`);
 });

@@ -1,6 +1,6 @@
 name: Link exam questions
 
-# For each new DOH (HAAD) quiz: without its links file, prints link candidates
+# For each DOH (HAAD) quiz in data/exams/links/quizzes.txt (title|file): without its links file, prints link candidates
 # in the log; with it, writes the picked links. (The Jan + Feb 2024 paper was
 # linked from data/exams/doh-haad-links.json in an earlier run.)
 on:
@@ -9,8 +9,7 @@ on:
       - claude/project-thread-cop9he
     paths:
       - 'scripts/link-exam.mjs'
-      - 'data/exams/doh-haad-pv-2024-03-links.json'
-      - 'data/exams/doh-haad-pv-33-links.json'
+      - 'data/exams/links/**'
       - '.github/workflows/link-exam.yml'
   workflow_dispatch:
 
@@ -39,9 +38,11 @@ jobs:
             if [ -f "$2" ]; then
               node --max-old-space-size=6000 scripts/link-exam.mjs --book doh_haad --quiz "$1" --apply "$2" --commit
             else
-              node --max-old-space-size=6000 scripts/link-exam.mjs --book doh_haad --quiz "$1"
+              node --max-old-space-size=6000 scripts/link-exam.mjs --book doh_haad --quiz "$1" --compact
             fi
           }
-          link "Pearson VUE 5 Mar 2024" data/exams/doh-haad-pv-2024-03-links.json
-          link "Pearson VUE recall 33" data/exams/doh-haad-pv-33-links.json
+          while IFS='|' read -r title file; do
+            echo "=== $title"
+            link "$title" "data/exams/links/$file.json"
+          done < data/exams/links/quizzes.txt
           rm -f "$RUNNER_TEMP/sa.json"
