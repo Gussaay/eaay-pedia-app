@@ -1,10 +1,11 @@
 // "Remember it" under a quiz explanation: the mnemonic, the flashcards and the
-// similar questions linked to this one (quizqq/<id>/mnem_links, card_links and
-// similar), opened over the quiz so the session is not lost. A question asked
-// again in other sittings also shows where (quizqq/<id>/same).
+// linked questions (quizqq/<id>/mnem_links, card_links, and same + similar),
+// opened over the quiz so the session is not lost. Linked questions are the
+// copies of this question asked in other sittings and the similar questions,
+// all answerable in one list.
 import { useState } from 'react';
 import { createPortal } from 'react-dom';
-import { ChevronRight, Copy, Layers, Lightbulb, Repeat2, X } from 'lucide-react';
+import { ChevronRight, Layers, Lightbulb, Repeat2, X } from 'lucide-react';
 import { useAsync } from '../hooks/useData';
 import { useBackHandler } from '../lib/back';
 import { loadByRefs } from '../lib/mnemonicData';
@@ -20,9 +21,9 @@ export default function StudyLinks({ question }) {
   const [mnemonic, setMnemonic] = useState(null);
   const similar = similarOf(question);
   const same = sameOf(question);
-  const [sameOpen, setSameOpen] = useState(false);
+  const linked = same.length + similar.length;
   const [cardsOpen, setCardsOpen] = useState(false);
-  const [similarOpen, setSimilarOpen] = useState(false);
+  const [linkedOpen, setLinkedOpen] = useState(false);
   // Only the mnemonic titles are read up front; the flashcards wait for a tap.
   const titles = useAsync(
     () => (mnemonics.length ? loadByRefs(mnemonics) : Promise.resolve([])),
@@ -66,26 +67,24 @@ export default function StudyLinks({ question }) {
             <ChevronRight size={18} className="shrink-0 text-brand-400" />
           </button>
         )}
-        {same.length > 0 && (
+        {linked > 0 && (
           <button
-            onClick={() => setSameOpen(true)}
-            className="w-full flex items-center gap-3 rounded-xl border border-violet-200 bg-violet-50 px-3 py-2.5 text-left hover:bg-violet-100"
-          >
-            <Repeat2 size={18} className="shrink-0 text-violet-600" />
-            <span className="flex-1 text-sm font-medium text-slate-800">
-              Asked in {same.length + 1} sittings — a repeated question
-            </span>
-            <ChevronRight size={18} className="shrink-0 text-violet-400" />
-          </button>
-        )}
-        {similar.length > 0 && (
-          <button
-            onClick={() => setSimilarOpen(true)}
+            onClick={() => setLinkedOpen(true)}
             className="w-full flex items-center gap-3 rounded-xl border border-amber-200 bg-amber-50 px-3 py-2.5 text-left hover:bg-amber-100"
           >
-            <Copy size={18} className="shrink-0 text-amber-600" />
-            <span className="flex-1 text-sm font-medium text-slate-800">
-              {similar.length} similar question{similar.length > 1 ? 's' : ''}
+            <Repeat2 size={18} className="shrink-0 text-amber-600" />
+            <span className="flex-1 min-w-0">
+              <span className="block text-sm font-medium text-slate-800">
+                {linked} linked question{linked > 1 ? 's' : ''}
+              </span>
+              <span className="block text-xs text-slate-500">
+                {[
+                  same.length ? `Asked in ${same.length + 1} sittings` : '',
+                  similar.length ? `${similar.length} similar` : '',
+                ]
+                  .filter(Boolean)
+                  .join(' · ')}
+              </span>
             </span>
             <ChevronRight size={18} className="shrink-0 text-amber-400" />
           </button>
@@ -93,19 +92,7 @@ export default function StudyLinks({ question }) {
       </div>
       {mnemonic && <MnemonicPeek mnemonicRef={mnemonic} onClose={() => setMnemonic(null)} />}
       {cardsOpen && <FlashcardsPeek refs={flashcards} onClose={() => setCardsOpen(false)} />}
-      {similarOpen && <SimilarPeek ids={similar} onClose={() => setSimilarOpen(false)} />}
-      {sameOpen && (
-        <SamePeek
-          here={question.title}
-          ids={same}
-          similar={similar}
-          onClose={() => setSameOpen(false)}
-          onSimilar={() => {
-            setSameOpen(false);
-            setSimilarOpen(true);
-          }}
-        />
-      )}
+      {linkedOpen && <LinkedPeek same={same} similar={similar} onClose={() => setLinkedOpen(false)} />}
     </div>
   );
 }
@@ -136,63 +123,12 @@ function Sheet({ icon, title, tone, onClose, children }) {
   );
 }
 
-// Where else this question was asked: the quiz of each linked copy, then the
-// quizzes holding similar questions, labelled "Similar".
-function SamePeek({ here, ids, similar = [], onClose, onSimilar }) {
-  const data = useAsync(
-    () =>
-      Promise.all([...ids, ...similar].map((id) => getOne(`quizqq/${id}/title`).catch(() => null))),
-    [ids.join(','), similar.join(',')],
-  );
-  const got = data.data || [];
-  const titles = [...new Set([here, ...got.slice(0, ids.length)].filter(Boolean).map(String))].sort((a, b) =>
-    a.localeCompare(b, undefined, { numeric: true }),
-  );
-  const similarTitles = [...new Set(got.slice(ids.length).filter(Boolean).map(String))];
-  return (
-    <Sheet icon={<Repeat2 size={18} className="shrink-0 text-violet-600" />} title="A repeated question" tone="text-violet-700" onClose={onClose}>
-      {data.loading ? (
-        <div className="py-10">
-          <Spinner />
-        </div>
-      ) : (
-        <>
-          <p className="text-sm text-slate-600 mb-3">
-            This question came up in {ids.length + 1} sittings, so it is worth knowing well.
-          </p>
-          <ul className="space-y-1.5">
-            {titles.map((t) => (
-              <li key={t} className={`rounded-lg px-3 py-2 text-sm ${t === here ? 'bg-violet-50 font-semibold text-violet-800' : 'bg-slate-50 text-slate-700'}`}>
-                {t}
-                {t === here ? ' (this quiz)' : ''}
-              </li>
-            ))}
-          </ul>
-          {similarTitles.length > 0 && (
-            <>
-              <p className="text-sm text-slate-600 mt-4 mb-2">Similar questions on the same point appear in:</p>
-              <ul className="space-y-1.5">
-                {similarTitles.map((t) => (
-                  <li key={t} className="flex items-center gap-2 rounded-lg bg-amber-50 px-3 py-2 text-sm text-slate-700">
-                    <span className="rounded-full bg-amber-100 px-2 py-0.5 text-xs font-semibold text-amber-800">Similar</span>
-                    {t}
-                  </li>
-                ))}
-              </ul>
-              <button onClick={onSimilar} className="mt-3 text-sm font-semibold text-amber-700 hover:underline">
-                Answer the similar questions
-              </button>
-            </>
-          )}
-        </>
-      )}
-    </Sheet>
-  );
-}
-
-// The similar questions, each answerable in place: pick an option to see the
-// answer and its explanation.
-function SimilarPeek({ ids, onClose }) {
+// The linked questions, each answerable in place: the copies of this same
+// question from other sittings first, then the similar questions. Pick an
+// option to see the answer and its explanation.
+function LinkedPeek({ same, similar, onClose }) {
+  const ids = [...same, ...similar];
+  const isSame = new Set(same);
   const data = useAsync(
     () =>
       Promise.all(ids.map((id) => getOne(`quizqq/${id}`).then((q) => q && { ...q, _key: id }))).then((l) =>
@@ -203,7 +139,7 @@ function SimilarPeek({ ids, onClose }) {
   const [picked, setPicked] = useState({});
   const list = data.data || [];
   return (
-    <Sheet icon={<Copy size={18} className="shrink-0 text-amber-600" />} title="Similar questions" tone="text-amber-700" onClose={onClose}>
+    <Sheet icon={<Repeat2 size={18} className="shrink-0 text-amber-600" />} title="Linked questions" tone="text-amber-700" onClose={onClose}>
       {data.loading ? (
         <div className="py-10">
           <Spinner />
@@ -214,7 +150,10 @@ function SimilarPeek({ ids, onClose }) {
         </p>
       ) : (
         <>
-          <p className="text-xs text-slate-500 mb-3">Questions on the same point from other papers. Pick an answer to check it.</p>
+          <p className="text-xs text-slate-500 mb-3">
+            {same.length ? `This question came up in ${same.length + 1} sittings. ` : ''}
+            The same question from other sittings and questions on the same point from other papers. Pick an answer to check it.
+          </p>
           <ul className="space-y-3">
             {list.map((q, n) => {
               const answer = String(q.answer || '').trim().toLowerCase();
@@ -222,9 +161,14 @@ function SimilarPeek({ ids, onClose }) {
               const from = q.title || q.quiztitle;
               return (
                 <li key={q._key} className="rounded-xl border border-slate-200 p-3">
-                  <p className="text-xs font-semibold text-amber-700 mb-1">
+                  <p className="flex flex-wrap items-center gap-1.5 text-xs font-semibold text-amber-700 mb-1">
                     Question {n + 1}
-                    {from ? <span className="font-normal text-slate-500"> · {from}</span> : null}
+                    {isSame.has(q._key) ? (
+                      <span className="rounded-full bg-violet-100 px-2 py-0.5 text-violet-800">Same question</span>
+                    ) : (
+                      <span className="rounded-full bg-amber-100 px-2 py-0.5 text-amber-800">Similar</span>
+                    )}
+                    {from ? <span className="font-normal text-slate-500">{from}</span> : null}
                   </p>
                   <p className="text-sm font-medium text-slate-800 whitespace-pre-line">{q.question}</p>
                   <ZoomImage src={q.question_img} className="mt-2" />
