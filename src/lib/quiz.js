@@ -3,6 +3,23 @@
 
 export const OPTION_KEYS = ['a', 'b', 'c', 'd', 'e'];
 
+/**
+ * A question stem split into paragraphs for display. Imported text often
+ * carries stray blank lines (two or three in a row), which showed as large
+ * empty bands; any run of blank lines becomes one paragraph break, while a
+ * single line break (a list inside the stem) is kept.
+ */
+export function questionParagraphs(text) {
+  return String(text ?? '')
+    .replace(/\r/g, '')
+    .split(/\n[ \t]*\n\s*/)
+    .map((p) => p.replace(/[ \t]+\n/g, '\n').trim())
+    .filter(Boolean);
+}
+
+/** An option's text on one line: line breaks inside an option only add height. */
+export const optionText = (text) => String(text ?? '').replace(/\s*\n\s*/g, ' ').trim();
+
 /** Options that should be shown for a question (empty ones are hidden). */
 export function visibleOptions(question, source = '') {
   return OPTION_KEYS.filter((k) => {

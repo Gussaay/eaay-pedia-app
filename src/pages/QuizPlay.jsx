@@ -12,7 +12,7 @@
 //   exam   — you may move freely and change any answer until you submit
 import { lazy, Suspense, useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import { useNavigate, useParams, useSearchParams } from 'react-router-dom';
-import { ArrowLeft, ArrowRight, Clock, Highlighter, LayoutGrid, Lightbulb, MessageSquarePlus, Pencil, Send, X, SkipForward } from 'lucide-react';
+import { ArrowLeft, ArrowRight, Check, Clock, Highlighter, LayoutGrid, MessageSquarePlus, Pencil, Send, X, SkipForward } from 'lucide-react';
 import { useAuth } from '../hooks/useAuth';
 import { useBackHandler } from '../lib/back';
 import { useSwipe } from '../hooks/useSwipe';
@@ -29,7 +29,9 @@ import {
   formatDuration,
   historyCounts,
   isCorrect,
+  optionText,
   planDeck,
+  questionParagraphs,
   tallyAnswers,
   visibleOptions,
 } from '../lib/quiz';
@@ -524,6 +526,14 @@ export default function QuizPlay() {
 
   // Swipe left for the next question, right to look back at the last one.
   const deckRef = useRef(null);
+
+  // Review mode: once a question is answered, bring the result (and the start
+  // of its explanation) into view; on a phone it is often below the options.
+  const resultRef = useRef(null);
+  const answeredHere = mode === 'review' && !!chosen;
+  useEffect(() => {
+    if (answeredHere) resultRef.current?.scrollIntoView({ behavior: 'smooth', block: 'nearest' });
+  }, [answeredHere, index]);
   useSwipe(deckRef, {
     onForward: goForward,
     onBack: goBack,
@@ -597,37 +607,32 @@ export default function QuizPlay() {
       <Page className="space-y-4">
         {current && (
           <>
-            {/* One line: the quiz name and category shrink (with …) before the counts do. */}
-            <div className="flex items-center gap-2 text-xs whitespace-nowrap">
-              {meta.source === 'smsb' || meta.bysystem || meta.set || meta.ai ? (
-                current.title && <span className="min-w-0 truncate rounded-full bg-amber-50 text-amber-800 px-2.5 py-1">{current.title}</span>
-              ) : null}
-              {current.category && <span className="min-w-0 truncate rounded-full bg-slate-100 text-slate-700 px-2.5 py-1">{current.category}</span>}
+            {/* One quiet line: where the question is from, then the hint toggle on the right. */}
+            <div className="flex items-center gap-1.5 text-xs text-slate-500 whitespace-nowrap min-h-[26px]">
+              {(meta.source === 'smsb' || meta.bysystem || meta.set || meta.ai) && current.title && (
+                <span className="min-w-0 truncate">{current.title}</span>
+              )}
+              {(meta.source === 'smsb' || meta.bysystem || meta.set || meta.ai) && current.title && current.category && (
+                <span aria-hidden>·</span>
+              )}
+              {current.category && <span className="min-w-0 truncate">{current.category}</span>}
               {sameOf(current).length + similarOf(current).length > 0 && (
-                <span
-                  className="shrink-0 rounded-full bg-violet-50 text-violet-800 px-2.5 py-1"
-                  title="This question, or one on the same point, came up in other sittings"
-                >
-                  Repeated · {sameOf(current).length + similarOf(current).length + 1}×
-                </span>
+                <>
+                  {current.category && <span aria-hidden>·</span>}
+                  <span
+                    className="shrink-0 font-medium text-violet-700"
+                    title="This question, or one on the same point, came up in other sittings"
+                  >
+                    Repeated {sameOf(current).length + similarOf(current).length + 1}×
+                  </span>
+                </>
               )}
-              {mode !== 'review' && (
-                <span className="shrink-0 rounded-full bg-brand-50 text-brand-800 px-2.5 py-1 ml-auto">Answered: {answeredCount}/{tq}</span>
-              )}
-            </div>
-            {mode === 'review' && reviewing && chosen && (
-              <div className="flex items-center gap-2 rounded-xl bg-amber-50 text-amber-900 px-3 py-2 text-sm">
-                <ArrowLeft size={16} className="shrink-0" />
-                Looking back at an answered question — your answer cannot be changed. Swipe left to return to the quiz.
-              </div>
-            )}
-            <Card className="relative p-5">
               {hints.length > 0 && (
                 <button
                   onClick={() => setHintFor(hintOn ? -1 : qi)}
                   aria-label={hintOn ? 'Hide hint' : 'Show hint'}
                   title={hintOn ? 'Hide hint' : 'Hint'}
-                  className={`absolute right-2 top-2 inline-flex items-center gap-1 rounded-full border px-2 py-1 text-xs font-medium transition ${
+                  className={`ml-auto shrink-0 inline-flex items-center gap-1 rounded-full border px-2 py-0.5 font-medium transition ${
                     hintOn
                       ? 'border-yellow-300 bg-yellow-100 text-yellow-900'
                       : 'border-slate-200 bg-white text-slate-500 hover:border-yellow-300 hover:bg-yellow-50'
@@ -636,36 +641,49 @@ export default function QuizPlay() {
                   <Highlighter size={14} /> Hint
                 </button>
               )}
-              <p className={`text-lg text-slate-900 whitespace-pre-line leading-relaxed ${hints.length > 0 ? 'pr-14' : ''}`}>
-                {hintOn
-                  ? markHints(current.question, hints).map((part, i) =>
-                      part.hit ? (
-                        <mark key={i} className="rounded bg-yellow-200 px-0.5 font-semibold text-slate-900">
-                          {part.text}
-                        </mark>
-                      ) : (
-                        part.text
-                      ),
-                    )
-                  : current.question}
-              </p>
+            </div>
+            {mode === 'review' && reviewing && chosen && (
+              <div className="flex items-center gap-2 rounded-xl bg-amber-50 text-amber-900 px-3 py-2 text-sm">
+                <ArrowLeft size={16} className="shrink-0" />
+                Looking back at an answered question — your answer cannot be changed. Swipe left to return to the quiz.
+              </div>
+            )}
+            <Card className="!border-slate-200 px-4 py-3.5 sm:px-5 sm:py-4">
+              <div className="space-y-2 text-[17px] sm:text-lg leading-normal text-slate-900">
+                {questionParagraphs(current.question).map((para, pi) => (
+                  <p key={pi} className="whitespace-pre-line">
+                    {hintOn
+                      ? markHints(para, hints).map((part, i) =>
+                          part.hit ? (
+                            <mark key={i} className="rounded bg-yellow-200 px-0.5 font-semibold text-slate-900">
+                              {part.text}
+                            </mark>
+                          ) : (
+                            part.text
+                          ),
+                        )
+                      : para}
+                  </p>
+                ))}
+              </div>
               <div data-no-swipe>
                 <ZoomImage src={current.question_img} className="mt-3" />
               </div>
             </Card>
-            <div className="space-y-2.5">
+            <div className="space-y-2">
               {options.map((k) => {
                 const isAns = reveal && k === answer;
                 const isWrong = reveal && k === chosen && k !== answer;
                 // An exam reveals nothing, but the option you picked has to be
                 // visible — both to come back to and to change.
                 const isChosen = !reveal && k === chosen;
+                const faded = reveal && !isAns && !isWrong;
                 return (
                   <button
                     key={`${index}-${k}`}
                     onClick={() => choose(k)}
                     disabled={locked}
-                    className={`w-full text-left flex gap-3 items-start rounded-2xl border-2 p-4 transition active:scale-[0.99] ${
+                    className={`w-full text-left flex gap-2.5 items-center min-h-[48px] rounded-xl border-2 px-3 py-2 transition active:scale-[0.99] ${
                       isAns
                         ? 'border-emerald-500 bg-emerald-50'
                         : isWrong
@@ -673,10 +691,10 @@ export default function QuizPlay() {
                           : isChosen
                             ? 'border-brand-500 bg-brand-50'
                             : 'border-slate-200 bg-white hover:border-brand-400'
-                    }`}
+                    } ${faded ? 'opacity-60' : ''}`}
                   >
                     <span
-                      className={`h-7 w-7 shrink-0 rounded-full flex items-center justify-center text-sm font-bold uppercase ${
+                      className={`h-6 w-6 shrink-0 rounded-full flex items-center justify-center text-xs font-bold uppercase ${
                         isAns
                           ? 'bg-emerald-500 text-white'
                           : isWrong
@@ -686,13 +704,16 @@ export default function QuizPlay() {
                               : 'bg-brand-50 text-brand-700'
                       }`}
                     >
-                      {k}
+                      {isAns ? <Check size={14} strokeWidth={3} /> : isWrong ? <X size={14} strokeWidth={3} /> : k}
                     </span>
-                    <span className="flex-1 text-slate-800 whitespace-pre-line">{current[k]}</span>
+                    <span className="flex-1 text-[15px] leading-snug text-slate-800">{optionText(current[k])}</span>
                   </button>
                 );
               })}
             </div>
+            {mode === 'review' && chosen && (
+              <ResultBox boxRef={resultRef} question={current} selected={chosen} answer={answer} onOpen={() => setShowExp(true)} />
+            )}
             {mode === 'exam' && (
               <p className="text-center text-xs text-slate-400">
                 Tap another option to change your answer at any time before you submit.
@@ -705,20 +726,14 @@ export default function QuizPlay() {
       {/* Review mode: the answer bar, once this question has been answered. */}
       {mode === 'review' && chosen && (
         <div className="fixed bottom-0 inset-x-0 bg-white border-t border-slate-200 shadow-[0_-4px_12px_rgba(0,0,0,0.06)] pb-safe">
-          <div className="max-w-3xl mx-auto flex gap-3 p-3">
-            <div className={`hidden sm:flex items-center font-semibold ${chosen === answer ? 'text-emerald-600' : 'text-red-600'}`}>
-              {chosen === answer ? 'Correct!' : `Wrong — answer is ${answer.toUpperCase()}`}
-            </div>
+          <div className="max-w-3xl mx-auto flex gap-2 px-3 py-2">
             {index > navMin && (
-              <Button variant="outline" onClick={goBack} aria-label="Previous question">
+              <Button variant="outline" className="!px-0 w-11 h-11" onClick={goBack} aria-label="Previous question">
                 <ArrowLeft size={18} />
               </Button>
             )}
-            <Button variant="secondary" className="flex-1" onClick={() => setShowExp(true)}>
-              <Lightbulb size={18} /> Explanation
-            </Button>
-            <Button className="flex-1" onClick={goForward}>
-              {!reviewing && index >= deck.length - 1 ? 'Finish' : 'Next'} <ArrowRight size={18} />
+            <Button className="flex-1 h-11" onClick={goForward}>
+              {!reviewing && index >= deck.length - 1 ? 'Finish' : 'Next question'} <ArrowRight size={18} />
             </Button>
           </div>
         </div>
@@ -727,17 +742,17 @@ export default function QuizPlay() {
       {/* Review mode, not yet answered: look back, or skip this one for now. */}
       {mode === 'review' && !chosen && (
         <div className="fixed bottom-0 inset-x-0 bg-white/95 backdrop-blur border-t border-slate-200 pb-safe">
-          <div className="max-w-3xl mx-auto flex items-center gap-2 p-3">
+          <div className="max-w-3xl mx-auto flex items-center gap-2 px-3 py-2">
             {index > navMin && (
-              <Button variant="outline" onClick={goBack}>
-                <ArrowLeft size={18} /> Previous
+              <Button variant="outline" className="!px-0 w-11 h-11" onClick={goBack} aria-label="Previous question">
+                <ArrowLeft size={18} />
               </Button>
             )}
-            <Button variant="outline" onClick={reviewing ? goForward : advance}>
-              {!reviewing && index >= deck.length - 1 ? 'Skip & finish' : 'Skip'} <SkipForward size={18} />
+            <Button variant="outline" className="!px-0 w-11 h-11" onClick={() => setShowNav(true)} aria-label="All questions" title="All questions">
+              <LayoutGrid size={18} />
             </Button>
-            <Button variant="ghost" className="flex-1" onClick={() => setShowNav(true)}>
-              <LayoutGrid size={18} /> All questions
+            <Button variant="outline" className="flex-1 h-11" onClick={reviewing ? goForward : advance}>
+              {!reviewing && index >= deck.length - 1 ? 'Skip & finish' : 'Skip'} <SkipForward size={18} />
             </Button>
           </div>
         </div>
@@ -746,17 +761,17 @@ export default function QuizPlay() {
       {/* Exam mode: free movement, and the paper is submitted when you say so. */}
       {mode === 'exam' && (
         <div className="fixed bottom-0 inset-x-0 bg-white border-t border-slate-200 shadow-[0_-4px_12px_rgba(0,0,0,0.06)] pb-safe">
-          <div className="max-w-3xl mx-auto flex items-center gap-2 p-3">
-            <Button variant="outline" onClick={goBack} disabled={index <= 0} aria-label="Previous question">
+          <div className="max-w-3xl mx-auto flex items-center gap-2 px-3 py-2">
+            <Button variant="outline" className="!px-0 w-11 h-11" onClick={goBack} disabled={index <= 0} aria-label="Previous question">
               <ArrowLeft size={18} />
             </Button>
-            <Button variant="ghost" className="flex-1 !px-2" onClick={() => setShowNav(true)}>
-              <LayoutGrid size={18} /> {answeredCount}/{tq} answered
+            <Button variant="ghost" className="flex-1 min-w-0 h-11 !px-2 whitespace-nowrap" onClick={() => setShowNav(true)}>
+              <LayoutGrid size={18} className="shrink-0" /> {answeredCount}/{tq} answered
             </Button>
-            <Button variant="outline" onClick={goForward} disabled={index >= deck.length - 1} aria-label="Next question">
+            <Button variant="outline" className="!px-0 w-11 h-11" onClick={goForward} disabled={index >= deck.length - 1} aria-label="Next question">
               <ArrowRight size={18} />
             </Button>
-            <Button onClick={submitExam}>
+            <Button className="h-11" onClick={submitExam}>
               <Send size={16} /> Submit
             </Button>
           </div>
@@ -1005,6 +1020,29 @@ function NavigatorModal({ deck, questions, answers, index, min, max, onPick, onC
         {questions.length !== deck.length ? '. This session plays a selection of the quiz' : ''}.
       </p>
     </Modal>
+  );
+}
+
+// -------------------------------------------------------------------------
+/**
+ * Review mode, under the options once answered: right or wrong in words (the
+ * colours alone are easy to miss on a phone), the first lines of the
+ * explanation, and the way into the full explanation and comments.
+ */
+function ResultBox({ boxRef, question, selected, answer, onOpen }) {
+  const right = selected === answer;
+  const exp = String(question.exp || '').trim();
+  return (
+    <div
+      ref={boxRef}
+      className={`rounded-xl px-3 py-2.5 text-sm scroll-mb-24 ${right ? 'bg-emerald-50 text-emerald-800' : 'bg-red-50 text-red-800'}`}
+    >
+      <p className="font-semibold">{right ? 'Correct!' : `Wrong — the answer is ${answer.toUpperCase()}`}</p>
+      {exp && <p className="mt-1 text-slate-700 line-clamp-2 whitespace-pre-line">{exp}</p>}
+      <button onClick={onOpen} className="mt-1 font-semibold text-brand-700 hover:underline">
+        {exp || question.exp_img ? 'Read full explanation' : 'Explanation and comments'}
+      </button>
+    </div>
   );
 }
 

@@ -5,7 +5,20 @@ import {
   computeSessionResult, rating, answerStats, matchesChapter,
   planDeck, historyCounts, tallyAnswers, encodeDeck, decodeDeck, encodeAnswers, decodeAnswers,
   buildAttempt, encodeAttempt, decodeAttempt, reviewItems, filterItems, reviewCounts,
+  questionParagraphs, optionText,
 } from './quiz.js';
+
+test('questionParagraphs collapses runs of blank lines and keeps single breaks', () => {
+  assert.deepEqual(questionParagraphs('A boy.\n\n\nHe is well.\r\n\r\n What next?\n'), ['A boy.', 'He is well.', 'What next?']);
+  assert.deepEqual(questionParagraphs('Which:\n1. x\n2. y'), ['Which:\n1. x\n2. y']);
+  assert.deepEqual(questionParagraphs(''), []);
+  assert.deepEqual(questionParagraphs(undefined), []);
+});
+
+test('optionText puts an option on one line', () => {
+  assert.equal(optionText('\nNebulised adrenaline\n and admit\n\n'), 'Nebulised adrenaline and admit');
+  assert.equal(optionText(5), '5');
+});
 
 test('visibleOptions hides empty options and E for smsb', () => {
   const q = { a: 'x', b: 'y', c: '', d: 'z', e: 'w' };
