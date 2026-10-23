@@ -1,0 +1,519 @@
+{
+ "1": {
+  "similar": [
+   "-P4eMBynwbIo0xefJf6N",
+   "-P2RxJaG3oHI7h2mkYSV"
+  ],
+  "cards": [
+   "-P2RwhZVzUIPChcvDyuc~-P2RwoxEgaqTbhC0bk4z",
+   "-P2RwhZVzUIPChcvDyuc~-P2RwoxEgaqTbhC0bk51"
+  ]
+ },
+ "2": {
+  "similar": [
+   "-P4eMBynwbIo0xefJf6K"
+  ],
+  "cards": [
+   "-P2n35T8QrKFwRxPgRt3~-P2n35T8QrKFwRxPgRtO",
+   "-P2n35T8QrKFwRxPgRt3~-P2n35T8QrKFwRxPgRtP"
+  ]
+ },
+ "3": {
+  "similar": [
+   "-N648J89J-DEifxlMOzh",
+   "-OSlnQPq2gPL00oBHPWl"
+  ],
+  "mnemonics": [
+   "-P3UIk0X0UCE_yzzz7Fy~-P3UIk0X0UCE_yzzz7G4"
+  ]
+ },
+ "6": {
+  "similar": [
+   "-NERhkoLUyJGEFJjQDu-",
+   "-KU4cq-sp7DAAGnUuJck"
+  ],
+  "cards": [
+   "-P2n35TBfGFKeIqydMsS~-P2n35TCk2WM1HVqqxxp"
+  ]
+ },
+ "7": {
+  "similar": [
+   "-OiywvEcTl10mfL7AZq1"
+  ],
+  "cards": [
+   "-P3QS-NiyOyZoGfXIqFh~-P3QS-NjMsPY1bKvSg4y",
+   "-P3QS-NmC5R_a1vpSJi8~-P3QS-NmC5R_a1vpSJid"
+  ],
+  "mnemonics": [
+   "-P3UIk0X0UCE_yzzz7FW~-P3UIk0X0UCE_yzzz7F_",
+   "-P3UIk0Vy9WmVtC37ry2~-P3UIk0Vy9WmVtC37ry7"
+  ]
+ },
+ "8": {
+  "similar": [
+   "-OiywvEcTl10mfL7AZq1",
+   "-P2y7DumQ8SpmWX6RoMO"
+  ],
+  "cards": [
+   "-P3QS-NiyOyZoGfXIqFh~-P3QS-NjMsPY1bKvSg4y",
+   "-P3QS-NmC5R_a1vpSJi8~-P3QS-NmC5R_a1vpSJid",
+   "-P2n35TCk2WM1HVqqy2X~-P2n35TCk2WM1HVqqy3_"
+  ],
+  "mnemonics": [
+   "-P3UIk0X0UCE_yzzz7FW~-P3UIk0X0UCE_yzzz7F_"
+  ]
+ },
+ "9": {
+  "similar": [
+   "-P3QSAmIlW9uUCncyHX9",
+   "-P3QSAmIlW9uUCncyHWg",
+   "-OnimiVHZ89A8jDqrzf0"
+  ],
+  "cards": [
+   "-P3QS-NjMsPY1bKvSg5T~-P3QS-NkN1mY_kOFS5lN",
+   "-P3WclWbv0n7_Wltv0-b~-P3WclWiat644vpjjSQT",
+   "-P3QS-NjMsPY1bKvSg5T~-P3QS-NkN1mY_kOFS5lM"
+  ],
+  "mnemonics": [
+   "-P3UIk0X0UCE_yzzz7FW~-P3VZjYGmZOMqPe9KN5Y",
+   "-P3UIk0X0UCE_yzzz7FG~-P3VZjYCqXw536VhcuZ9"
+  ]
+ },
+ "10": {
+  "similar": [
+   "-P3QSAmMvJSx6a-nuzQH",
+   "-F3fZZMW1RFEbw28D_TZ"
+  ],
+  "cards": [
+   "-P2n35T8QrKFwRxPgRt3~-P2n35T8QrKFwRxPgRuA",
+   "-P3QS-NmC5R_a1vpSJgk~-P3QS-NmC5R_a1vpSJi2"
+  ],
+  "mnemonics": [
+   "-P3UIk0X0UCE_yzzz7FG~-P3UIk0X0UCE_yzzz7FL"
+  ]
+ },
+ "13": {
+  "similar": [
+   "-P4eMA8dNsxM68ChBIPy",
+   "-P3QSAmMvJSx6a-nuzNS"
+  ],
+  "cards": [
+   "-P2n35TA-i4olfJGvBsA~-P2n35TA-i4olfJGvBsE"
+  ],
+  "mnemonics": [
+   "-P3UIk0X0UCE_yzzz7F3~-P3UIk0X0UCE_yzzz7F6"
+  ]
+ },
+ "14": {
+  "similar": [
+   "-P4eMKsKNzb_64E6KUmJ",
+   "-P4eMFYXeFPG3JxiABXb",
+   "-P3QSAmIlW9uUCncyHWr"
+  ],
+  "cards": [
+   "-P2n35T8QrKFwRxPgRuD~-P2n35T8QrKFwRxPgRvD",
+   "-P3QS-NjMsPY1bKvSg5T~-P3QS-NkN1mY_kOFS5kV",
+   "-P3QS-NjMsPY1bKvSg5T~-P3QS-NkN1mY_kOFS5jz"
+  ],
+  "mnemonics": [
+   "-P3UIk0WaEPwxDz__H5e~-P3UIk0WaEPwxDz__H5i"
+  ]
+ },
+ "15": {
+  "cards": [
+   "-P2n35T8QrKFwRxPgRuD~-P2n35T8QrKFwRxPgRvM"
+  ],
+  "mnemonics": [
+   "-P3UIk0WaEPwxDz__H5e~-P3UIk0WaEPwxDz__H5j"
+  ]
+ },
+ "16": {
+  "similar": [
+   "-P4eM8HRe9V4I_C2schd",
+   "-J5tPN-qweCIZuotLtnN",
+   "-P3QSAmLclANPG025-rM"
+  ],
+  "cards": [
+   "-P2y6uPXJfyaaTGBAomt~-P2y6uPYKmsh7w5rsNSW"
+  ]
+ },
+ "17": {
+  "similar": [
+   "-J5tPMzjCIhbvxbuG2h_"
+  ],
+  "cards": [
+   "-P2n35T8QrKFwRxPgRuD~-P2n35T8QrKFwRxPgRv_"
+  ]
+ },
+ "18": {
+  "similar": [
+   "-F3fZZMVYkYFD2kUGLoc",
+   "-OnimiVHZ89A8jDqrzf0"
+  ],
+  "cards": [
+   "-P3QS-NjMsPY1bKvSg5T~-P3QS-NkN1mY_kOFS5lR"
+  ],
+  "mnemonics": [
+   "-P3UIk0X0UCE_yzzz7FG~-P3VZjYCqXw536VhcuZ9",
+   "-P3UIk0UM2nFV73kB5Gc~-P3UIk0Vy9WmVtC37rwf"
+  ]
+ },
+ "19": {
+  "similar": [
+   "-P4eMA8e6uXE2QySAuNX",
+   "-P4eMJ9XPFyoEJWOiY9q",
+   "-P4eMByomzaK_zIKXPOz",
+   "-P4eAOPS30uyj5Z-VuvA"
+  ],
+  "cards": [
+   "-P3WclWbv0n7_Wltv0-b~-P3WclWh0UHUmcgss8HK",
+   "-P2n35T93kU7bIDXPqHa~-P2n35T93kU7bIDXPqJG"
+  ],
+  "mnemonics": [
+   "-P3UIk0X0UCE_yzzz7FG~-P3VZjYCqXw536VhcuZ9"
+  ]
+ },
+ "20": {
+  "similar": [
+   "-NB3kZaIUDHAnO6bqUt4",
+   "-P4eMBynwbIo0xefJf6I",
+   "-P2n5-5FpkQTmhod0hOm",
+   "-NERhkoLUyJGEFJjQDu-"
+  ],
+  "cards": [
+   "-P2n35TBfGFKeIqydMsS~-P2n35TCk2WM1HVqqxxp"
+  ]
+ },
+ "21": {
+  "similar": [
+   "-F3fZZMX6GWjdFdGhlZ0"
+  ],
+  "cards": [
+   "-P2n35T8QrKFwRxPgRuD~-P2n35T8QrKFwRxPgRvT"
+  ]
+ },
+ "22": {
+  "similar": [
+   "-P4eAOPS30uyj5Z-Vuv4",
+   "-P2n5-5FpkQTmhod0hN4",
+   "-P4eM8HQr4MENPVhBzHP"
+  ],
+  "cards": [
+   "-P26Ys86pHM1h9P6nV8A~-P26iRlpuyT0mVODNxzs",
+   "-P3WclV3IR7a9bfXnZm8~-P3WclV9JCe6_3om2lHB"
+  ],
+  "mnemonics": [
+   "-P3UIk0WaEPwxDz__H5e~-P3_tiroYzPEj9EICzA_",
+   "-P3UIk0X0UCE_yzzz7Eo~-P3UIk0X0UCE_yzzz7Er"
+  ]
+ },
+ "23": {
+  "similar": [
+   "-P2n5-5EBCHyMYeOnaj0",
+   "-P2n5-5FpkQTmhod0hM2",
+   "-P2n5-5EBCHyMYeOnajA",
+   "-P4eMKsKNzb_64E6KUmZ"
+  ],
+  "cards": [
+   "-P2n35T93kU7bIDXPqHa~-P2n35T93kU7bIDXPqI7"
+  ]
+ },
+ "24": {
+  "similar": [
+   "-N7gbSkSuc8NWfta5rF5",
+   "-ND9I1E26lqG9FIIh8l2"
+  ],
+  "cards": [
+   "-P2n35TBfGFKeIqydMpn~-P2n35TBfGFKeIqydMrD",
+   "-P2n35T7rUK-lJWfkam9~-P2n35T8QrKFwRxPgRsU",
+   "-P3QS-NmC5R_a1vpSJi8~-P3QS-NmC5R_a1vpSJiP"
+  ]
+ },
+ "25": {
+  "similar": [
+   "-F3fZZMR7_63vTe56Spr",
+   "-P3QSAmMvJSx6a-nuzQ9"
+  ],
+  "mnemonics": [
+   "-P3UIk0X0UCE_yzzz7Fc~-P3UIk0X0UCE_yzzz7Fe"
+  ]
+ },
+ "26": {
+  "similar": [
+   "-P3QSAmKxs0uIijibR1Q",
+   "-OnimiVPj133ipkavKKg"
+  ],
+  "cards": [
+   "-P3QS-NlAI_fjonyC_SP~-P3QS-NlAI_fjonyC_T7",
+   "-P2y6uPdLGIeJhwjQtbV~-P2y6uPeAiAh_FfwArku",
+   "-P3QS-NlAI_fjonyC_SP~-P3QS-NlAI_fjonyC_T0"
+  ]
+ },
+ "27": {
+  "similar": [
+   "-P4eMByomzaK_zIKXPPE",
+   "-NAVcZS_8Tf0ebugNxlR",
+   "-P3QSAmKxs0uIijibR1i"
+  ],
+  "cards": [
+   "-P3QS-NlAI_fjonyC_SP~-P3QS-NlAI_fjonyC_Td"
+  ]
+ },
+ "28": {
+  "similar": [
+   "-P3QSAmKxs0uIijibR1Y"
+  ],
+  "cards": [
+   "-P2n35TCk2WM1HVqqy-_~-P2n35TCk2WM1HVqqy-u",
+   "-P2y6uPdLGIeJhwjQtbV~-P2y6uPeAiAh_FfwArkU"
+  ]
+ },
+ "29": {
+  "similar": [
+   "-P4eMBynwbIo0xefJf6J",
+   "-P4eMHS2V5DJzrklGXMX",
+   "-F3fZZF2Lr8H8nwqzEhv"
+  ],
+  "cards": [
+   "-P3WclTuUl8_8GEVz4KH~-P3WclUNWKc7j_y5yWk0"
+  ],
+  "mnemonics": [
+   "-P3UIk0UM2nFV73kB5Gc~-P3UIk0Vy9WmVtC37rwf",
+   "-P3UIk0UM2nFV73kB5Gc~-P3UIk0UM2nFV73kB5Gm"
+  ]
+ },
+ "30": {
+  "similar": [
+   "-N62Bu_Dvn7ppuzgtOqE",
+   "-P3QSAmGiGClEBH3wSls"
+  ],
+  "cards": [
+   "-P3QS-Nb_0dtD8rvyp8F~-P3QS-Nb_0dtD8rvyp8O"
+  ],
+  "mnemonics": [
+   "-P3UIk0UM2nFV73kB5Gc~-P3UIk0UM2nFV73kB5Gf"
+  ]
+ },
+ "31": {
+  "similar": [
+   "-P4eMA8e6uXE2QySAuNW",
+   "-P4eMByomzaK_zIKXPOl"
+  ],
+  "cards": [
+   "-P3QS-Nb_0dtD8rvyp8F~-P3QS-Nb_0dtD8rvyp9J"
+  ],
+  "mnemonics": [
+   "-P3UIk0UM2nFV73kB5Gc~-P3VZjXjV5bUOUQFcv3T"
+  ]
+ },
+ "32": {
+  "similar": [
+   "-P4eMFYYoQk9qGsB3L-3"
+  ],
+  "cards": [
+   "-P3WclUrigIJacqtpkVe~-P3XgJCNYXnVRl9by-tv"
+  ]
+ },
+ "33": {
+  "similar": [
+   "-OlTaCUiuUMuo_V6zlS3"
+  ],
+  "cards": [
+   "-P3QS-NlAI_fjonyC_SP~-P3QS-NmC5R_a1vpSJgf"
+  ],
+  "mnemonics": [
+   "-P3UIk0X0UCE_yzzz7Fy~-P3VZjYLdzWpSbfjzfuw"
+  ]
+ },
+ "35": {
+  "similar": [
+   "-P4eM8HOduQ_ol0E0lFp",
+   "-P4eAOPS30uyj5Z-VuvJ",
+   "-KwSK7kk1k26FfoE1zkT"
+  ],
+  "cards": [
+   "-P2RwhZVzUIPChcvDyuc~-P2RwoxEgaqTbhC0bk5Z"
+  ],
+  "mnemonics": [
+   "-P3UIk0X0UCE_yzzz7F3~-P3UIk0X0UCE_yzzz7F6"
+  ]
+ },
+ "36": {
+  "similar": [
+   "-P4eMA8cMJCRSQ3eGY9u"
+  ],
+  "mnemonics": [
+   "-P3UIk0X0UCE_yzzz7F3~-P3UIk0X0UCE_yzzz7F6"
+  ]
+ },
+ "37": {
+  "similar": [
+   "-P4eMA8dNsxM68ChBIQ4",
+   "-J5tPMzwG2Q6g53MTzrF",
+   "-P4eMKsJTvM11lEa2oEY"
+  ],
+  "cards": [
+   "-P3WclVwu8i75q_kTBmk~-P3WclW-jk2bg8F3cYOE",
+   "-P2n35TA-i4olfJGvBsA~-P2n35TBfGFKeIqydMlh"
+  ]
+ },
+ "39": {
+  "similar": [
+   "-NEebIOuFfcJpELxRodt",
+   "-P4eMByomzaK_zIKXPOs"
+  ],
+  "cards": [
+   "-P3WclUrigIJacqtpkVe~-P3WclUwZUJ3Naf7cYl5"
+  ]
+ },
+ "40": {
+  "similar": [
+   "-P4eM8HQr4MENPVhBzHX"
+  ],
+  "cards": [
+   "-P26Ys86pHM1h9P6nV8A~-P26iRlqcMz29kkLZx-L"
+  ]
+ },
+ "41": {
+  "similar": [
+   "-P4eMByomzaK_zIKXPPD",
+   "-P1zmTYTJGsuMFiT0YHA",
+   "-OlTaCVPy4PY3KfNay5o"
+  ],
+  "cards": [
+   "-P2n35TCk2WM1HVqqy57~-P2n35TDyMhWgpPHlnV_",
+   "-P26Ys86pHM1h9P6nV8A~-P26iRlo-jusV2MnMofG",
+   "-P26Ys86pHM1h9P6nV8A~-P26iRlo-jusV2MnMofH"
+  ]
+ },
+ "42": {
+  "similar": [
+   "-P1zmTYTJGsuMFiT0YGe",
+   "-P3QSAmKxs0uIijibR-x",
+   "-P4eMBymBSs5ck-PbGYd",
+   "-P4eM8HRe9V4I_C2schY"
+  ],
+  "cards": [
+   "-P26Ys86pHM1h9P6nV8A~-P26iRlqcMz29kkLZx-A",
+   "-P2n35T93kU7bIDXPqM-~-P2n35T93kU7bIDXPqN0"
+  ],
+  "mnemonics": [
+   "-P3UIk0WaEPwxDz__H5z~-P3UIk0WaEPwxDz__H61"
+  ]
+ },
+ "43": {
+  "similar": [
+   "-OlTaCVB37MFLW8jXl2S",
+   "-OnimiVH21NhM0-8iH5a"
+  ],
+  "cards": [
+   "-P3QS-NkN1mY_kOFS5mS~-P3QS-NkN1mY_kOFS5nU",
+   "-P3QS-NiyOyZoGfXIqFh~-P3QS-NjMsPY1bKvSg2N"
+  ],
+  "mnemonics": [
+   "-P3UIk0WaEPwxDz__H5z~-P3UIk0WaEPwxDz__H61"
+  ]
+ },
+ "45": {
+  "similar": [
+   "-P4eGE8WIK3K4RvBIIJ4",
+   "-P3QSAmKxs0uIijibR0a"
+  ],
+  "cards": [
+   "-P3QS-NlAI_fjonyC_RK~-P3QS-NlAI_fjonyC_Rv",
+   "-P2n35T93kU7bIDXPqOB~-P2n35T93kU7bIDXPqP2",
+   "-P3QS-NlAI_fjonyC_RK~-P3QS-NlAI_fjonyC_Rr"
+  ],
+  "mnemonics": [
+   "-P3VZjY5NTZBaybN2Hyz~-P3UIk0X0UCE_yzzz7Ek"
+  ]
+ },
+ "47": {
+  "similar": [
+   "-NCaNEZiiY7x8c-kEzIr",
+   "-P2n5-5FpkQTmhod0hMA"
+  ],
+  "cards": [
+   "-P2n35TBfGFKeIqydMmb~-P2n35TBfGFKeIqydMnG"
+  ]
+ },
+ "48": {
+  "similar": [
+   "-NES268hqyssGCaLn5ob",
+   "-NDZeqAcNIC5Hzbyx-BK"
+  ],
+  "cards": [
+   "-P2n35TBfGFKeIqydMpn~-P2n35TBfGFKeIqydMqv"
+  ]
+ },
+ "49": {
+  "similar": [
+   "-F3fZZN0LScVxEUGW86n",
+   "-P1zmTYTJGsuMFiT0YHa",
+   "-NOHMjcEH-td_erE2DCv"
+  ],
+  "cards": [
+   "-P3WclUrigIJacqtpkVe~-P3WclV1Aof5sClETUh7",
+   "-P3WclXap6b-Wlp5ltdF~-P3fXKvIM12SKe9hlBsc",
+   "-P3WclUrigIJacqtpkVe~-P3WclV0baROiL9ivOTt"
+  ]
+ },
+ "50": {
+  "similar": [
+   "-NERtsZrCkOqJ3Lz34rB",
+   "-N5zOuYgMeegxDOxq0VN"
+  ]
+ },
+ "51": {
+  "similar": [
+   "-P4eMByomzaK_zIKXPPG",
+   "-KU4cq-q2GeU-XG0fdLI"
+  ],
+  "cards": [
+   "-P3QS-NnuDGzM99a4kcB~-P3QS-NnuDGzM99a4kcE",
+   "-P3WclXap6b-Wlp5ltdF~-P3WclXm4FUTW86cTmO7"
+  ]
+ },
+ "52": {
+  "similar": [
+   "-P4eMA8dNsxM68ChBIQQ",
+   "-P4eGE8WIK3K4RvBIIJ0",
+   "-N5zWPuj0E-8iXMdtQQE"
+  ],
+  "cards": [
+   "-P2n35TBfGFKeIqydMmb~-P2n35TBfGFKeIqydMov"
+  ]
+ },
+ "53": {
+  "similar": [
+   "-J5tPN-LzVcUQ_3gVlju"
+  ],
+  "cards": [
+   "-P3WclTuUl8_8GEVz4KH~-P3WclTzkMxIXBmLn2GO"
+  ],
+  "mnemonics": [
+   "-P3UIk0Vy9WmVtC37rx1~-P3UIk0Vy9WmVtC37rxR"
+  ]
+ },
+ "54": {
+  "similar": [
+   "-P4eMA8cMJCRSQ3eGYA-",
+   "-NERZ_VPfIy1w1Z_Lzwb"
+  ],
+  "cards": [
+   "-P2n35T6D5yrw_9UacxB~-P2n35T6D5yrw_9UacxN"
+  ]
+ },
+ "55": {
+  "similar": [
+   "-P2n5-5FpkQTmhod0hJ2",
+   "-P2n5-5FpkQTmhod0hJx"
+  ],
+  "cards": [
+   "-P2n35TA-i4olfJGvBns~-P2n35TA-i4olfJGvBpS"
+  ],
+  "mnemonics": [
+   "-P3UIk0Vy9WmVtC37rx1~-P3VZjXqWqFSoBq8QExq"
+  ]
+ }
+}

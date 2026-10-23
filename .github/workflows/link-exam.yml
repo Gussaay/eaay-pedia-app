@@ -43,6 +43,6 @@ jobs:
           }
           while IFS='|' read -r title file; do
             echo "=== $title"
-            link "$title" "data/exams/links/$file.json"
+            link "$title" "data/exams/links/$file.json" < /dev/null
           done < data/exams/links/quizzes.txt
           rm -f "$RUNNER_TEMP/sa.json"
