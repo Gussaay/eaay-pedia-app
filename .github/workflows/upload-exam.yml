@@ -1,6 +1,6 @@
 name: Upload exam paper
 
-# Writes data/exams/doh-haad-2024.json into the Realtime Database with
+# Writes the DOH (HAAD) papers in data/exams into the Realtime Database with
 # scripts/upload-exam-json.mjs, using the same service account as the hosting
 # deploy. Runs only from this branch; the script skips a paper that is already
 # there, so a re-run cannot duplicate it. The undo manifest is kept as a run
@@ -11,6 +11,8 @@ on:
       - claude/project-thread-cop9he
     paths:
       - 'data/exams/doh-haad-2024.json'
+      - 'data/exams/doh-haad-pv-2024-03.json'
+      - 'data/exams/doh-haad-pv-33.json'
       - '.github/workflows/upload-exam.yml'
   workflow_dispatch:
 
@@ -34,9 +36,12 @@ jobs:
         run: |
           printf '%s' "$FIREBASE_SERVICE_ACCOUNT" > "$RUNNER_TEMP/sa.json"
           export GOOGLE_APPLICATION_CREDENTIALS="$RUNNER_TEMP/sa.json"
-          node scripts/upload-exam-json.mjs data/exams/doh-haad-2024.json \
-            --bank gulf_licensing --bank-title "Gulf Licensing Exams" \
-            --book doh_haad --book-title "DOH (HAAD)" --commit
+          for paper in doh-haad-2024 doh-haad-pv-2024-03 doh-haad-pv-33; do
+            node scripts/upload-exam-json.mjs "data/exams/$paper.json" \
+              --bank gulf_licensing --bank-title "Gulf Licensing Exams" \
+              --book doh_haad --book-title "DOH (HAAD)" --commit
+            if [ -f .tmp/exam-upload-keys-doh_haad.json ]; then mv .tmp/exam-upload-keys-doh_haad.json ".tmp/exam-upload-keys-$paper.json"; fi
+          done
           rm -f "$RUNNER_TEMP/sa.json"
       - uses: actions/upload-artifact@v4
         if: always()
@@ -44,3 +49,4 @@ jobs:
           name: exam-upload-keys
           path: .tmp/exam-upload-keys-*.json
           if-no-files-found: ignore
+          include-hidden-files: true
