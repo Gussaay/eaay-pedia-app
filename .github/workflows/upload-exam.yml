@@ -1,0 +1,46 @@
+name: Upload exam paper
+
+# Writes data/exams/doh-haad-2024.json into the Realtime Database with
+# scripts/upload-exam-json.mjs, using the same service account as the hosting
+# deploy. Runs only from this branch; the script skips a paper that is already
+# there, so a re-run cannot duplicate it. The undo manifest is kept as a run
+# artifact (node scripts/upload-exam-json.mjs --undo <file> --commit).
+on:
+  push:
+    branches:
+      - claude/project-thread-cop9he
+    paths:
+      - 'data/exams/**'
+      - '.github/workflows/upload-exam.yml'
+  workflow_dispatch:
+
+concurrency:
+  group: upload-exam
+  cancel-in-progress: false
+
+jobs:
+  upload:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+      - name: Install Firebase CLI
+        run: npm i -g firebase-tools@14
+      - name: Upload
+        env:
+          FIREBASE_SERVICE_ACCOUNT: ${{ secrets.FIREBASE_SERVICE_ACCOUNT_EASY_PEDIA }}
+        run: |
+          printf '%s' "$FIREBASE_SERVICE_ACCOUNT" > "$RUNNER_TEMP/sa.json"
+          export GOOGLE_APPLICATION_CREDENTIALS="$RUNNER_TEMP/sa.json"
+          node scripts/upload-exam-json.mjs data/exams/doh-haad-2024.json \
+            --bank gulf_licensing --bank-title "Gulf Licensing Exams" \
+            --book doh_haad --book-title "DOH (HAAD)" --commit
+          rm -f "$RUNNER_TEMP/sa.json"
+      - uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: exam-upload-keys
+          path: .tmp/exam-upload-keys-*.json
+          if-no-files-found: ignore
