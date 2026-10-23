@@ -1,0 +1,41 @@
+name: Link exam questions
+
+# Without data/exams/doh-haad-links.json: prints link candidates for the DOH
+# (HAAD) book in the log. With it: writes the picked links.
+on:
+  push:
+    branches:
+      - claude/project-thread-cop9he
+    paths:
+      - 'scripts/link-exam.mjs'
+      - 'data/exams/doh-haad-links.json'
+      - '.github/workflows/link-exam.yml'
+  workflow_dispatch:
+
+concurrency:
+  group: link-exam
+  cancel-in-progress: false
+
+jobs:
+  link:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+      - name: Install Firebase CLI
+        run: npm i -g firebase-tools@14
+      - name: Link
+        env:
+          FIREBASE_SERVICE_ACCOUNT: ${{ secrets.FIREBASE_SERVICE_ACCOUNT_EASY_PEDIA }}
+        run: |
+          printf '%s' "$FIREBASE_SERVICE_ACCOUNT" > "$RUNNER_TEMP/sa.json"
+          export GOOGLE_APPLICATION_CREDENTIALS="$RUNNER_TEMP/sa.json"
+          if [ -f data/exams/doh-haad-links.json ]; then
+            node --max-old-space-size=6000 scripts/link-exam.mjs --book doh_haad --apply data/exams/doh-haad-links.json --commit
+          else
+            node --max-old-space-size=6000 scripts/link-exam.mjs --book doh_haad > candidates.txt
+            tail -n +1 candidates.txt
+          fi
+          rm -f "$RUNNER_TEMP/sa.json"

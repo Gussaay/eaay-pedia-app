@@ -10,7 +10,7 @@ on:
     branches:
       - claude/project-thread-cop9he
     paths:
-      - 'data/exams/**'
+      - 'data/exams/doh-haad-2024.json'
       - '.github/workflows/upload-exam.yml'
   workflow_dispatch:
 
