@@ -29,13 +29,17 @@ jobs:
         run: |
           set +e
           cd "$RUNNER_TEMP"
-          echo "Reply with exactly: OK" | claude -p --model sonnet --max-turns 1 --output-format json > reply.json 2> err.txt
+          # the same lean call the link phase makes: short system prompt, no tools
+          echo "Reply with exactly: OK" | claude -p --model sonnet --max-turns 1 --output-format json \
+            --system-prompt "You judge paediatric exam questions. Reply with JSON or the exact text asked for, nothing else." \
+            --tools "" --disable-slash-commands --strict-mcp-config --no-session-persistence > reply.json 2> err.txt
           echo "exit code: $?"
           node -e '
             const fs = require("fs");
             let j = {};
             try { j = JSON.parse(fs.readFileSync("reply.json", "utf8")); } catch {}
             console.log("is_error:", j.is_error, "| subtype:", j.subtype, "| reply:", String(j.result ?? "").slice(0, 300));
+            console.log("usage:", JSON.stringify(j.usage || {}));
             const err = fs.readFileSync("err.txt", "utf8").split("\n").slice(-5).join("\n");
             if (err.trim()) console.log("stderr tail:", err.slice(0, 500));
             console.log(j.is_error === false ? "RESULT: token works" : "RESULT: token failed");
