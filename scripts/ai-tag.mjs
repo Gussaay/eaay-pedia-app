@@ -422,6 +422,8 @@ if (phase === 'link') {
       const v = reply.r?.[String(n + 1)];
       if (v === 0 || v === 1 || v === '0' || v === '1') updates[`aitag/pair/${k}`] = state.pair[k] = Number(v);
     });
+    // a small summary the status workflow (ai-tag-status.yml) can read while this runs
+    updates['aitag/progress'] = { phase: 'link', candidates: cand.length, left: todo.length - i, updated: new Date().toISOString() };
     write(updates, 'aitag-pair');
     console.log(`  ${i}/${todo.length} (${calls} requests)`);
   }

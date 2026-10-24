@@ -1,0 +1,47 @@
+name: AI tags status
+
+# Prints how far the AI tags and links job (ai-tag.yml) has got, without
+# stopping it: questions tagged, pairs judged and linked, and the link
+# phase's own summary (aitag/progress, written after every batch).
+on:
+  workflow_dispatch:
+
+concurrency:
+  group: ai-tag-status
+  cancel-in-progress: true
+
+permissions:
+  contents: read
+
+jobs:
+  status:
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    steps:
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+      - name: Install Firebase CLI
+        run: npm i -g firebase-tools@14
+      - name: Status
+        env:
+          FIREBASE_SERVICE_ACCOUNT: ${{ secrets.FIREBASE_SERVICE_ACCOUNT_EASY_PEDIA }}
+        run: |
+          printf '%s' "$FIREBASE_SERVICE_ACCOUNT" > "$RUNNER_TEMP/sa.json"
+          export GOOGLE_APPLICATION_CREDENTIALS="$RUNNER_TEMP/sa.json"
+          get() { firebase database:get "$1" --shallow --project easy-pedia --output "$RUNNER_TEMP/$2.json"; }
+          get /aitag/q q
+          get /aitag/pair pair
+          get /quizqq all
+          firebase database:get /aitag/progress --project easy-pedia --output "$RUNNER_TEMP/progress.json"
+          rm -f "$RUNNER_TEMP/sa.json"
+          cd "$RUNNER_TEMP"
+          node -e '
+            const r = (f) => JSON.parse(require("fs").readFileSync(f, "utf8") || "null") || {};
+            const pair = Object.values(r("pair.json"));
+            const p = r("progress.json");
+            console.log("STATUS");
+            console.log(`Questions tagged: ${Object.keys(r("q.json")).length} of ${Object.keys(r("all.json")).length}`);
+            console.log(`Pairs judged: ${pair.length}; linked: ${pair.filter((v) => Number(v) === 1).length}`);
+            if (p.phase) console.log(`Link phase: ${p.candidates - p.left} of ${p.candidates} candidate pairs judged, ${p.left} left (updated ${p.updated})`);
+          '
