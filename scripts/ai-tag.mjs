@@ -106,9 +106,10 @@ const saveWeek = () => write({ 'aitag/claude': claudeWeek }, 'aitag-claude');
 const claudeReady = () =>
   claudeOn && claudeState().calls < claudeMax && claudeWeek.calls < claudeWeekMax && Date.now() > claudeWeek.until;
 const models = [
-  ...(claudeReady() ? [{ provider: 'claude', model: process.env.CLAUDE_MODEL || 'sonnet' }] : []),
   ...(geminiKey ? (process.env.GEMINI_MODEL || 'gemini-flash-lite-latest,gemini-3.5-flash-lite,gemini-flash-latest,gemini-3.8-flash').split(',').map((m) => ({ provider: 'gemini', model: m })) : []),
   ...(groqKey ? (await groqModels()).map((m) => ({ provider: 'groq', model: m })) : []),
+  // last: the free models come first wherever one list is used
+  ...(claudeReady() ? [{ provider: 'claude', model: process.env.CLAUDE_MODEL || 'sonnet' }] : []),
 ];
 
 /** Groq's text models that this key can use now; each has its own free quota. */
@@ -128,6 +129,7 @@ async function groqModels() {
 const spent = new Set(); // models out of quota for today
 const fits = new Map(); // model → longest prompt (characters) it accepts
 let tooBig = false; // last ask() failed only because the prompt was too long
+const tooBigFor = {}; // the same, per group ('free', 'claude'), for side-by-side workers
 let calls = 0;
 let allSpent = false; // every model out of quota for today
 let lastCall = 0;
@@ -208,14 +210,16 @@ async function askOnce({ provider, model }, prompt, out) {
 /**
  * JSON from the first model with quota left; null when every model is spent,
  * or (with tooBig set) when the models left only take a shorter prompt.
- * out: tokens the reply may need.
+ * out: tokens the reply may need. pick: 'free' (Gemini, Groq) or 'claude'
+ * to use only those; tooBig and allSpent then speak for that group.
  */
-async function ask(prompt, out = 4000) {
-  tooBig = false;
-  for (const m of models) {
+async function ask(prompt, out = 4000, pick = '') {
+  let big = false; // local: workers can ask side by side
+  const group = pick === 'claude' ? models.filter((m) => m.provider === 'claude') : pick === 'free' ? models.filter((m) => m.provider !== 'claude') : models;
+  for (const m of group) {
     if (spent.has(m.model)) continue;
     if (prompt.length > (fits.get(m.model) ?? Infinity)) {
-      tooBig = true;
+      big = true;
       continue;
     }
     let skip = false; // try the next model without writing this one off
@@ -241,7 +245,7 @@ async function ask(prompt, out = 4000) {
       if (status === 413 || asked > limit || (status === 400 && /reduce the length/i.test(text))) {
         // prompt too big for this model: remember what fits and ask for a smaller batch
         fits.set(m.model, Math.floor(prompt.length * Math.min(0.9, asked > limit ? (limit / asked) * 0.9 : 0.5)));
-        tooBig = true;
+        big = true;
         skip = true;
         break;
       }
@@ -262,8 +266,10 @@ async function ask(prompt, out = 4000) {
     }
     if (!skip) spent.add(m.model);
   }
-  if (tooBig) return null;
-  allSpent = true;
+  tooBig = big;
+  tooBigFor[pick] = big;
+  if (big) return null;
+  if (pick !== 'claude') allSpent = true;
   return null;
 }
 
@@ -470,43 +476,58 @@ if (phase === 'link') {
   const todo = cand.filter(([k]) => state.pair[k] === undefined && pairIds(k)[0]).sort((a, b) => b[1].shared - a[1].shared || b[1].cos - a[1].cos);
   console.log(`${cand.length} candidate pairs, ${todo.length} still to judge.`);
   if (!todo.length) console.log('NOTHING TO DO');
-  let size = Number(value('batch', models[0]?.provider === 'claude' ? 50 : 25));
   const show = (id) => {
     const q = all[id];
     return `${clean(q.question).slice(0, 350)} | Answer: ${answerOf(q).slice(0, 100)} | Tests: ${state.q[id]?.f || ''}`;
   };
-  for (let i = 0; i < todo.length; ) {
-    const batch = todo.slice(i, i + size);
-    const reply = await ask(
-      [
-        'Decide for each pair of paediatric exam questions whether they are LINKED: both test the same specific fact or concept, so a student who learns the answer to one is directly helped with the other (same condition AND same aspect, e.g. both on the first-line treatment of Kawasaki disease, or one asks the diagnosis and the other a key feature that defines it).',
-        'NOT linked: same condition but unrelated aspects (e.g. epidemiology vs. drug dose), or only a shared broad area.',
-        'Reply only with JSON: {"r":{"<pair number>":1 or 0, …}} for every pair.',
-        '',
-        ...batch.map(([k], n) => {
-          const [a, b] = pairIds(k);
-          return `Pair ${n + 1}\nA: ${show(a)}\nB: ${show(b)}`;
-        }),
-      ].join('\n'),
-      500 + 15 * batch.length,
-    );
-    if (!reply && tooBig && size > 1) {
-      size = Math.ceil(size / 2);
-      console.log(`  smaller batches: ${size}`);
-      continue;
+  // Gemini/Groq and Claude work side by side on one queue: each worker takes
+  // the next batch, and puts it back when its models are spent for now.
+  const queue = [...todo];
+  let busy = 0;
+  const worker = async (pick, size) => {
+    while (queue.length) {
+      const batch = queue.splice(0, size);
+      busy += batch.length;
+      const reply = await ask(
+        [
+          'Decide for each pair of paediatric exam questions whether they are LINKED: both test the same specific fact or concept, so a student who learns the answer to one is directly helped with the other (same condition AND same aspect, e.g. both on the first-line treatment of Kawasaki disease, or one asks the diagnosis and the other a key feature that defines it).',
+          'NOT linked: same condition but unrelated aspects (e.g. epidemiology vs. drug dose), or only a shared broad area.',
+          'Reply only with JSON: {"r":{"<pair number>":1 or 0, …}} for every pair.',
+          '',
+          ...batch.map(([k], n) => {
+            const [a, b] = pairIds(k);
+            return `Pair ${n + 1}\nA: ${show(a)}\nB: ${show(b)}`;
+          }),
+        ].join('\n'),
+        500 + 15 * batch.length,
+        pick,
+      );
+      busy -= batch.length;
+      if (!reply) {
+        queue.unshift(...batch);
+        if (tooBigFor[pick] && size > 1) {
+          size = Math.ceil(size / 2);
+          console.log(`  ${pick}: smaller batches: ${size}`);
+          continue;
+        }
+        return;
+      }
+      const updates = {};
+      batch.forEach(([k], n) => {
+        const v = reply.r?.[String(n + 1)];
+        if (v === 0 || v === 1 || v === '0' || v === '1') updates[`aitag/pair/${k}`] = state.pair[k] = Number(v);
+      });
+      // a small summary the status workflow (ai-tag-status.yml) can read while this runs
+      updates['aitag/progress'] = { phase: 'link', candidates: cand.length, left: queue.length + busy, updated: new Date().toISOString() };
+      write(updates, 'aitag-pair');
+      console.log(`  ${todo.length - queue.length - busy}/${todo.length} (${calls} requests, ${pick})`);
     }
-    if (!reply) break;
-    i += batch.length;
-    const updates = {};
-    batch.forEach(([k], n) => {
-      const v = reply.r?.[String(n + 1)];
-      if (v === 0 || v === 1 || v === '0' || v === '1') updates[`aitag/pair/${k}`] = state.pair[k] = Number(v);
-    });
-    // a small summary the status workflow (ai-tag-status.yml) can read while this runs
-    updates['aitag/progress'] = { phase: 'link', candidates: cand.length, left: todo.length - i, updated: new Date().toISOString() };
-    write(updates, 'aitag-pair');
-    console.log(`  ${i}/${todo.length} (${calls} requests)`);
-  }
+  };
+  const batchSize = Number(value('batch', 25));
+  await Promise.all([
+    worker('free', batchSize),
+    ...(models.some((m) => m.provider === 'claude') ? [worker('claude', Number(value('claude-batch', 50)))] : []),
+  ]);
 }
 
 // ------------------------------------------------------------------ report
