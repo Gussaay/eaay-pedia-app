@@ -478,12 +478,32 @@ if (phase === 'link') {
     process.exit(0);
   }
   const cand = candidates();
-  const todo = cand.filter(([k]) => state.pair[k] === undefined && pairIds(k)[0]).sort((a, b) => b[1].shared - a[1].shared || b[1].cos - a[1].cos);
-  console.log(`${cand.length} candidate pairs, ${todo.length} still to judge.`);
+  // Obvious pairs need no AI: almost the same wording is linked, and only a
+  // side topic with little common wording is not (--auto-yes, --auto-no).
+  const autoYes = Number(value('auto-yes', 0.85));
+  const autoNo = Number(value('auto-no', 0.15));
+  const auto = {};
+  for (const [k, p] of cand) {
+    if (state.pair[k] !== undefined || !pairIds(k)[0]) continue;
+    if (p.cos >= autoYes) auto[`aitag/pair/${k}`] = state.pair[k] = 1;
+    else if (p.cos < autoNo && p.shared < 2) auto[`aitag/pair/${k}`] = state.pair[k] = 0;
+  }
+  if (Object.keys(auto).length) {
+    write(auto, 'aitag-pair-auto');
+    console.log(`${Object.keys(auto).length} obvious pairs decided without AI.`);
+  }
+  // Pairs are first judged from each question's one-line fact and answer;
+  // the ones the AI marks unsure (2) come back later with the full text.
+  const todo = cand
+    .filter(([k]) => (state.pair[k] === undefined || state.pair[k] === 2) && pairIds(k)[0])
+    .sort((a, b) => (state.pair[a[0]] === 2) - (state.pair[b[0]] === 2) || b[1].shared - a[1].shared || b[1].cos - a[1].cos);
+  console.log(`${cand.length} candidate pairs, ${todo.length} still to judge (${todo.filter(([k]) => state.pair[k] === 2).length} with full text).`);
   if (!todo.length) console.log('NOTHING TO DO');
-  const show = (id) => {
+  const show = (id, full) => {
     const q = all[id];
-    return `${clean(q.question).slice(0, 350)} | Answer: ${answerOf(q).slice(0, 100)} | Tests: ${state.q[id]?.f || ''}`;
+    const fact = state.q[id]?.f || '';
+    if (full || !fact) return `${clean(q.question).slice(0, 350)} | Answer: ${answerOf(q).slice(0, 100)} | Tests: ${fact}`;
+    return `${fact} | Answer: ${answerOf(q).slice(0, 80)}`;
   };
   // Gemini/Groq and Claude work side by side on one queue: each worker takes
   // the next batch, and puts it back when its models are spent for now.
@@ -497,11 +517,13 @@ if (phase === 'link') {
         [
           'Decide for each pair of paediatric exam questions whether they are LINKED: both test the same specific fact or concept, so a student who learns the answer to one is directly helped with the other (same condition AND same aspect, e.g. both on the first-line treatment of Kawasaki disease, or one asks the diagnosis and the other a key feature that defines it).',
           'NOT linked: same condition but unrelated aspects (e.g. epidemiology vs. drug dose), or only a shared broad area.',
-          'Reply only with JSON: {"r":{"<pair number>":1 or 0, …}} for every pair.',
+          'Most pairs show only the point each question tests and its answer. If that is not enough to decide, answer 2 (unsure) for that pair; pairs marked "full" show the whole question and need 1 or 0.',
+          'Reply only with JSON: {"r":{"<pair number>":1, 0 or 2, …}} for every pair.',
           '',
           ...batch.map(([k], n) => {
             const [a, b] = pairIds(k);
-            return `Pair ${n + 1}\nA: ${show(a)}\nB: ${show(b)}`;
+            const full = state.pair[k] === 2;
+            return `Pair ${n + 1}${full ? ' (full)' : ''}\nA: ${show(a, full)}\nB: ${show(b, full)}`;
           }),
         ].join('\n'),
         500 + 15 * batch.length,
@@ -519,8 +541,8 @@ if (phase === 'link') {
       }
       const updates = {};
       batch.forEach(([k], n) => {
-        const v = reply.r?.[String(n + 1)];
-        if (v === 0 || v === 1 || v === '0' || v === '1') updates[`aitag/pair/${k}`] = state.pair[k] = Number(v);
+        const v = Number(reply.r?.[String(n + 1)] ?? NaN);
+        if (v === 0 || v === 1 || (v === 2 && state.pair[k] !== 2)) updates[`aitag/pair/${k}`] = state.pair[k] = v;
       });
       // a small summary the status workflow (ai-tag-status.yml) can read while this runs
       updates['aitag/progress'] = { phase: 'link', candidates: cand.length, left: queue.length + busy, updated: new Date().toISOString() };
@@ -528,10 +550,10 @@ if (phase === 'link') {
       console.log(`  ${todo.length - queue.length - busy}/${todo.length} (${calls} requests, ${pick})`);
     }
   };
-  const batchSize = Number(value('batch', 25));
+  const batchSize = Number(value('batch', 40)); // short pair text: bigger batches
   await Promise.all([
     worker('free', batchSize),
-    ...(models.some((m) => m.provider === 'claude') ? [worker('claude', Number(value('claude-batch', 50)))] : []),
+    ...(models.some((m) => m.provider === 'claude') ? [worker('claude', Number(value('claude-batch', 100)))] : []),
   ]);
 }
 
