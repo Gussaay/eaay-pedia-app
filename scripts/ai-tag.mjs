@@ -68,16 +68,26 @@ const sleep = (ms) => new Promise((r) => setTimeout(r, ms));
 const geminiKey = process.env.GEMINI_API_KEY || '';
 const groqKey = process.env.GROQ_API_KEY || '';
 // Claude through Qusay's subscription (Claude Code CLI signed in by the
-// workflow), for the link phase only and kept light so the subscription keeps
-// headroom: at most CLAUDE_MAX_CALLS calls per workflow round, 20 s apart, and
-// an hour off after a usage limit. The count lives in .tmp, which lasts one round.
+// workflow), for the link phase only, kept within budgets so the subscription
+// keeps headroom: CLAUDE_MAX_CALLS calls per workflow round (count in .tmp,
+// which lasts one round), CLAUDE_WEEK_CALLS calls per week (count in the
+// database, aitag/claude, from Monday 00:00 UTC), 20 s apart. On a usage-limit
+// reply Claude rests until the reset time it gives (an hour for the 5-hour
+// limit, a day at a time for the weekly one when no time is given).
 const claudeUse = path.join('.tmp', 'claude-use.json');
-const claudeMax = Number(process.env.CLAUDE_MAX_CALLS || 60);
+const claudeMax = Number(process.env.CLAUDE_MAX_CALLS || 50);
+const claudeWeekMax = Number(process.env.CLAUDE_WEEK_CALLS || 350);
+const weekStart = (() => {
+  const d = new Date();
+  d.setUTCHours(0, 0, 0, 0);
+  d.setUTCDate(d.getUTCDate() - ((d.getUTCDay() + 6) % 7));
+  return d.toISOString().slice(0, 10);
+})();
 const claudeState = () => {
   try {
     return JSON.parse(fs.readFileSync(claudeUse, 'utf8'));
   } catch {
-    return { calls: 0, until: 0 };
+    return { calls: 0 };
   }
 };
 const saveClaude = (st) => {
@@ -85,10 +95,16 @@ const saveClaude = (st) => {
   fs.writeFileSync(claudeUse, JSON.stringify(st));
 };
 const claudeOn = process.env.CLAUDE_ON === '1' && phase === 'link';
-const claudeReady = () => {
-  const st = claudeState();
-  return claudeOn && st.calls < claudeMax && Date.now() > st.until;
-};
+let claudeWeek = { week: weekStart, calls: 0, tokens: 0, until: 0 };
+if (claudeOn) {
+  const w = read('aitag/claude');
+  if (w.until) claudeWeek.until = w.until;
+  if (w.week === weekStart) claudeWeek = { ...claudeWeek, calls: w.calls || 0, tokens: w.tokens || 0 };
+  console.log(`Claude this week: ${claudeWeek.calls}/${claudeWeekMax} calls, ${claudeWeek.tokens} tokens${claudeWeek.until > Date.now() ? `, resting until ${new Date(claudeWeek.until).toISOString()}` : ''}.`);
+}
+const saveWeek = () => write({ 'aitag/claude': claudeWeek }, 'aitag-claude');
+const claudeReady = () =>
+  claudeOn && claudeState().calls < claudeMax && claudeWeek.calls < claudeWeekMax && Date.now() > claudeWeek.until;
 const models = [
   ...(claudeReady() ? [{ provider: 'claude', model: process.env.CLAUDE_MODEL || 'sonnet' }] : []),
   ...(geminiKey ? (process.env.GEMINI_MODEL || 'gemini-flash-lite-latest,gemini-3.5-flash-lite,gemini-flash-latest,gemini-3.8-flash').split(',').map((m) => ({ provider: 'gemini', model: m })) : []),
@@ -118,12 +134,12 @@ let lastCall = 0;
 
 let lastClaude = 0;
 async function askClaude(model, prompt) {
-  const st = claudeState();
-  if (st.calls >= claudeMax || Date.now() < st.until) return [429, 'Claude: daily share for this round used'];
+  if (!claudeReady()) return [429, 'Claude: daily share (round or week budget) used'];
   const wait = 20000 - (Date.now() - lastClaude);
   if (wait > 0) await sleep(wait);
   lastClaude = Date.now();
-  saveClaude({ ...st, calls: st.calls + 1 });
+  saveClaude({ calls: claudeState().calls + 1 });
+  claudeWeek.calls += 1;
   const [stdout, stderr] = await new Promise((resolve) => {
     const child = execFile(
       'claude',
@@ -139,12 +155,18 @@ async function askClaude(model, prompt) {
   } catch {
     // not JSON: an error message
   }
-  if (j.is_error === false && j.result) return [200, j.result];
+  const u = j.usage || {};
+  claudeWeek.tokens += (u.input_tokens || 0) + (u.cache_creation_input_tokens || 0) + (u.cache_read_input_tokens || 0) + (u.output_tokens || 0);
   const text = `${j.result ?? ''} ${stdout.slice(0, 300)} ${stderr}`.trim();
-  if (/usage limit|limit reached|rate limit|5-hour|out of extra usage/i.test(text)) {
-    saveClaude({ ...claudeState(), until: Date.now() + 3600000 });
-    return [429, `Claude usage limit (daily share for this round): ${text.slice(0, 200)}`];
+  const limited = j.is_error !== false && /usage limit|limit reached|rate limit|hit your|5-hour|weekly limit|out of extra usage/i.test(text);
+  if (limited) {
+    // reset time when the message gives one (epoch seconds after "|"), else rest a while
+    const epoch = Number(text.match(/\|(\d{10})\b/)?.[1]) * 1000;
+    claudeWeek.until = epoch > Date.now() ? epoch : Date.now() + (/week/i.test(text) ? 24 : 1) * 3600000;
   }
+  saveWeek();
+  if (j.is_error === false && j.result) return [200, j.result];
+  if (limited) return [429, `Claude usage limit (daily share for now), resting until ${new Date(claudeWeek.until).toISOString()}: ${text.slice(0, 200)}`];
   return [500, `Claude: ${text.slice(0, 300) || 'no reply'}`];
 }
 
