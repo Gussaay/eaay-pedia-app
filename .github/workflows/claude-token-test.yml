@@ -1,0 +1,42 @@
+name: Claude token test
+
+# Checks that the CLAUDE_CODE_OAUTH_TOKEN repo secret (a Claude subscription
+# token) works with the Claude Code CLI. Prints only Claude's reply or error.
+on:
+  workflow_dispatch:
+  push:
+    branches:
+      - claude/project-thread-cop9he
+    paths:
+      - '.github/workflows/claude-token-test.yml'
+
+permissions:
+  contents: read
+
+jobs:
+  test:
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    steps:
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+      - name: Install Claude Code
+        run: npm i -g @anthropic-ai/claude-code
+      - name: Ask Claude
+        env:
+          CLAUDE_CODE_OAUTH_TOKEN: ${{ secrets.CLAUDE_CODE_OAUTH_TOKEN }}
+        run: |
+          cd "$RUNNER_TEMP"
+          echo "Reply with exactly: OK" | claude -p --model sonnet --max-turns 1 --output-format json > reply.json 2> err.txt
+          echo "exit code: $?"
+          node -e '
+            const fs = require("fs");
+            let j = {};
+            try { j = JSON.parse(fs.readFileSync("reply.json", "utf8")); } catch {}
+            console.log("is_error:", j.is_error, "| subtype:", j.subtype, "| reply:", String(j.result ?? "").slice(0, 300));
+            const err = fs.readFileSync("err.txt", "utf8").split("\n").slice(-5).join("\n");
+            if (err.trim()) console.log("stderr tail:", err.slice(0, 500));
+            console.log(j.is_error === false ? "RESULT: token works" : "RESULT: token failed");
+            process.exit(j.is_error === false ? 0 : 1);
+          '
