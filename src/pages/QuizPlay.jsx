@@ -38,7 +38,9 @@ import {
 import { hintsOf, markHints, sameOf, similarOf } from '../lib/questionHints';
 import { loadHistory, recordSession } from '../lib/quizHistory';
 import { saveAttempt } from '../lib/quizReview';
-import { findSavedSession, invalidateQuestions, loadQuestions, loadQuizMeta, playPath, reviewPath } from '../lib/quizSource';
+import { findSavedSession, invalidateQuestions, loadQuestions, loadQuizMeta, playPath, quizPath, reviewPath } from '../lib/quizSource';
+import { quizAccess, scopesOf, visibleQuestions } from '../lib/access';
+import { bankOfSource } from '../lib/banks';
 import { queuePendingResult } from '../lib/sync';
 import { AppBar, Button, Card, ErrorBox, Input, Modal, Page, Spinner, Textarea, ZoomImage, useToast } from '../components/ui';
 import QuestionEditModal from '../components/QuestionEditModal';
@@ -56,7 +58,12 @@ export default function QuizPlay() {
   const intent = params.get('resume') === '1' ? 'resume' : params.get('fresh') === '1' ? 'fresh' : '';
   const navigate = useNavigate();
   const toast = useToast();
-  const { user, profile, isAdmin } = useAuth();
+  const { user, profile, isAdmin, access } = useAuth();
+  // Read once when the quiz loads: a refreshed access record must not restart
+  // a session that is under way.
+  const accessRef = useRef(access);
+  accessRef.current = access;
+  const accessReady = !!access;
   // Stored with every bookmark: a pkey alone cannot be turned back into a URL,
   // so the home page would have no way to reopen what it is offering.
   const routes = useMemo(() => {
@@ -109,7 +116,8 @@ export default function QuizPlay() {
   /** Picks a saved session back up, from the database row or the local copy. */
   const applyResume = (s, m = meta, qs = questions) => {
     const savedDeck = decodeDeck(s.deck);
-    const positions = savedDeck.length ? savedDeck : qs.map((_, i) => i);
+    // A preview holds fewer questions than the session that was saved.
+    const positions = (savedDeck.length ? savedDeck : qs.map((_, i) => i)).filter((p) => p < qs.length);
     const at = Math.min(Math.max(num(s.question), 0), positions.length - 1);
     setDeck(positions);
     setIndex(at);
@@ -132,11 +140,25 @@ export default function QuizPlay() {
 
   // ---------------------------------------------------------------- loading
   useEffect(() => {
+    if (!accessReady) return undefined;
     let cancelled = false;
     (async () => {
       try {
         const m = await loadQuizMeta(kind, id, Object.fromEntries(params));
-        const qs = await loadQuestions(m);
+        // Locked quizzes go back to their page, which offers "Request unlock";
+        // a preview plays only its first questions (lib/access.js).
+        let qa = quizAccess(accessRef.current, scopesOf(m));
+        if (qa.level !== 'full' && !m.bank && m.source) {
+          const bank = await bankOfSource(m.source).catch(() => '');
+          qa = quizAccess(accessRef.current, scopesOf(m, { bank }));
+        }
+        if (cancelled) return;
+        if (qa.level === 'locked') {
+          const { mode: _m, resume: _r, fresh: _f, ...back } = Object.fromEntries(params);
+          navigate(quizPath(kind, id, back), { replace: true });
+          return;
+        }
+        const qs = visibleQuestions(await loadQuestions(m), qa);
         if (cancelled) return;
         setMeta(m);
         setQuestions(qs);
@@ -171,7 +193,7 @@ export default function QuizPlay() {
       cancelled = true;
     };
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [kind, id, mode, intent, user.uid]);
+  }, [kind, id, mode, intent, user.uid, accessReady]);
 
   const qi = deck[index] ?? -1;
   const current = questions[qi];
@@ -1048,7 +1070,12 @@ function ResultBox({ boxRef, question, selected, answer, onOpen }) {
 
 // -------------------------------------------------------------------------
 function ExplanationModal({ question, quizTitle, selected, answer, onClose, onNext, isLast }) {
-  const { user, profile, isAdmin } = useAuth();
+  const { user, profile, isAdmin, access } = useAuth();
+  // Read once when the quiz loads: a refreshed access record must not restart
+  // a session that is under way.
+  const accessRef = useRef(access);
+  accessRef.current = access;
+  const accessReady = !!access;
   const toast = useToast();
   const [comments, setComments] = useState(null);
   const [writing, setWriting] = useState(false);

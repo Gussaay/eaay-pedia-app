@@ -5,8 +5,28 @@ import { auth } from '../firebase';
 import { subscribe, updateAt } from '../lib/rtdb';
 import { forgetPushToken } from '../lib/push';
 import { APP_VERSION_NUMBER, isAdminEmail } from '../config';
+import { accessState, canAdmin, canManage, roleOf } from '../lib/access';
 
 const AuthContext = createContext(null);
+
+// The last access record and settings seen, so a quiz saved for offline still
+// opens with the right access when the phone has no connection.
+const ACCESS_CACHE = 'access-cache:';
+function readAccessCache(uid) {
+  try {
+    const raw = uid && localStorage.getItem(ACCESS_CACHE + uid);
+    return raw ? JSON.parse(raw) : null;
+  } catch {
+    return null;
+  }
+}
+function writeAccessCache(uid, value) {
+  try {
+    localStorage.setItem(ACCESS_CACHE + uid, JSON.stringify(value));
+  } catch {
+    /* storage blocked: the access is just read again next time */
+  }
+}
 
 const pad = (n) => String(n).padStart(2, '0');
 function nowParts() {
@@ -23,6 +43,9 @@ export function AuthProvider({ children }) {
   const [authLoading, setAuthLoading] = useState(true);
   const [profile, setProfile] = useState(null);
   const [profileLoading, setProfileLoading] = useState(true);
+  // access/<uid> and access_config (lib/access.js). `undefined` = not heard yet.
+  const [accessRecord, setAccessRecord] = useState(undefined);
+  const [accessConfig, setAccessConfig] = useState(undefined);
 
   useEffect(
     () =>
@@ -48,24 +71,64 @@ export function AuthProvider({ children }) {
     });
   }, [user]);
 
-  const value = useMemo(
-    () => ({
+  useEffect(() => {
+    if (!user) {
+      setAccessRecord(undefined);
+      setAccessConfig(undefined);
+      return undefined;
+    }
+    const cached = readAccessCache(user.uid);
+    setAccessRecord(cached ? cached.record : undefined);
+    setAccessConfig(cached ? cached.config : undefined);
+    const offRecord = subscribe(`access/${user.uid}`, (val) => setAccessRecord(val || null));
+    const offConfig = subscribe('access_config', (val) => setAccessConfig(val || null));
+    // No connection and nothing cached: go on with the defaults rather than
+    // wait for ever.
+    const timer = setTimeout(() => {
+      setAccessRecord((v) => (v === undefined ? null : v));
+      setAccessConfig((v) => (v === undefined ? null : v));
+    }, 8000);
+    return () => {
+      clearTimeout(timer);
+      offRecord();
+      offConfig();
+    };
+  }, [user]);
+
+  useEffect(() => {
+    if (user && accessRecord !== undefined && accessConfig !== undefined)
+      writeAccessCache(user.uid, { record: accessRecord, config: accessConfig });
+  }, [user, accessRecord, accessConfig]);
+
+  const value = useMemo(() => {
+    // The older admin list and the User manager's admin flag still count, as
+    // managers, until someone is given a role.
+    const legacyAdmin = isAdminEmail(user?.email) || profile?.admin === 'true';
+    const role = roleOf({ email: user?.email, record: accessRecord, legacyAdmin });
+    const accessLoading = !!user && (accessRecord === undefined || accessConfig === undefined);
+    return {
       user,
       authLoading,
       profile,
       profileLoading,
-      // Admin comes from the hard-coded list, or from the flag the User
-      // manager sets — so access can be granted without a new release.
-      isAdmin: isAdminEmail(user?.email) || profile?.admin === 'true',
+      role,
+      isSuperuser: role === 'superuser',
+      // Users, roles, access and unlock requests.
+      isManager: canManage(role),
+      // The admin panel: managers and editors.
+      isAdmin: canAdmin(role),
+      accessRecord: accessRecord || null,
+      accessLoading,
+      // Who may open which quiz: lib/access.js, hooks/useQuizAccess.js.
+      access: accessLoading ? null : accessState({ role, record: accessRecord, config: accessConfig }),
       // Set by the User manager. The database rules are the real protection;
       // this is what stops a blocked account using the app it already has.
       blocked: profile?.blocked === 'true',
       // Same rule as MainPageActivity: prompt when any of these is missing.
       profileIncomplete:
         !!profile && !(profile.img && profile.name && profile.residency && profile.level),
-    }),
-    [user, authLoading, profile, profileLoading],
-  );
+    };
+  }, [user, authLoading, profile, profileLoading, accessRecord, accessConfig]);
 
   return <AuthContext.Provider value={value}>{children}</AuthContext.Provider>;
 }

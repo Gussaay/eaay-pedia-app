@@ -8,6 +8,9 @@ import { useList } from '../hooks/useData';
 import { num } from '../lib/rtdb';
 import { quizPath } from '../lib/quizSource';
 import QuestionBrowser, { BrowseTabs } from '../components/QuestionBrowser';
+import { AccessMark } from '../components/LockPanel';
+import { useAccessCheck } from '../hooks/useQuizAccess';
+import { quizScopes } from '../lib/access';
 import { AppBar, Empty, ErrorBox, ListCard, Page, SkeletonList } from '../components/ui';
 
 const TABS = [
@@ -26,8 +29,9 @@ const readTab = (source) => {
   }
 };
 
-function QuizzesByName({ books }) {
+function QuizzesByName({ books, bank }) {
   const navigate = useNavigate();
+  const levelOf = useAccessCheck();
   const [q, setQ] = useState('');
   const titleOf = useMemo(() => new Map(books.map((b) => [b.source, b.title])), [books]);
   const quizzes = useList('allquiz', {
@@ -65,9 +69,12 @@ function QuizzesByName({ books }) {
               title={String(x.title || '').replace('MCQs', '').trim()}
               subtitle={titleOf.get(x.source)}
               badge={
-                num(x.number) ? (
-                  <span className="text-xs font-semibold bg-brand-50 text-brand-700 rounded-full px-2 py-1 shrink-0">{num(x.number)} Qs</span>
-                ) : null
+                <>
+                  <AccessMark level={levelOf(quizScopes({ id: x._key, source: x.source, bank }))} />
+                  {num(x.number) ? (
+                    <span className="text-xs font-semibold bg-brand-50 text-brand-700 rounded-full px-2 py-1 shrink-0">{num(x.number)} Qs</span>
+                  ) : null}
+                </>
               }
               onClick={() => navigate(quizPath('exam', x._key, { name: titleOf.get(x.source) || '', source: x.source }))}
             />
@@ -132,7 +139,7 @@ export default function Books() {
           </>
         )}
 
-        {tab === 'quizzes' && (books.loading ? <SkeletonList /> : <QuizzesByName books={books.data} />)}
+        {tab === 'quizzes' && (books.loading ? <SkeletonList /> : <QuizzesByName books={books.data} bank={source} />)}
         {tab === 'chapters' && <QuestionBrowser bank={source} name={params.get('title') || ''} mode="chapters" />}
         {tab === 'science' && <QuestionBrowser bank={source} name={params.get('title') || ''} mode="science" />}
       </Page>

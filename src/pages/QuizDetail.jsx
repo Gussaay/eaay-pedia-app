@@ -1,9 +1,11 @@
 // QuizdetailActivity: quiz info, your score, leaderboard, start buttons.
 import { useEffect, useState } from 'react';
-import { useNavigate, useParams, useSearchParams } from 'react-router-dom';
+import { useLocation, useNavigate, useParams, useSearchParams } from 'react-router-dom';
 import { BookOpenCheck, CheckCircle2, DownloadCloud, ListChecks, PlayCircle, RotateCcw, Timer, Trophy } from 'lucide-react';
 import { useAuth } from '../hooks/useAuth';
 import { useAsync, useOnline } from '../hooks/useData';
+import { useQuizAccess } from '../hooks/useQuizAccess';
+import LockPanel from '../components/LockPanel';
 import { incrementString, str, updateAt } from '../lib/rtdb';
 import { downloadQuiz, findSavedSession, loadLeaderboard, loadQuestions, loadQuizMeta, playPath, quizPath, reviewPath } from '../lib/quizSource';
 import { BATCH, setId } from '../lib/questionBrowse';
@@ -16,6 +18,7 @@ export default function QuizDetail() {
   const { kind, id } = useParams();
   const [params] = useSearchParams();
   const navigate = useNavigate();
+  const location = useLocation();
   const { user, profile } = useAuth();
   const extra = Object.fromEntries(params);
 
@@ -29,11 +32,19 @@ export default function QuizDetail() {
   const [downloading, setDownloading] = useState(false);
   const online = useOnline();
   const toast = useToast();
+  const qa = useQuizAccess(meta.data);
+  const locked = qa.level === 'locked';
+  const full = qa.level === 'full';
 
   useEffect(() => {
-    if (!meta.data) return;
+    if (!meta.data || !qa.ready) return;
     setCount(null);
     setCountError(null);
+    // A locked quiz shows its stored count; its questions are not fetched.
+    if (locked && meta.data.number) {
+      setCount(meta.data.number);
+      return;
+    }
     loadQuestions(meta.data)
       .then((qs) => setCount(qs.length))
       .catch((e) => {
@@ -51,7 +62,7 @@ export default function QuizDetail() {
     loadAttempts(user.uid, meta.data.pkey)
       .then(setAttempts)
       .catch(() => setAttempts([]));
-  }, [meta.data, user.uid]);
+  }, [meta.data, user.uid, qa.ready, locked]);
 
   if (meta.loading) return <><AppBar title="Loading…" /><Spinner /></>;
   if (meta.error)
@@ -101,7 +112,7 @@ export default function QuizDetail() {
             <p className="text-center text-sm text-red-600">Could not load questions: {countError.message}</p>
           )}
           {/* A long set (chapter, science or practice) can be answered in parts of 100. */}
-          {q.set && !q.part && count > BATCH && (
+          {full && q.set && !q.part && count > BATCH && (
             <BatchButtons
               total={count}
               onOpen={(part) => {
@@ -122,7 +133,10 @@ export default function QuizDetail() {
               </p>
             </div>
           </div>
-          {paused && (
+          {qa.ready && !full && (
+            <LockPanel access={qa} scopes={qa.scopes} total={count} path={`${location.pathname}${location.search}`} />
+          )}
+          {paused && !locked && (
             <div className="mt-5 rounded-2xl border-2 border-amber-200 bg-amber-50 p-4">
               <p className="font-semibold text-amber-900">You have a paused session here</p>
               <p className="text-sm text-amber-800 mt-0.5">
@@ -145,11 +159,12 @@ export default function QuizDetail() {
               </div>
             </div>
           )}
+          {!locked && (
           <div className="grid gap-3 mt-5">
-            <Button className="!py-3" disabled={!count} onClick={() => start('review')}>
+            <Button className="!py-3" disabled={!count || !qa.ready} onClick={() => start('review')}>
               <BookOpenCheck size={20} /> Start with Review mode
             </Button>
-            <Button variant="secondary" className="!py-3" disabled={!count} onClick={() => start('exam')}>
+            <Button variant="secondary" className="!py-3" disabled={!count || !qa.ready} onClick={() => start('exam')}>
               <Timer size={20} /> Start with Exam mode
             </Button>
             {attempts.length > 0 && (
@@ -157,7 +172,7 @@ export default function QuizDetail() {
                 <ListChecks size={20} /> Review answers of previous attempts ({attempts.length})
               </Button>
             )}
-            {saved?.manual ? (
+            {!full ? null : saved?.manual ? (
               <div className="flex items-center justify-center gap-3 text-sm">
                 <span className="inline-flex items-center gap-1.5 text-emerald-700 font-semibold">
                   <CheckCircle2 size={18} /> Saved for offline
@@ -195,6 +210,7 @@ export default function QuizDetail() {
               </Button>
             )}
           </div>
+          )}
         </Card>
 
         <Card className="p-5">

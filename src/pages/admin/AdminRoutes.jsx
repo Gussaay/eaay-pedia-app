@@ -1,5 +1,6 @@
-import { Route, Routes, useNavigate } from 'react-router-dom';
-import { ArrowUpCircle, BellRing, BookPlus, Eye, FolderTree, Layers, Lightbulb, PencilLine, Users } from 'lucide-react';
+import { Navigate, Route, Routes, useNavigate } from 'react-router-dom';
+import { ArrowUpCircle, BellRing, BookPlus, Eye, FolderTree, KeyRound, Layers, Lightbulb, PencilLine, Users } from 'lucide-react';
+import { useAuth } from '../../hooks/useAuth';
 import { AppBar, Page } from '../../components/ui';
 import { Categories, CategoryBooks, BookQuizzes } from './AdminCatalog';
 import { QuizEditor, QuestionEditorPage } from './AdminQuiz';
@@ -14,9 +15,17 @@ import { MnemonicAdminEdit, MnemonicAdminHome, MnemonicAdminPaper } from './Admi
 import AdminUpdates from './AdminUpdates';
 import AdminUsers from './AdminUsers';
 import AdminNotify from './AdminNotify';
+import AdminAccess from './AdminAccess';
+
+/** Users, roles, access, updates and pushes: managers only, not editors. */
+function ManagerOnly({ children }) {
+  const { isManager } = useAuth();
+  return isManager ? children : <Navigate to="/admin" replace />;
+}
 
 function AdminHome() {
   const navigate = useNavigate();
+  const { isManager, role } = useAuth();
   const items = [
     { icon: BookPlus, title: 'Add content', desc: 'Categories → books → quizzes → questions', to: '/admin/categories' },
     { icon: PencilLine, title: 'Edit quizzes', desc: 'Edit published quizzes and their questions', to: '/cat/*?mode=edit&title=Edit%20quizzes' },
@@ -24,13 +33,14 @@ function AdminHome() {
     { icon: FolderTree, title: 'Chapters / systems', desc: 'Edit chapters used by "By system" quizzes', to: '/admin/chapters' },
     { icon: Layers, title: 'Flashcards', desc: 'Categories → books → decks → cards', to: '/admin/flashcards' },
     { icon: Lightbulb, title: 'Mnemonics', desc: 'Exams → papers → chapters, illustrations and flashcard links', to: '/admin/mnemonics' },
-    { icon: ArrowUpCircle, title: 'Update manager', desc: 'Roll out, pause or roll back app updates', to: '/admin/updates' },
-    { icon: Users, title: 'User manager', desc: 'Accounts, activity, admin access and blocking', to: '/admin/users' },
-    { icon: BellRing, title: 'Notification manager', desc: 'Announcements and push notifications', to: '/admin/notifications' },
-  ];
+    { icon: ArrowUpCircle, title: 'Update manager', desc: 'Roll out, pause or roll back app updates', to: '/admin/updates', manager: true },
+    { icon: Users, title: 'User manager', desc: 'Accounts, roles, access, trials and blocking', to: '/admin/users', manager: true },
+    { icon: KeyRound, title: 'Access & unlocks', desc: 'Unlock requests, trials, Pro and locking settings', to: '/admin/access', manager: true },
+    { icon: BellRing, title: 'Notification manager', desc: 'Announcements and push notifications', to: '/admin/notifications', manager: true },
+  ].filter((i) => isManager || !i.manager);
   return (
     <div className="min-h-screen">
-      <AppBar title="Admin panel" />
+      <AppBar title="Admin panel" subtitle={role === 'superuser' ? 'Superuser' : role === 'manager' ? 'Manager' : 'Editor'} />
       <Page className="grid sm:grid-cols-2 gap-3">
         {items.map(({ icon: Icon, title, desc, to }) => (
           <button
@@ -67,9 +77,10 @@ export default function AdminRoutes() {
       <Route path="mnemonics" element={<MnemonicAdminHome />} />
       <Route path="mnemonics/paper/:source" element={<MnemonicAdminPaper />} />
       <Route path="mnemonics/edit" element={<MnemonicAdminEdit />} />
-      <Route path="updates" element={<AdminUpdates />} />
-      <Route path="users" element={<AdminUsers />} />
-      <Route path="notifications" element={<AdminNotify />} />
+      <Route path="updates" element={<ManagerOnly><AdminUpdates /></ManagerOnly>} />
+      <Route path="users" element={<ManagerOnly><AdminUsers /></ManagerOnly>} />
+      <Route path="access" element={<ManagerOnly><AdminAccess /></ManagerOnly>} />
+      <Route path="notifications" element={<ManagerOnly><AdminNotify /></ManagerOnly>} />
     </Routes>
   );
 }

@@ -67,10 +67,11 @@ function RequireAuth({ children }) {
 }
 
 function RequireAdmin({ children }) {
-  const { isAdmin, profileLoading } = useAuth();
-  // Admin can come from the user record, which arrives a moment after sign-in.
-  // Redirecting before it has loaded would bounce a real admin back home.
-  if (profileLoading) return <Spinner />;
+  const { isAdmin, profileLoading, accessLoading } = useAuth();
+  // The role comes from the user and access records, which arrive a moment
+  // after sign-in. Redirecting before they have loaded would bounce a real
+  // admin back home.
+  if (profileLoading || accessLoading) return <Spinner />;
   if (!isAdmin) return <Navigate to="/" replace />;
   return children;
 }

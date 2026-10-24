@@ -7,6 +7,7 @@ import { updateAt, uploadImage } from '../lib/rtdb';
 import BottomNav from '../components/BottomNav';
 import { AppBar, Avatar, Button, Card, Confirm, Page, useToast } from '../components/ui';
 import OfflineDownloads from '../components/OfflineDownloads';
+import { MyAccessCard } from '../components/LockPanel';
 
 export default function Profile() {
   const { user, profile } = useAuth();
@@ -61,6 +62,7 @@ export default function Profile() {
             </div>
           ))}
         </Card>
+        <MyAccessCard />
         <OfflineDownloads />
         <div className="grid gap-3">
           <Button variant="secondary" onClick={() => navigate('/setup')}>

@@ -164,6 +164,58 @@
       }
     },
 
+    // ------------------------------------------------------------- access
+    // Roles, plans, trials, Pro and unlocks (src/lib/access.js). Only the
+    // superuser and managers may set them.
+    //
+    // Why .validate at every depth: the top-level ".write" above already lets
+    // every signed-in user write everywhere, and a granted .write cannot be
+    // taken back by a deeper rule. A .validate can, because every one on the
+    // way down has to pass; it is checked for each value written, so each
+    // depth needs its own. Deletes skip .validate, so these stop someone
+    // giving themselves access but not someone removing access. Closing that
+    // needs the top-level rule tightened, which means listing every node the
+    // old Android app writes.
+    "access_config": {
+      ".validate": "auth.token.email === 'gussaay@gmail.com' || root.child('access').child(auth.uid).child('role').val() === 'manager' || (auth.token.email === 'malazmuzamil55@gmail.com' && !root.child('access').child(auth.uid).child('role').exists())",
+      "$field": { ".validate": "auth.token.email === 'gussaay@gmail.com' || root.child('access').child(auth.uid).child('role').val() === 'manager' || (auth.token.email === 'malazmuzamil55@gmail.com' && !root.child('access').child(auth.uid).child('role').exists())" }
+    },
+    "access": {
+      "$uid": {
+        ".validate": "auth.token.email === 'gussaay@gmail.com' || root.child('access').child(auth.uid).child('role').val() === 'manager' || (auth.token.email === 'malazmuzamil55@gmail.com' && !root.child('access').child(auth.uid).child('role').exists())",
+        "$field": {
+          ".validate": "auth.token.email === 'gussaay@gmail.com' || root.child('access').child(auth.uid).child('role').val() === 'manager' || (auth.token.email === 'malazmuzamil55@gmail.com' && !root.child('access').child(auth.uid).child('role').exists())",
+          "$a": {
+            ".validate": "auth.token.email === 'gussaay@gmail.com' || root.child('access').child(auth.uid).child('role').val() === 'manager' || (auth.token.email === 'malazmuzamil55@gmail.com' && !root.child('access').child(auth.uid).child('role').exists())",
+            "$b": {
+              ".validate": "auth.token.email === 'gussaay@gmail.com' || root.child('access').child(auth.uid).child('role').val() === 'manager' || (auth.token.email === 'malazmuzamil55@gmail.com' && !root.child('access').child(auth.uid).child('role').exists())",
+              "$c": { ".validate": false }
+            }
+          }
+        },
+        // Only the superuser makes or changes a manager. (A named child is not
+        // covered by the $field rule beside it, so this repeats the manager check.)
+        "role": {
+          ".validate": "(auth.token.email === 'gussaay@gmail.com' || root.child('access').child(auth.uid).child('role').val() === 'manager' || (auth.token.email === 'malazmuzamil55@gmail.com' && !root.child('access').child(auth.uid).child('role').exists())) && newData.isString() && newData.val().matches(/^(manager|editor|reviewer|pro|user)$/) && (auth.token.email === 'gussaay@gmail.com' || (newData.val() !== 'manager' && data.val() !== 'manager'))"
+        }
+      }
+    },
+
+    // "Request unlock": each person may send their own, as pending; only the
+    // superuser and managers approve or decline them.
+    "unlock_requests": {
+      "$uid": {
+        ".validate": "auth.token.email === 'gussaay@gmail.com' || root.child('access').child(auth.uid).child('role').val() === 'manager' || (auth.token.email === 'malazmuzamil55@gmail.com' && !root.child('access').child(auth.uid).child('role').exists()) || auth.uid === $uid",
+        "$key": {
+          ".validate": "auth.token.email === 'gussaay@gmail.com' || root.child('access').child(auth.uid).child('role').val() === 'manager' || (auth.token.email === 'malazmuzamil55@gmail.com' && !root.child('access').child(auth.uid).child('role').exists()) || (auth.uid === $uid && newData.child('status').val() === 'pending')",
+          "$field": {
+            ".validate": "auth.token.email === 'gussaay@gmail.com' || root.child('access').child(auth.uid).child('role').val() === 'manager' || (auth.token.email === 'malazmuzamil55@gmail.com' && !root.child('access').child(auth.uid).child('role').exists()) || (auth.uid === $uid && newData.parent().child('status').val() === 'pending')",
+            "$deeper": { ".validate": false }
+          }
+        }
+      }
+    },
+
     // ---------------------------------------------------------------- interest
     // Who asked to be told when a coming-soon section opens. Readable by any
     // signed-in user because the page shows the running count and whether you

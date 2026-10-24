@@ -14,6 +14,9 @@ import { getOne } from '../lib/rtdb';
 import { loadBookQuestions, quizPath } from '../lib/quizSource';
 import { loadAllHistory } from '../lib/quizHistory';
 import { useAuth } from '../hooks/useAuth';
+import { useAccessCheck } from '../hooks/useQuizAccess';
+import { scopesOf } from '../lib/access';
+import { AccessMark } from './LockPanel';
 import {
   ANSWER_FILTERS,
   BATCH,
@@ -54,7 +57,7 @@ export function BrowseTabs({ tabs, tab, onChange }) {
   );
 }
 
-function Row({ icon: Icon, title, subtitle, onOpen, chips = [], onChip }) {
+function Row({ icon: Icon, title, subtitle, onOpen, chips = [], onChip, level }) {
   return (
     <div className="rounded-2xl border border-slate-100 bg-white shadow-sm transition hover:shadow-md">
       <button onClick={onOpen} className="group w-full text-left flex items-center gap-3 p-3 active:scale-[0.99]">
@@ -65,6 +68,7 @@ function Row({ icon: Icon, title, subtitle, onOpen, chips = [], onChip }) {
           <p className="font-semibold text-slate-800 truncate">{title}</p>
           <p className="text-xs text-slate-500 mt-0.5 line-clamp-2">{subtitle}</p>
         </div>
+        <AccessMark level={level} />
         <ChevronRight className="text-slate-300 group-hover:text-brand-500 shrink-0" size={20} />
       </button>
       {chips.length > 1 && (
@@ -90,6 +94,7 @@ function Row({ icon: Icon, title, subtitle, onOpen, chips = [], onChip }) {
  */
 export default function QuestionBrowser({ bank, book = '', bookTitle = '', name = '', mode = 'chapters' }) {
   const navigate = useNavigate();
+  const check = useAccessCheck();
   const data = useAsync(() => getOne(`qbrowse/${bank}`), [bank]);
   const stats = useMemo(() => {
     const all = data.data || null;
@@ -104,7 +109,9 @@ export default function QuestionBrowser({ bank, book = '', bookTitle = '', name 
 
   if (data.loading) return <SkeletonList />;
   if (data.error) return <ErrorBox error={data.error} onRetry={data.reload} />;
-  return <BrowseLists stats={stats} mode={mode} onOpen={open} />;
+  const levelOf = ({ chapter = '', science = '' }) =>
+    check(scopesOf({ kind: 'set', bank, book, filterChapter: chapter, science }));
+  return <BrowseLists stats={stats} mode={mode} onOpen={open} levelOf={levelOf} />;
 }
 
 /**
@@ -241,7 +248,7 @@ export function BatchButtons({ total, onOpen }) {
 }
 
 /** The rows themselves, from a qbrowse counts record. */
-export function BrowseLists({ stats, mode, onOpen: open }) {
+export function BrowseLists({ stats, mode, onOpen: open, levelOf = () => 'full' }) {
   if (!stats?.total) return <Empty icon={<Layers size={40} />} title="Not sorted into chapters yet" />;
 
   const grid = stats.grid || {};
@@ -262,6 +269,7 @@ export function BrowseLists({ stats, mode, onOpen: open }) {
               title={sectionLabel(sec)}
               subtitle={`${plural(n, 'question')} across ${plural(chapters.length, 'chapter')}`}
               onOpen={() => open({ science: sec })}
+              level={levelOf({ science: sec })}
               chips={chapters.slice(0, 8)}
               onChip={(chapter) => open({ chapter, science: sec })}
             />
@@ -284,6 +292,7 @@ export function BrowseLists({ stats, mode, onOpen: open }) {
             title={chapter}
             subtitle={`${plural(n, 'question')} · ${plural(sections.length, 'section')}`}
             onOpen={() => open({ chapter })}
+            level={levelOf({ chapter })}
             chips={sections}
             onChip={(science) => open({ chapter, science })}
           />

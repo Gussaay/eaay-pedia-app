@@ -9,10 +9,17 @@ import { useList } from '../hooks/useData';
 import { num } from '../lib/rtdb';
 import { quizPath } from '../lib/quizSource';
 import QuestionBrowser, { PracticeSets } from '../components/QuestionBrowser';
+import { AccessMark } from '../components/LockPanel';
+import { useAccessCheck } from '../hooks/useQuizAccess';
+import { quizScopes, scopesOf } from '../lib/access';
 import { AppBar, Empty, ErrorBox, ListCard, Page, SkeletonList } from '../components/ui';
 
-const countBadge = (n) =>
-  n ? <span className="text-xs font-semibold bg-brand-50 text-brand-700 rounded-full px-2 py-1 shrink-0">{n} Qs</span> : null;
+const countBadge = (n, level) => (
+  <>
+    <AccessMark level={level} />
+    {n ? <span className="text-xs font-semibold bg-brand-50 text-brand-700 rounded-full px-2 py-1 shrink-0">{n} Qs</span> : null}
+  </>
+);
 
 export default function Exams() {
   const { source } = useParams();
@@ -23,6 +30,7 @@ export default function Exams() {
   const editMode = params.get('mode') === 'edit';
   const isCollection = source.includes('smsb');
   const [tab, setTab] = useState('exam');
+  const levelOf = useAccessCheck();
 
   const exams = useList('allquiz', {
     filter: (q) =>
@@ -90,7 +98,7 @@ export default function Exams() {
                 img={q.img}
                 title={String(q.title || '').replace('MCQs', '').trim()}
                 subtitle={q.uploader ? `by ${q.uploader}` : q.des}
-                badge={countBadge(num(q.number))}
+                badge={countBadge(num(q.number), editMode ? 'full' : levelOf(quizScopes({ id: q._key, source, bank })))}
                 onClick={() =>
                   navigate(
                     editMode
@@ -108,7 +116,10 @@ export default function Exams() {
                 key={c._key}
                 img={c.chapter_img}
                 title={c.chapter}
-                badge={countBadge(num(c[`${type}number`]))}
+                badge={countBadge(
+                  num(c[`${type}number`]),
+                  levelOf(scopesOf({ kind: 'chapter', pkey: `${c._key}${type}`, source }, { bank })),
+                )}
                 onClick={() => navigate(quizPath('chapter', c._key, { type, source, name }))}
               />
             ))}

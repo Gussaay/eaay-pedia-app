@@ -1,18 +1,16 @@
 // User manager: who is using the app, what they have done, and the few
 // controls an admin needs over an account.
 //
-// Everything lives on the existing `quizusers/<uid>` record that the Android
-// app also writes, so nothing here needs a second copy of the user list. Two
-// fields are new and only this screen sets them:
+// The list is the existing `quizusers/<uid>` record that the Android app also
+// writes. This screen sets one field there:
 //
-//   admin    "true" grants the admin panel without a code change
 //   blocked  "true" stops the account being used
 //
-// Both are read in hooks/useAuth.jsx. They are a convenience for the person
-// running the app, not a security boundary — the database rules are what
-// actually decide who may write what.
+// and keeps the older `admin` flag in step with the role. Roles, plans, trials,
+// Pro and unlocks live in access/<uid> (lib/access.js), which only the
+// superuser and managers may change.
 import { useMemo, useState } from 'react';
-import { useNavigate } from 'react-router-dom';
+import { useNavigate, useSearchParams } from 'react-router-dom';
 import {
   Ban,
   BarChart3,
@@ -25,9 +23,12 @@ import {
   Trash2,
   Users,
 } from 'lucide-react';
-import { useList } from '../../hooks/useData';
-import { num, removeAt, updateAt } from '../../lib/rtdb';
-import { ADMIN_EMAILS, SUPER_ADMIN_EMAIL } from '../../config';
+import { useAsync, useList } from '../../hooks/useData';
+import { useAuth } from '../../hooks/useAuth';
+import { getOne, num, removeAt, updateAt } from '../../lib/rtdb';
+import { isAdminEmail } from '../../config';
+import { ACCESS_GROUPS, ROLE_INFO, accessGroup, accessState, describeAccess, readConfig, roleOf } from '../../lib/access';
+import AccessEditor from './AccessEditor';
 import DangerConfirm from '../../components/DangerConfirm';
 import {
   AppBar,
@@ -77,6 +78,10 @@ export default function AdminUsers() {
   const toast = useToast();
   const navigate = useNavigate();
   const list = useList('quizusers');
+  const accessData = useAsync(() => Promise.all([getOne('access'), getOne('access_config')]), []);
+  const [accessAll, accessConfig] = accessData.data || [];
+  const [params, setParams] = useSearchParams();
+  const group = params.get('access') || '';
 
   const [q, setQ] = useState('');
   const [sort, setSort] = useState('recent');
@@ -86,7 +91,17 @@ export default function AdminUsers() {
   const [confirm, setConfirm] = useState(null);
   const [busy, setBusy] = useState(false);
 
-  const users = list.data;
+  // Each person's role and access, worked out as if locking were on so the
+  // groups mean the same whatever the setting.
+  const users = useMemo(() => {
+    const on = { ...readConfig(accessConfig), enabled: true };
+    return list.data.map((u) => {
+      const record = accessAll?.[u._key] || null;
+      const role = roleOf({ email: emailOf(u), record, legacyAdmin: isAdminEmail(emailOf(u)) || isTrue(u.admin) });
+      const state = accessState({ role, record, config: on });
+      return { ...u, _role: role, _record: record, _access: state, _group: accessGroup(state) };
+    });
+  }, [list.data, accessAll, accessConfig]);
 
   const stats = useMemo(() => {
     const byLevel = {};
@@ -113,6 +128,7 @@ export default function AdminUsers() {
     const needle = q.trim().toLowerCase();
     return users
       .filter((u) => !level || u.level === level)
+      .filter((u) => !group || u._group === group)
       .filter(
         (u) =>
           !needle ||
@@ -121,7 +137,7 @@ export default function AdminUsers() {
           String(u.residency || '').toLowerCase().includes(needle),
       )
       .sort(SORTS[sort].fn);
-  }, [users, q, level, sort]);
+  }, [users, q, level, sort, group]);
 
   const patch = async (uid, values, message) => {
     setBusy(true);
@@ -137,15 +153,16 @@ export default function AdminUsers() {
     }
   };
 
-  const isSuperAdmin = (u) =>
-    emailOf(u).toLowerCase() === SUPER_ADMIN_EMAIL ||
-    ADMIN_EMAILS.includes(emailOf(u).toLowerCase());
+  const isSuperAdmin = (u) => u._role === 'superuser';
+  const { role: myRole } = useAuth();
+  const current = open && users.find((u) => u._key === open._key);
 
   return (
     <div className="min-h-screen">
       <AppBar title="User manager" subtitle={`${stats.total} accounts`} />
       <Page className="space-y-4">
         <ErrorBox error={list.error} onRetry={list.reload} />
+        <ErrorBox error={accessData.error} onRetry={accessData.reload} />
 
         <div className="flex flex-wrap gap-3">
           <Stat icon={Users} value={stats.total} label="Total accounts" />
@@ -199,6 +216,23 @@ export default function AdminUsers() {
                 </option>
               ))}
             </Select>
+            <Select
+              value={group}
+              onChange={(e) => {
+                const next = new URLSearchParams(params);
+                if (e.target.value) next.set('access', e.target.value);
+                else next.delete('access');
+                setParams(next, { replace: true });
+              }}
+              className="flex-1"
+            >
+              <option value="">All access</option>
+              {Object.entries(ACCESS_GROUPS).map(([k, label]) => (
+                <option key={k} value={k}>
+                  {label}
+                </option>
+              ))}
+            </Select>
             <Select value={level} onChange={(e) => setLevel(e.target.value)} className="flex-1">
               <option value="">All levels</option>
               {Object.keys(stats.byLevel).map((l) => (
@@ -232,7 +266,7 @@ export default function AdminUsers() {
                     <div className="min-w-0 flex-1">
                       <p className="font-semibold text-slate-800 truncate flex items-center gap-1.5">
                         {nameOf(u)}
-                        {(isTrue(u.admin) || isSuperAdmin(u)) && (
+                        {['superuser', 'manager', 'editor'].includes(u._role) && (
                           <ShieldCheck size={14} className="shrink-0 text-brand-600" />
                         )}
                         {isTrue(u.blocked) && <Ban size={14} className="shrink-0 text-red-600" />}
@@ -240,6 +274,9 @@ export default function AdminUsers() {
                       <p className="text-xs text-slate-500 truncate">
                         {u.level || 'No level'}
                         {u.residency ? ` · ${u.residency}` : ''}
+                      </p>
+                      <p className="text-xs text-brand-700 truncate">
+                        {ROLE_INFO[u._role]?.label} · {describeAccess(u._access)}
                       </p>
                     </div>
                     <div className="shrink-0 text-right">
@@ -311,26 +348,22 @@ export default function AdminUsers() {
                 <Send size={16} /> Send this person a notification
               </Button>
 
-              {isSuperAdmin(open) ? (
+              {current && !isSuperAdmin(current) && (
+                <AccessEditor
+                  user={current}
+                  myRole={myRole}
+                  config={accessConfig}
+                  onChanged={() => {
+                    accessData.reload();
+                    list.reload();
+                  }}
+                />
+              )}
+
+              {isSuperAdmin(open) && (
                 <p className="flex items-center justify-center gap-2 rounded-xl bg-brand-50 py-2.5 text-sm text-brand-700">
-                  <Shield size={16} /> Permanent admin (set in the app's code)
+                  <Shield size={16} /> Superuser: always has every right (set in the app's code)
                 </p>
-              ) : (
-                <Button
-                  variant="outline"
-                  className="w-full justify-center"
-                  loading={busy}
-                  onClick={() =>
-                    patch(
-                      open._key,
-                      { admin: isTrue(open.admin) ? 'false' : 'true' },
-                      isTrue(open.admin) ? 'Admin access removed.' : 'Admin access granted.',
-                    )
-                  }
-                >
-                  <Shield size={16} />
-                  {isTrue(open.admin) ? 'Remove admin access' : 'Make admin'}
-                </Button>
               )}
 
               {!isSuperAdmin(open) && (
