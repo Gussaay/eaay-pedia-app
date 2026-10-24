@@ -36,7 +36,7 @@ jobs:
           export GOOGLE_APPLICATION_CREDENTIALS="$RUNNER_TEMP/sa.json"
           get() { firebase database:get "$1" --shallow --project easy-pedia --output "$RUNNER_TEMP/$2.json"; }
           get /aitag/q q
-          get /aitag/pair pair
+          firebase database:get /aitag/pair --project easy-pedia --output "$RUNNER_TEMP/pair.json"
           get /quizqq all
           firebase database:get /aitag/progress --project easy-pedia --output "$RUNNER_TEMP/progress.json"
           rm -f "$RUNNER_TEMP/sa.json"
