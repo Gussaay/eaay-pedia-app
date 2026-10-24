@@ -5,6 +5,11 @@ name: AI tags status
 # phase's own summary (aitag/progress, written after every batch).
 on:
   workflow_dispatch:
+  push:
+    branches:
+      - claude/project-thread-cop9he
+    paths:
+      - '.github/workflows/ai-tag-status.yml'
 
 concurrency:
   group: ai-tag-status
