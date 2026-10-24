@@ -67,8 +67,8 @@ const sleep = (ms) => new Promise((r) => setTimeout(r, ms));
 const geminiKey = process.env.GEMINI_API_KEY || '';
 const groqKey = process.env.GROQ_API_KEY || '';
 const models = [
-  ...(geminiKey ? (process.env.GEMINI_MODEL || 'gemini-2.5-flash-lite,gemini-flash-lite-latest,gemini-2.5-flash,gemini-flash-latest').split(',').map((m) => ({ provider: 'gemini', model: m })) : []),
-  ...(groqKey ? (process.env.GROQ_MODEL || 'openai/gpt-oss-120b,openai/gpt-oss-20b').split(',').map((m) => ({ provider: 'groq', model: m })) : []),
+  ...(geminiKey ? (process.env.GEMINI_MODEL || 'gemini-flash-lite-latest,gemini-3.5-flash-lite,gemini-flash-latest,gemini-3.8-flash').split(',').map((m) => ({ provider: 'gemini', model: m })) : []),
+  ...(groqKey ? (process.env.GROQ_MODEL || 'meta-llama/llama-4-scout-17b-16e-instruct,moonshotai/kimi-k2-instruct,llama-3.3-70b-versatile,qwen/qwen3-32b,openai/gpt-oss-120b,openai/gpt-oss-20b').split(',').map((m) => ({ provider: 'groq', model: m })) : []),
 ];
 const spent = new Set(); // models out of quota for today
 let calls = 0;
@@ -111,6 +111,7 @@ async function askOnce({ provider, model }, prompt) {
 async function ask(prompt) {
   for (const m of models) {
     if (spent.has(m.model)) continue;
+    let waits = 0; // per-minute limit waits on this model
     for (let attempt = 0; attempt < 3; attempt += 1) {
       if (calls >= maxCalls) return null;
       calls += 1;
@@ -125,8 +126,19 @@ async function ask(prompt) {
       }
       console.log(`  ${m.model} ${status}: ${String(text).slice(0, 160)}`);
       if (status === 429 && /day|daily|quota|tokens per day|TPD|RPD/i.test(text)) break; // spent for today
+      const asked = Number(String(text).match(/Requested (\d+)/)?.[1]);
+      const limit = Number(String(text).match(/Limit (\d+)/)?.[1]);
+      if (status === 413 || asked > limit) break; // prompt too big for this model
+      if (status === 429 && waits < 20) {
+        // per-minute limit: wait as long as the API says, then try the same model again
+        const s = Number(String(text).match(/try again in (?:(\d+)m)?([\d.]+)s/i)?.slice(1).reduce((a, v, i) => a + (Number(v) || 0) * (i ? 1 : 60), 0)) || 30;
+        waits += 1;
+        attempt -= 1;
+        await sleep(Math.min(s + 1, 65) * 1000);
+        continue;
+      }
       if (![0, 429, 500, 502, 503].includes(status)) break;
-      await sleep(status === 429 ? 30000 : 5000);
+      await sleep(5000);
     }
     spent.add(m.model);
   }
