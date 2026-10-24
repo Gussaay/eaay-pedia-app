@@ -198,6 +198,16 @@ state.q ||= {};
 state.canon ||= {};
 state.pair ||= {};
 const list = Object.entries(all).filter(([, q]) => q && q.question !== undefined);
+// Pair keys are "a__b", and push ids can themselves contain "_", so split
+// where both halves are real question ids.
+const pairIds = (k) => {
+  for (let i = k.indexOf('__'); i !== -1; i = k.indexOf('__', i + 1)) {
+    const a = k.slice(0, i);
+    const b = k.slice(i + 2);
+    if (all[a] && all[b]) return [a, b];
+  }
+  return [null, null];
+};
 const isHand = (q) => tagsOf(q).length > 0 && q.tags_auto !== '1';
 const brief = (q, n = 700) => {
   const opts = ['a', 'b', 'c', 'd', 'e', 'f'].filter((k) => clean(q[k])).map((k) => `${k}) ${clean(q[k]).slice(0, 120)}`);
@@ -363,7 +373,7 @@ function candidates() {
     .filter(([, p]) => (p.shared && p.cos >= minCos) || p.cos >= wideCos)
     .map(([k, p]) => [k, { ...p, score: p.cos + 0.1 * p.shared }]);
   const best = new Map();
-  for (const [k, p] of ok) for (const id of k.split('__')) (best.get(id) || best.set(id, []).get(id)).push([p.score, k]);
+  for (const [k, p] of ok) for (const id of pairIds(k)) (best.get(id) || best.set(id, []).get(id)).push([p.score, k]);
   const keep = new Set();
   for (const list2 of best.values()) list2.sort((a, b) => b[0] - a[0]).slice(0, per).forEach(([, k]) => keep.add(k));
   return ok.filter(([k]) => keep.has(k));
@@ -377,7 +387,7 @@ if (phase === 'link') {
     process.exit(0);
   }
   const cand = candidates();
-  const todo = cand.filter(([k]) => state.pair[k] === undefined).sort((a, b) => b[1].shared - a[1].shared || b[1].cos - a[1].cos);
+  const todo = cand.filter(([k]) => state.pair[k] === undefined && pairIds(k)[0]).sort((a, b) => b[1].shared - a[1].shared || b[1].cos - a[1].cos);
   console.log(`${cand.length} candidate pairs, ${todo.length} still to judge.`);
   if (!todo.length) console.log('NOTHING TO DO');
   let size = Number(value('batch', 25));
@@ -394,7 +404,7 @@ if (phase === 'link') {
         'Reply only with JSON: {"r":{"<pair number>":1 or 0, …}} for every pair.',
         '',
         ...batch.map(([k], n) => {
-          const [a, b] = k.split('__');
+          const [a, b] = pairIds(k);
           return `Pair ${n + 1}\nA: ${show(a)}\nB: ${show(b)}`;
         }),
       ].join('\n'),
@@ -442,14 +452,14 @@ if (phase === 'report' || phase === 'write') {
     const inCand = [...gold].filter((k) => cand.has(k)).length;
     const yes = [...gold].filter((k) => state.pair[k] === 1).length;
     const judgedGold = [...gold].filter((k) => state.pair[k] !== undefined).length;
-    const extra = Object.entries(state.pair).filter(([k, v]) => v === 1 && !gold.has(k) && k.split('__').every((x) => dohSet.has(x)));
+    const extra = Object.entries(state.pair).filter(([k, v]) => v === 1 && !gold.has(k) && pairIds(k).every((x) => x && dohSet.has(x)));
     console.log(`DOH check: ${gold.size} links already in the app between DOH papers; ${inCand} among the candidates; ${judgedGold} judged, ${yes} confirmed by the AI; ${extra.length} new DOH links the AI adds.`);
     extra.slice(0, 25).forEach(([k]) => {
-      const [a, b] = k.split('__');
+      const [a, b] = pairIds(k);
       console.log(`  + ${clean(all[a].question).slice(0, 90)} → ${answerOf(all[a]).slice(0, 30)} || ${clean(all[b].question).slice(0, 90)} → ${answerOf(all[b]).slice(0, 30)}`);
     });
-    [...gold].filter((k) => state.pair[k] === 0).slice(0, 15).forEach((k) => {
-      const [a, b] = k.split('__');
+    [...gold].filter((k) => state.pair[k] === 0 && pairIds(k)[0]).slice(0, 15).forEach((k) => {
+      const [a, b] = pairIds(k);
       console.log(`  - ${clean(all[a].question).slice(0, 90)} → ${answerOf(all[a]).slice(0, 30)} || ${clean(all[b].question).slice(0, 90)} → ${answerOf(all[b]).slice(0, 30)}`);
     });
   }
@@ -465,8 +475,8 @@ if (phase === 'report' || phase === 'write') {
   const lstep = Math.max(1, Math.floor(linked.length / sample));
   console.log('\nSample of links:');
   linked.filter((_, i) => i % lstep === 0).forEach(([k]) => {
-    const [a, b] = k.split('__');
-    if (all[a] && all[b]) console.log(`  L ${state.q[a]?.f} || ${state.q[b]?.f}`);
+    const [a, b] = pairIds(k);
+    if (a) console.log(`  L ${state.q[a]?.f} || ${state.q[b]?.f}`);
   });
 }
 
@@ -493,8 +503,8 @@ if (phase === 'write') {
   for (const [slug, ids] of Object.entries(index)) for (const id of Object.keys(ids)) if (!qtags[slug]?.[id]) updates[`qtags/${slug}/${id}`] = true;
   let links = 0;
   for (const [k, v] of Object.entries(state.pair)) {
-    const [a, b] = k.split('__');
-    if (v !== 1 || !all[a] || !all[b] || all[a].similar?.[b]) continue;
+    const [a, b] = pairIds(k);
+    if (v !== 1 || !a || !all[b] || all[a].similar?.[b]) continue;
     updates[`quizqq/${a}/similar/${b}`] = true;
     updates[`quizqq/${b}/similar/${a}`] = true;
     links += 1;
