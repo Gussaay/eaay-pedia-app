@@ -79,7 +79,7 @@ async function groqModels() {
     .then((r) => r.json())
     .catch(() => ({}));
   const ids = (j.data || [])
-    .filter((m) => m.active !== false && !/whisper|tts|guard|orpheus|playai|compound|embed|distil/i.test(m.id))
+    .filter((m) => m.active !== false && !/whisper|tts|guard|orpheus|playai|compound|embed|distil|allam/i.test(m.id))
     .map((m) => m.id);
   if (!ids.length) return first;
   const rank = (id) => (first.includes(id) ? first.indexOf(id) : first.length);
@@ -154,10 +154,11 @@ async function ask(prompt, out = 4000) {
         }
       }
       console.log(`  ${m.model} ${status}: ${String(text).slice(0, 160)}`);
-      if (status === 429 && /day|daily|quota|tokens per day|TPD|RPD/i.test(text)) break; // spent for today
+      // spent for today ("today" alone is Groq's upgrade advert, not a daily limit)
+      if (status === 429 && (/per day|daily|\b(TPD|RPD)\b/i.test(text) || (m.provider === 'gemini' && /quota/i.test(text)))) break;
       const asked = Number(String(text).match(/Requested (\d+)/)?.[1]);
       const limit = Number(String(text).match(/Limit (\d+)/)?.[1]);
-      if (status === 413 || asked > limit) {
+      if (status === 413 || asked > limit || (status === 400 && /reduce the length/i.test(text))) {
         // prompt too big for this model: remember what fits and ask for a smaller batch
         fits.set(m.model, Math.floor(prompt.length * Math.min(0.9, asked > limit ? (limit / asked) * 0.9 : 0.5)));
         tooBig = true;
