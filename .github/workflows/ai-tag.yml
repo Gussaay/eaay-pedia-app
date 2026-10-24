@@ -44,11 +44,12 @@ jobs:
           CLAUDE_ON: '1'
           # Claude Pro plan: per 5-hour round and per week, leaving Qusay room for his own use
           # Qusay (2026-10-24): let this use the plan up to ~90% of the week, leaving him 10%.
-          # His week was 51% used then; 220 lean calls is the estimate for the rest, to be
-          # checked against his usage page. The week starts at his plan's reset.
+          # Measured: 51% (13:29) to 57% (18:05) over 83 calls, so ~0.07% a call (his own use
+          # included). 470 calls a week ends near 85%, leaving margin for his other use.
+          # The week starts at his plan's reset.
           # per round: the plan's own 5-hour limit also stops it (then it rests and rejoins)
           CLAUDE_MAX_CALLS: '150'
-          CLAUDE_WEEK_CALLS: '220'
+          CLAUDE_WEEK_CALLS: '470'
           CLAUDE_WEEK_RESET: '2T19:59'
           CLAUDE_MODEL: haiku # Qusay's choice: uses far less of the Pro limits than sonnet
           GH_TOKEN: ${{ github.token }}
