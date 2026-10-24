@@ -43,8 +43,9 @@ jobs:
           CLAUDE_CODE_OAUTH_TOKEN: ${{ secrets.CLAUDE_CODE_OAUTH_TOKEN }}
           CLAUDE_ON: '1'
           # Claude Pro plan: per 5-hour round and per week, leaving Qusay room for his own use
-          CLAUDE_MAX_CALLS: '50'
-          CLAUDE_WEEK_CALLS: '350'
+          # (2026-10-24: Qusay's week already 51% used by all his Claude use, so kept low)
+          CLAUDE_MAX_CALLS: '25'
+          CLAUDE_WEEK_CALLS: '150'
           GH_TOKEN: ${{ github.token }}
           WRITE: dry
         run: |

@@ -145,7 +145,8 @@ async function askClaude(model, prompt) {
   const [stdout, stderr] = await new Promise((resolve) => {
     const child = execFile(
       'claude',
-      ['-p', '--model', model, '--output-format', 'json', '--max-turns', '1', '--disallowedTools', 'Bash,Edit,Write,Read,Glob,Grep,WebFetch,WebSearch,Task,NotebookEdit'],
+      // lean call: a short system prompt and no tools instead of Claude Code's own (~8K tokens a call)
+      ['-p', '--model', model, '--output-format', 'json', '--max-turns', '1', '--system-prompt', 'You judge paediatric exam questions for a study app. Reply with JSON only.', '--tools', '', '--disable-slash-commands', '--strict-mcp-config', '--no-session-persistence'],
       { cwd: os.tmpdir(), timeout: 180000, maxBuffer: 64 * 1024 * 1024 },
       (err, so, se) => resolve([String(so || ''), `${se || ''}${err && !so ? ` ${err.message}` : ''}`]),
     );
