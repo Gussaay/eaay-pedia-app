@@ -113,7 +113,8 @@ const models = [
   ...(geminiKey ? (process.env.GEMINI_MODEL || 'gemini-flash-lite-latest,gemini-3.5-flash-lite,gemini-flash-latest,gemini-3.8-flash').split(',').map((m) => ({ provider: 'gemini', model: m })) : []),
   ...(groqKey ? (await groqModels()).map((m) => ({ provider: 'groq', model: m })) : []),
   // last: the free models come first wherever one list is used
-  ...(claudeReady() ? [{ provider: 'claude', model: process.env.CLAUDE_MODEL || 'sonnet' }] : []),
+  // listed even while resting, so Claude rejoins when its rest ends
+  ...(claudeOn ? [{ provider: 'claude', model: process.env.CLAUDE_MODEL || 'sonnet' }] : []),
 ];
 
 /** Groq's text models that this key can use now; each has its own free quota. */
@@ -243,6 +244,11 @@ async function ask(prompt, out = 4000, pick = '') {
         }
       }
       console.log(`  ${m.model} ${status}: ${String(text).slice(0, 160)}`);
+      // Claude resting or over budget: its worker waits for the rest to end (no retries)
+      if (m.provider === 'claude' && status === 429) {
+        skip = true;
+        break;
+      }
       // spent for today ("today" alone is Groq's upgrade advert, not a daily limit)
       if (status === 429 && (/per day|daily|\b(TPD|RPD)\b/i.test(text) || (m.provider === 'gemini' && /quota/i.test(text)))) break;
       const asked = Number(String(text).match(/Requested (\d+)/)?.[1]);
@@ -535,6 +541,13 @@ if (phase === 'link') {
         if (tooBigFor[pick] && size > 1) {
           size = Math.ceil(size / 2);
           console.log(`  ${pick}: smaller batches: ${size}`);
+          continue;
+        }
+        // Claude resting after a usage-limit reply, with budget left: wait, then go on
+        const rest = claudeWeek.until - Date.now();
+        if (pick === 'claude' && rest > 0 && calls < maxCalls && claudeState().calls < claudeMax && claudeWeek.calls < claudeWeekMax) {
+          console.log(`  claude: resting until ${new Date(claudeWeek.until).toISOString()}`);
+          await sleep(Math.min(rest + 5000, 2 * 3600000));
           continue;
         }
         return;
