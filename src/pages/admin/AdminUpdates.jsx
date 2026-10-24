@@ -238,20 +238,21 @@ export default function AdminUpdates() {
             <div className="min-w-0 flex-1">
               <p className="font-display text-lg">"Install the new app" prompt</p>
               <p className="text-sm text-slate-500 mt-0.5">
-                Shown only when the Android app itself changed, so a full install is unavoidable.
+                Every release reaches phones over the air. Users are asked to install a new APK only when you
+                switch this on, or when their app is too old for the over-the-air update.
               </p>
             </div>
           </div>
           <div className="mt-4 space-y-3">
             <Toggle
+              label="Ask users to install the latest APK"
+              checked={isTrue(nat.prompt)}
+              onChange={(v) => save('update/native', { prompt: v }, v ? 'Users will be asked to install the new APK.' : 'APK prompt off.')}
+            />
+            <Toggle
               label="Required — users cannot dismiss it"
               checked={isTrue(nat.mandatory)}
               onChange={(v) => save('update/native', { mandatory: v }, 'Saved.')}
-            />
-            <Toggle
-              label="Hide the prompt entirely"
-              checked={isTrue(nat.hidden)}
-              onChange={(v) => save('update/native', { hidden: v }, 'Saved.')}
             />
             <Input
               label="Custom message (optional)"

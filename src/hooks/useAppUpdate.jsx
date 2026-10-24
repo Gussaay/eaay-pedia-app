@@ -3,12 +3,14 @@
 //   web    the service worker has a new build waiting -> reload.
 //   live   a new web bundle downloaded over the air -> restart the WebView.
 //          This is the usual case and costs the user a few hundred KB.
-//   apk    the native shell itself changed (new plugin, new permission), so a
-//          real install is required. Only this one needs a full download.
+//   apk    a full install. Every release also builds an APK, but most only
+//          change the web code, which arrives over the air. So the APK prompt
+//          appears only when an admin asks for it (Update manager, "Ask users
+//          to install the latest APK" or "Required"), or when the installed
+//          app is older than the over-the-air bundle allows (minNativeBuild).
 //
-// "apk" always wins over "live": an over-the-air bundle that expects a plugin
-// the installed APK does not have would crash on launch, so when both are
-// pending the user is asked for the APK first.
+// When it does appear, "apk" wins over "live": an over-the-air bundle that
+// expects a plugin the installed APK does not have would crash on launch.
 import { useCallback, useEffect, useMemo, useState, useSyncExternalStore } from 'react';
 import { App as CapApp } from '@capacitor/app';
 import {
@@ -22,7 +24,7 @@ import { downloadStore, getDownload, startDownload } from '../lib/downloads';
 import { fetchNativeVersion, isNewerBuild } from '../lib/nativeVersion';
 import { subscribe } from '../lib/rtdb';
 import { isNative } from '../lib/native';
-import { APK_URL } from '../config';
+import { APK_URL, LIVE_UPDATE_URL } from '../config';
 
 const SKIPPED_BUILD_KEY = 'update:skipped-build';
 const APK_DOWNLOAD_ID = 'easy-pedia-apk';
@@ -50,15 +52,20 @@ export function useAppUpdate() {
         setApk(null);
         return null;
       }
-      const mandatory =
-        nativeConfig?.mandatory === true || nativeConfig?.mandatory === 'true';
-      if (nativeConfig?.hidden === true || nativeConfig?.hidden === 'true') {
+      const on = (v) => v === true || v === 'true';
+      const mandatory = on(nativeConfig?.mandatory);
+      // Too old for the over-the-air bundle: the APK is the only way forward.
+      const live = await fetch(`${LIVE_UPDATE_URL}?t=${Date.now()}`, { cache: 'no-store' })
+        .then((r) => (r.ok ? r.json() : null))
+        .catch(() => null);
+      const tooOld = Number(live?.minNativeBuild) > Number(installed.build);
+      if (on(nativeConfig?.hidden) || !(mandatory || tooOld || on(nativeConfig?.prompt))) {
         setApk(null);
         return null;
       }
       // "Not now" survives a restart, so the same build stops nagging. A
       // required update ignores it.
-      if (!mandatory && localStorage.getItem(SKIPPED_BUILD_KEY) === String(published.versionCode)) {
+      if (!mandatory && !tooOld && localStorage.getItem(SKIPPED_BUILD_KEY) === String(published.versionCode)) {
         setApk(null);
         return null;
       }
@@ -68,7 +75,7 @@ export function useAppUpdate() {
         notes: nativeConfig?.message || published.notes,
         size: published.size,
         url: published.apkUrl || APK_URL,
-        mandatory,
+        mandatory: mandatory || tooOld,
       };
       setApk(info);
       return info;
