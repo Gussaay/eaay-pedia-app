@@ -1,0 +1,16 @@
+{
+  "bank": "mrcpch",
+  "groups": {
+    "TAS": { "title": "TAS", "subtitle": "Theory and Science", "order": 1 },
+    "FOP": { "title": "FOP", "subtitle": "Foundation of Practice", "order": 2 }
+  },
+  "books": {
+    "mrcpch": "TAS",
+    "pastests": "TAS",
+    "philippa": "TAS",
+    "survival": "TAS",
+    "tasrecall": "TAS",
+    "tassample": "TAS",
+    "fopsample": "FOP"
+  }
+}

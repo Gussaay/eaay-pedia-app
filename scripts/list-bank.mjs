@@ -24,7 +24,7 @@ const read = (node) => {
 
 const cats = read('main_category');
 console.log('== main_category');
-for (const [k, c] of Object.entries(cats)) console.log(k, JSON.stringify(c));
+for (const [k, c] of Object.entries(cats)) console.log(k, JSON.stringify({ ...c, img: undefined }));
 const books = Object.entries(read('mcqs')).filter(([, b]) => b.main_category === bank);
 const quizzes = Object.entries(read('allquiz'));
 console.log(`\n== books in ${bank}: ${books.length}`);

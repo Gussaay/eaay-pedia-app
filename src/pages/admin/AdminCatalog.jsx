@@ -195,6 +195,8 @@ export function CategoryBooks() {
         title: form.title.trim(),
         source: form.source.trim(),
         sub_category: form.sub_category.trim(),
+        // Optional group inside the category, e.g. TAS or FOP in MRCPCH.
+        group: form.group.trim(),
         img: form.img,
         // Needed so the book shows under its category (McqsMainActivity filter).
         main_category: source,
@@ -230,7 +232,7 @@ export function CategoryBooks() {
     <div className="min-h-screen">
       <AppBar title={params.get('title') || source} subtitle="Books — tap one to open its quizzes" />
       <Page className="space-y-3">
-        <AddButton onClick={() => setForm({ title: '', source, sub_category: '', img: '' })}>Add new book</AddButton>
+        <AddButton onClick={() => setForm({ title: '', source, sub_category: '', group: '', img: '' })}>Add new book</AddButton>
         {list.loading ? (
           <SkeletonList />
         ) : list.data.length === 0 ? (
@@ -241,7 +243,7 @@ export function CategoryBooks() {
               key={b._key}
               img={b.img}
               title={b.title}
-              subtitle={`source: ${b.source}${b.sub_category ? ` · type: ${b.sub_category}` : ''} · ${plural(quizzesUnder(b), 'quiz').replace('quizs', 'quizzes')}`}
+              subtitle={`source: ${b.source}${b.group ? ` · group: ${b.group}` : ''}${b.sub_category ? ` · type: ${b.sub_category}` : ''} · ${plural(quizzesUnder(b), 'quiz').replace('quizs', 'quizzes')}`}
               onClick={() =>
                 navigate(
                   `/admin/book/${encodeURIComponent(b.source)}?sub=${encodeURIComponent(b.sub_category || '')}&title=${encodeURIComponent(b.title || '')}`,
@@ -249,7 +251,7 @@ export function CategoryBooks() {
               }
               right={
                 <RowActions
-                  onEdit={() => setForm({ _key: b._key, title: b.title || '', source: b.source || '', sub_category: b.sub_category || '', img: b.img || '' })}
+                  onEdit={() => setForm({ _key: b._key, title: b.title || '', source: b.source || '', sub_category: b.sub_category || '', group: b.group || '', img: b.img || '' })}
                   onDelete={() => setConfirm(b)}
                 />
               }
@@ -274,6 +276,12 @@ export function CategoryBooks() {
               onChange={(e) => setForm({ ...form, source: e.target.value })}
             />
             <Input label="Sub-category / type (optional)" hint="Used by collection books (smsb) to split parts." value={form.sub_category} onChange={(e) => setForm({ ...form, sub_category: e.target.value })} />
+            <Input
+              label="Group (optional)"
+              hint="Books with the same group show together under one card in the category, e.g. TAS or FOP."
+              value={form.group}
+              onChange={(e) => setForm({ ...form, group: e.target.value })}
+            />
             <ImageField folder="source" value={form.img} onChange={(img) => setForm({ ...form, img })} />
           </>
         )}
