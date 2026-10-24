@@ -71,7 +71,7 @@ const groqKey = process.env.GROQ_API_KEY || '';
 // workflow), for the link phase only, kept within budgets so the subscription
 // keeps headroom: CLAUDE_MAX_CALLS calls per workflow round (count in .tmp,
 // which lasts one round), CLAUDE_WEEK_CALLS calls per week (count in the
-// database, aitag/claude, from Monday 00:00 UTC), 20 s apart. On a usage-limit
+// database, aitag/claude, from Monday 00:00 UTC), 8 s apart (CLAUDE_WORKERS calls side by side). On a usage-limit
 // reply Claude rests until the reset time it gives (an hour for the 5-hour
 // limit, a day at a time for the weekly one when no time is given).
 const claudeUse = path.join('.tmp', 'claude-use.json');
@@ -142,7 +142,7 @@ let lastCall = 0;
 let lastClaude = 0;
 async function askClaude(model, prompt) {
   if (!claudeReady()) return [429, 'Claude: daily share (round or week budget) used'];
-  const wait = 20000 - (Date.now() - lastClaude);
+  const wait = 8000 - (Date.now() - lastClaude);
   if (wait > 0) await sleep(wait);
   lastClaude = Date.now();
   saveClaude({ calls: claudeState().calls + 1 });
@@ -566,7 +566,9 @@ if (phase === 'link') {
   const batchSize = Number(value('batch', 40)); // short pair text: bigger batches
   await Promise.all([
     worker('free', batchSize),
-    ...(models.some((m) => m.provider === 'claude') ? [worker('claude', Number(value('claude-batch', 100)))] : []),
+    ...(models.some((m) => m.provider === 'claude')
+      ? Array.from({ length: Number(process.env.CLAUDE_WORKERS || 1) }, () => worker('claude', Number(value('claude-batch', 100))))
+      : []),
   ]);
 }
 
