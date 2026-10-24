@@ -27,7 +27,8 @@
 import fs from 'node:fs';
 import path from 'node:path';
 import crypto from 'node:crypto';
-import { execFileSync } from 'node:child_process';
+import { execFile, execFileSync } from 'node:child_process';
+import os from 'node:os';
 import { parseTopics, tagSlug, tagsOf } from '../src/lib/topicTags.js';
 
 const args = process.argv.slice(2);
@@ -66,7 +67,30 @@ const sleep = (ms) => new Promise((r) => setTimeout(r, ms));
 // ------------------------------------------------------------------ the AI
 const geminiKey = process.env.GEMINI_API_KEY || '';
 const groqKey = process.env.GROQ_API_KEY || '';
+// Claude through Qusay's subscription (Claude Code CLI signed in by the
+// workflow), for the link phase only and kept light so the subscription keeps
+// headroom: at most CLAUDE_MAX_CALLS calls per workflow round, 20 s apart, and
+// an hour off after a usage limit. The count lives in .tmp, which lasts one round.
+const claudeUse = path.join('.tmp', 'claude-use.json');
+const claudeMax = Number(process.env.CLAUDE_MAX_CALLS || 60);
+const claudeState = () => {
+  try {
+    return JSON.parse(fs.readFileSync(claudeUse, 'utf8'));
+  } catch {
+    return { calls: 0, until: 0 };
+  }
+};
+const saveClaude = (st) => {
+  fs.mkdirSync('.tmp', { recursive: true });
+  fs.writeFileSync(claudeUse, JSON.stringify(st));
+};
+const claudeOn = process.env.CLAUDE_ON === '1' && phase === 'link';
+const claudeReady = () => {
+  const st = claudeState();
+  return claudeOn && st.calls < claudeMax && Date.now() > st.until;
+};
 const models = [
+  ...(claudeReady() ? [{ provider: 'claude', model: process.env.CLAUDE_MODEL || 'sonnet' }] : []),
   ...(geminiKey ? (process.env.GEMINI_MODEL || 'gemini-flash-lite-latest,gemini-3.5-flash-lite,gemini-flash-latest,gemini-3.8-flash').split(',').map((m) => ({ provider: 'gemini', model: m })) : []),
   ...(groqKey ? (await groqModels()).map((m) => ({ provider: 'groq', model: m })) : []),
 ];
@@ -92,8 +116,41 @@ let calls = 0;
 let allSpent = false; // every model out of quota for today
 let lastCall = 0;
 
+let lastClaude = 0;
+async function askClaude(model, prompt) {
+  const st = claudeState();
+  if (st.calls >= claudeMax || Date.now() < st.until) return [429, 'Claude: daily share for this round used'];
+  const wait = 20000 - (Date.now() - lastClaude);
+  if (wait > 0) await sleep(wait);
+  lastClaude = Date.now();
+  saveClaude({ ...st, calls: st.calls + 1 });
+  const [stdout, stderr] = await new Promise((resolve) => {
+    const child = execFile(
+      'claude',
+      ['-p', '--model', model, '--output-format', 'json', '--max-turns', '1', '--disallowedTools', 'Bash,Edit,Write,Read,Glob,Grep,WebFetch,WebSearch,Task,NotebookEdit'],
+      { cwd: os.tmpdir(), timeout: 180000, maxBuffer: 64 * 1024 * 1024 },
+      (err, so, se) => resolve([String(so || ''), `${se || ''}${err && !so ? ` ${err.message}` : ''}`]),
+    );
+    child.stdin.end(`${prompt}\n\nReply with the JSON only: no other text, no code fences.`);
+  });
+  let j = {};
+  try {
+    j = JSON.parse(stdout);
+  } catch {
+    // not JSON: an error message
+  }
+  if (j.is_error === false && j.result) return [200, j.result];
+  const text = `${j.result ?? ''} ${stdout.slice(0, 300)} ${stderr}`.trim();
+  if (/usage limit|limit reached|rate limit|5-hour|out of extra usage/i.test(text)) {
+    saveClaude({ ...claudeState(), until: Date.now() + 3600000 });
+    return [429, `Claude usage limit (daily share for this round): ${text.slice(0, 200)}`];
+  }
+  return [500, `Claude: ${text.slice(0, 300) || 'no reply'}`];
+}
+
 async function askOnce({ provider, model }, prompt, out) {
   if (process.env.AI_MOCK) return [200, await import(path.resolve(process.env.AI_MOCK)).then((m) => m.default(prompt))];
+  if (provider === 'claude') return askClaude(model, prompt);
   const wait = 4200 - (Date.now() - lastCall); // ≤ 15 requests a minute
   if (wait > 0) await sleep(wait);
   lastCall = Date.now();
@@ -147,7 +204,8 @@ async function ask(prompt, out = 4000) {
       const [status, text] = await askOnce(m, prompt, out).catch((e) => [0, e.message]);
       if (status === 200) {
         try {
-          return JSON.parse(String(text).replace(/^```(json)?|```$/g, '').trim());
+          const t = String(text).replace(/^```(json)?|```$/g, '').trim();
+          return JSON.parse(m.provider === 'claude' ? t.slice(t.indexOf('{'), t.lastIndexOf('}') + 1) : t);
         } catch {
           console.log(`  ${m.model}: reply was not JSON, asking again`);
           continue;
@@ -390,7 +448,7 @@ if (phase === 'link') {
   const todo = cand.filter(([k]) => state.pair[k] === undefined && pairIds(k)[0]).sort((a, b) => b[1].shared - a[1].shared || b[1].cos - a[1].cos);
   console.log(`${cand.length} candidate pairs, ${todo.length} still to judge.`);
   if (!todo.length) console.log('NOTHING TO DO');
-  let size = Number(value('batch', 25));
+  let size = Number(value('batch', models[0]?.provider === 'claude' ? 50 : 25));
   const show = (id) => {
     const q = all[id];
     return `${clean(q.question).slice(0, 350)} | Answer: ${answerOf(q).slice(0, 100)} | Tests: ${state.q[id]?.f || ''}`;
