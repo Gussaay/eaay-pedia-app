@@ -42,6 +42,7 @@ jobs:
           # Claude subscription token: the link phase asks Claude first, lightly
           CLAUDE_CODE_OAUTH_TOKEN: ${{ secrets.CLAUDE_CODE_OAUTH_TOKEN }}
           CLAUDE_ON: '1'
+          CLAUDE_MAX_CALLS: '25' # Claude Pro plan: leave Qusay most of each 5-hour window
           GH_TOKEN: ${{ github.token }}
           WRITE: dry
         run: |
