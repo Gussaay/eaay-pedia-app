@@ -72,8 +72,8 @@ const groqKey = process.env.GROQ_API_KEY || '';
 // keeps headroom: CLAUDE_MAX_CALLS calls per workflow round (count in .tmp,
 // which lasts one round), CLAUDE_WEEK_CALLS calls per week (count in the
 // database, aitag/claude, from Monday 00:00 UTC), 8 s apart (CLAUDE_WORKERS calls side by side). On a usage-limit
-// reply Claude rests until the reset time it gives (15 minutes for the 5-hour, then it tries again
-// limit, a day at a time for the weekly one when no time is given).
+// reply Claude rests until the reset time it gives (for the 5-hour limit it tries
+// again every 15 minutes, a day at a time for the weekly one when no time is given).
 const claudeUse = path.join('.tmp', 'claude-use.json');
 const claudeMax = Number(process.env.CLAUDE_MAX_CALLS || 50);
 const claudeWeekMax = Number(process.env.CLAUDE_WEEK_CALLS || 350);
@@ -102,7 +102,8 @@ const claudeOn = process.env.CLAUDE_ON === '1' && phase === 'link';
 let claudeWeek = { week: weekStart, calls: 0, tokens: 0, until: 0 };
 if (claudeOn) {
   const w = read('aitag/claude');
-  if (w.until) claudeWeek.until = w.until;
+  // a short rest (the 5-hour limit) is tried again at start: a refused call costs nothing
+  if (w.until - Date.now() > 6 * 3600000) claudeWeek.until = w.until;
   if (w.week === weekStart) claudeWeek = { ...claudeWeek, calls: w.calls || 0, tokens: w.tokens || 0 };
   console.log(`Claude this week: ${claudeWeek.calls}/${claudeWeekMax} calls, ${claudeWeek.tokens} tokens${claudeWeek.until > Date.now() ? `, resting until ${new Date(claudeWeek.until).toISOString()}` : ''}.`);
 }
