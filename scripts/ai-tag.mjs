@@ -68,7 +68,7 @@ const sleep = (ms) => new Promise((r) => setTimeout(r, ms));
 const geminiKey = process.env.GEMINI_API_KEY || '';
 const groqKey = process.env.GROQ_API_KEY || '';
 // Claude through Qusay's subscription (Claude Code CLI signed in by the
-// workflow), for the link phase only, kept within budgets so the subscription
+// workflow), for tagging (after the free models) and linking, kept within budgets so the subscription
 // keeps headroom: CLAUDE_MAX_CALLS calls per workflow round (count in .tmp,
 // which lasts one round), CLAUDE_WEEK_CALLS calls per week (count in the
 // database, aitag/claude, from Monday 00:00 UTC), 8 s apart (CLAUDE_WORKERS calls side by side). On a usage-limit
@@ -98,7 +98,7 @@ const saveClaude = (st) => {
   fs.mkdirSync('.tmp', { recursive: true });
   fs.writeFileSync(claudeUse, JSON.stringify(st));
 };
-const claudeOn = process.env.CLAUDE_ON === '1' && phase === 'link';
+const claudeOn = process.env.CLAUDE_ON === '1' && ['tag', 'link'].includes(phase);
 let claudeWeek = { week: weekStart, calls: 0, tokens: 0, until: 0 };
 if (claudeOn) {
   const w = read('aitag/claude');
