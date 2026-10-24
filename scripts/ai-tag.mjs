@@ -68,14 +68,31 @@ const geminiKey = process.env.GEMINI_API_KEY || '';
 const groqKey = process.env.GROQ_API_KEY || '';
 const models = [
   ...(geminiKey ? (process.env.GEMINI_MODEL || 'gemini-flash-lite-latest,gemini-3.5-flash-lite,gemini-flash-latest,gemini-3.8-flash').split(',').map((m) => ({ provider: 'gemini', model: m })) : []),
-  ...(groqKey ? (process.env.GROQ_MODEL || 'meta-llama/llama-4-scout-17b-16e-instruct,moonshotai/kimi-k2-instruct,llama-3.3-70b-versatile,qwen/qwen3-32b,openai/gpt-oss-120b,openai/gpt-oss-20b').split(',').map((m) => ({ provider: 'groq', model: m })) : []),
+  ...(groqKey ? (await groqModels()).map((m) => ({ provider: 'groq', model: m })) : []),
 ];
+
+/** Groq's text models that this key can use now; each has its own free quota. */
+async function groqModels() {
+  if (process.env.GROQ_MODEL) return process.env.GROQ_MODEL.split(',');
+  const first = ['openai/gpt-oss-120b', 'llama-3.3-70b-versatile', 'moonshotai/kimi-k2-instruct', 'qwen/qwen3-32b', 'meta-llama/llama-4-scout-17b-16e-instruct', 'openai/gpt-oss-20b'];
+  const j = await fetch('https://api.groq.com/openai/v1/models', { headers: { Authorization: `Bearer ${groqKey}` } })
+    .then((r) => r.json())
+    .catch(() => ({}));
+  const ids = (j.data || [])
+    .filter((m) => m.active !== false && !/whisper|tts|guard|orpheus|playai|compound|embed|distil/i.test(m.id))
+    .map((m) => m.id);
+  if (!ids.length) return first;
+  const rank = (id) => (first.includes(id) ? first.indexOf(id) : first.length);
+  return ids.sort((a, b) => rank(a) - rank(b) || a.localeCompare(b));
+}
 const spent = new Set(); // models out of quota for today
+const fits = new Map(); // model → longest prompt (characters) it accepts
+let tooBig = false; // last ask() failed only because the prompt was too long
 let calls = 0;
 let allSpent = false; // every model out of quota for today
 let lastCall = 0;
 
-async function askOnce({ provider, model }, prompt) {
+async function askOnce({ provider, model }, prompt, out) {
   if (process.env.AI_MOCK) return [200, await import(path.resolve(process.env.AI_MOCK)).then((m) => m.default(prompt))];
   const wait = 4200 - (Date.now() - lastCall); // ≤ 15 requests a minute
   if (wait > 0) await sleep(wait);
@@ -99,6 +116,8 @@ async function askOnce({ provider, model }, prompt) {
     body: JSON.stringify({
       model,
       temperature: 0,
+      max_completion_tokens: out, // counts against the per-minute token limit, so keep it to what the reply needs
+      ...(/gpt-oss/.test(model) ? { reasoning_effort: 'low' } : {}),
       response_format: { type: 'json_object' },
       messages: [{ role: 'user', content: prompt }],
     }),
@@ -107,15 +126,25 @@ async function askOnce({ provider, model }, prompt) {
   return [r.status, r.ok ? j?.choices?.[0]?.message?.content || '' : j?.error?.message || ''];
 }
 
-/** JSON from the first model with quota left; null when every model is spent. */
-async function ask(prompt) {
+/**
+ * JSON from the first model with quota left; null when every model is spent,
+ * or (with tooBig set) when the models left only take a shorter prompt.
+ * out: tokens the reply may need.
+ */
+async function ask(prompt, out = 4000) {
+  tooBig = false;
   for (const m of models) {
     if (spent.has(m.model)) continue;
+    if (prompt.length > (fits.get(m.model) ?? Infinity)) {
+      tooBig = true;
+      continue;
+    }
+    let skip = false; // try the next model without writing this one off
     let waits = 0; // per-minute limit waits on this model
     for (let attempt = 0; attempt < 3; attempt += 1) {
       if (calls >= maxCalls) return null;
       calls += 1;
-      const [status, text] = await askOnce(m, prompt).catch((e) => [0, e.message]);
+      const [status, text] = await askOnce(m, prompt, out).catch((e) => [0, e.message]);
       if (status === 200) {
         try {
           return JSON.parse(String(text).replace(/^```(json)?|```$/g, '').trim());
@@ -128,7 +157,17 @@ async function ask(prompt) {
       if (status === 429 && /day|daily|quota|tokens per day|TPD|RPD/i.test(text)) break; // spent for today
       const asked = Number(String(text).match(/Requested (\d+)/)?.[1]);
       const limit = Number(String(text).match(/Limit (\d+)/)?.[1]);
-      if (status === 413 || asked > limit) break; // prompt too big for this model
+      if (status === 413 || asked > limit) {
+        // prompt too big for this model: remember what fits and ask for a smaller batch
+        fits.set(m.model, Math.floor(prompt.length * Math.min(0.9, asked > limit ? (limit / asked) * 0.9 : 0.5)));
+        tooBig = true;
+        skip = true;
+        break;
+      }
+      if (status === 400 && /validate JSON|json_validate/i.test(text)) {
+        if (attempt === 2) skip = true;
+        continue;
+      }
       if (status === 429 && waits < 20) {
         // per-minute limit: wait as long as the API says, then try the same model again
         const s = Number(String(text).match(/try again in (?:(\d+)m)?([\d.]+)s/i)?.slice(1).reduce((a, v, i) => a + (Number(v) || 0) * (i ? 1 : 60), 0)) || 30;
@@ -140,8 +179,9 @@ async function ask(prompt) {
       if (![0, 429, 500, 502, 503].includes(status)) break;
       await sleep(5000);
     }
-    spent.add(m.model);
+    if (!skip) spent.add(m.model);
   }
+  if (tooBig) return null;
   allSpent = true;
   return null;
 }
@@ -174,10 +214,10 @@ if (phase === 'tag') {
   const todo = list.filter(([id, q]) => state.q[id]?.h !== hashOf(q));
   console.log(`${list.length} questions, ${todo.length} to tag.`);
   if (!todo.length) console.log('NOTHING TO DO');
-  const BATCH = Number(value('batch', 20));
+  let size = Number(value('batch', 20));
   let done = 0;
-  for (let i = 0; i < todo.length; i += BATCH) {
-    const batch = todo.slice(i, i + BATCH);
+  for (let i = 0; i < todo.length; ) {
+    const batch = todo.slice(i, i + size);
     const prompt = [
       'You index paediatric exam MCQs (MRCPCH, DOH/HAAD, Nelson, SMSB) for a study app, so questions on the same point can be found together.',
       'For EACH question return:',
@@ -190,8 +230,14 @@ if (phase === 'tag') {
       '',
       ...batch.map(([id, q]) => `### id: ${id}\n${brief(q)}`),
     ].join('\n');
-    const reply = await ask(prompt);
+    const reply = await ask(prompt, 500 + 100 * batch.length);
+    if (!reply && tooBig && size > 1) {
+      size = Math.ceil(size / 2);
+      console.log(`  smaller batches: ${size}`);
+      continue;
+    }
     if (!reply) break;
+    i += batch.length;
     const updates = {};
     for (const it of reply.items || []) {
       const q = all[it?.id];
@@ -202,7 +248,7 @@ if (phase === 'tag') {
     }
     write(updates, 'aitag-q');
     Object.assign(state.q, Object.fromEntries(Object.entries(updates).map(([k, v]) => [k.split('/')[2], v])));
-    console.log(`  ${Math.min(i + BATCH, todo.length)}/${todo.length} (${calls} requests)`);
+    console.log(`  ${i}/${todo.length} (${calls} requests)`);
   }
   console.log(`Tagged ${done} questions this run; ${list.filter(([id, q]) => state.q[id]?.h !== hashOf(q)).length} left.`);
 }
@@ -333,13 +379,13 @@ if (phase === 'link') {
   const todo = cand.filter(([k]) => state.pair[k] === undefined).sort((a, b) => b[1].shared - a[1].shared || b[1].cos - a[1].cos);
   console.log(`${cand.length} candidate pairs, ${todo.length} still to judge.`);
   if (!todo.length) console.log('NOTHING TO DO');
-  const BATCH = Number(value('batch', 25));
+  let size = Number(value('batch', 25));
   const show = (id) => {
     const q = all[id];
     return `${clean(q.question).slice(0, 350)} | Answer: ${answerOf(q).slice(0, 100)} | Tests: ${state.q[id]?.f || ''}`;
   };
-  for (let i = 0; i < todo.length; i += BATCH) {
-    const batch = todo.slice(i, i + BATCH);
+  for (let i = 0; i < todo.length; ) {
+    const batch = todo.slice(i, i + size);
     const reply = await ask(
       [
         'Decide for each pair of paediatric exam questions whether they are LINKED: both test the same specific fact or concept, so a student who learns the answer to one is directly helped with the other (same condition AND same aspect, e.g. both on the first-line treatment of Kawasaki disease, or one asks the diagnosis and the other a key feature that defines it).',
@@ -351,15 +397,22 @@ if (phase === 'link') {
           return `Pair ${n + 1}\nA: ${show(a)}\nB: ${show(b)}`;
         }),
       ].join('\n'),
+      500 + 15 * batch.length,
     );
+    if (!reply && tooBig && size > 1) {
+      size = Math.ceil(size / 2);
+      console.log(`  smaller batches: ${size}`);
+      continue;
+    }
     if (!reply) break;
+    i += batch.length;
     const updates = {};
     batch.forEach(([k], n) => {
       const v = reply.r?.[String(n + 1)];
       if (v === 0 || v === 1 || v === '0' || v === '1') updates[`aitag/pair/${k}`] = state.pair[k] = Number(v);
     });
     write(updates, 'aitag-pair');
-    console.log(`  ${Math.min(i + BATCH, todo.length)}/${todo.length} (${calls} requests)`);
+    console.log(`  ${i}/${todo.length} (${calls} requests)`);
   }
 }
 
