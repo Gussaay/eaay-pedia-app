@@ -77,11 +77,15 @@ const groqKey = process.env.GROQ_API_KEY || '';
 const claudeUse = path.join('.tmp', 'claude-use.json');
 const claudeMax = Number(process.env.CLAUDE_MAX_CALLS || 50);
 const claudeWeekMax = Number(process.env.CLAUDE_WEEK_CALLS || 350);
+// the week runs from the plan's own weekly reset, CLAUDE_WEEK_RESET as
+// "<UTC weekday 0-6>T<HH:MM>" (Qusay's resets Tuesday 22:59 his time = 2T19:59 UTC)
 const weekStart = (() => {
+  const [, day, hh, mm] = (process.env.CLAUDE_WEEK_RESET || '1T00:00').match(/^(\d)T(\d\d):(\d\d)$/) || [0, 1, 0, 0];
   const d = new Date();
-  d.setUTCHours(0, 0, 0, 0);
-  d.setUTCDate(d.getUTCDate() - ((d.getUTCDay() + 6) % 7));
-  return d.toISOString().slice(0, 10);
+  d.setUTCHours(Number(hh), Number(mm), 0, 0);
+  d.setUTCDate(d.getUTCDate() - ((d.getUTCDay() - Number(day) + 7) % 7));
+  if (d > new Date()) d.setUTCDate(d.getUTCDate() - 7);
+  return d.toISOString().slice(0, 16);
 })();
 const claudeState = () => {
   try {
