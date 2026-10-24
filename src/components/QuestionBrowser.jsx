@@ -92,7 +92,7 @@ function Row({ icon: Icon, title, subtitle, onOpen, chips = [], onChip, level })
  * Chapters or basic-science rows for a bank, optionally limited to one book.
  * `mode` is "chapters" or "science".
  */
-export default function QuestionBrowser({ bank, book = '', bookTitle = '', name = '', mode = 'chapters' }) {
+export default function QuestionBrowser({ bank, book = '', bookTitle = '', name = '', mode = 'chapters', onLocked }) {
   const navigate = useNavigate();
   const check = useAccessCheck();
   const data = useAsync(() => getOne(`qbrowse/${bank}`), [bank]);
@@ -103,6 +103,10 @@ export default function QuestionBrowser({ bank, book = '', bookTitle = '', name 
   }, [data.data, book]);
 
   const open = ({ chapter = '', science = '' }) => {
+    if (onLocked && levelOf({ chapter, science }) === 'locked') {
+      onLocked();
+      return;
+    }
     const filters = { bank, book, chapter, science };
     navigate(quizPath('set', setId(filters), { ...filters, bookTitle, name }));
   };

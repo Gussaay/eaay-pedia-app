@@ -11,10 +11,12 @@
 //
 //   unlock_requests/<uid>/<scope>  { type, id, title, path, status, at, name, email }
 //
-// Everyone can still browse every bank, book and chapter with its real
-// question count. What the access decides is whether a quiz opens at all
-// ("locked"), opens with only its first few questions ("partial") or opens
-// whole ("full").
+// Everyone can browse every bank, its groups (e.g. MRCPCH → FOP) and its
+// books, with the number of quizzes and questions in each. What the access
+// decides is whether a book's quizzes can be seen and opened at all
+// ("locked"), open with only their first few questions ("partial") or open
+// whole ("full"). People ask to unlock a whole bank, or one group (or a book
+// that is in no group), from one pop-up (components/UnlockSheet.jsx).
 //
 // Times are milliseconds since 1970. A purchase system only has to write the
 // same fields (role "pro" with pro_until, or an unlock with until), so nothing
@@ -45,7 +47,8 @@ export const PLANS = {
   full: { label: 'Full', desc: 'Opens every quiz in full.' },
 };
 
-export const DEFAULT_CONFIG = { enabled: true, default_plan: 'locked', partial_count: 10, trial_days: 7 };
+// `subscriptions` turns on the Subscribe button; until then it shows "coming soon".
+export const DEFAULT_CONFIG = { enabled: true, default_plan: 'locked', partial_count: 10, trial_days: 7, subscriptions: false };
 
 const STAFF = new Set(['superuser', 'manager', 'editor', 'reviewer']);
 export const isStaffRole = (role) => STAFF.has(role);
@@ -65,6 +68,7 @@ export function readConfig(raw) {
     default_plan: plan,
     partial_count: count,
     trial_days: days,
+    subscriptions: isTrue(c.subscriptions),
   };
 }
 
@@ -119,9 +123,12 @@ export const SCOPE_LABELS = {
   quiz: 'Quiz',
   chapter: 'Chapter',
   science: 'Section',
-  book: 'Whole book',
+  book: 'Book',
+  group: 'Group',
   bank: 'Whole bank',
 };
+
+const groupId = (bank, group) => `${bank}|${group}`;
 
 const scope = (type, id, title) => (id ? { type, id: String(id), key: scopeKey(type, id), title: title || String(id) } : null);
 
@@ -129,8 +136,9 @@ const scope = (type, id, title) => (id ? { type, id: String(id), key: scopeKey(t
  * Every unlock that would open this quiz, narrowest first. The first one is
  * what the "Request unlock" button asks for.
  */
-export function scopesOf(meta = {}, { bank = '', bookTitle = '', bankTitle = '' } = {}) {
+export function scopesOf(meta = {}, { bank = '', group = '', bookTitle = '', bankTitle = '' } = {}) {
   const b = bank || meta.bank || '';
+  const g = group || meta.group || '';
   const book = meta.book || meta.source || '';
   const out = [];
   if (meta.kind === 'exam') out.push(scope('quiz', meta.id, meta.title));
@@ -140,12 +148,31 @@ export function scopesOf(meta = {}, { bank = '', bookTitle = '', bankTitle = '' 
     if (meta.science) out.push(scope('science', `${b}|${meta.science}`, meta.science));
   }
   out.push(scope('book', book, bookTitle || meta.name));
+  if (b && g) out.push(scope('group', groupId(b, g), g));
   out.push(scope('bank', b, bankTitle));
   return out.filter(Boolean);
 }
 
-/** The unlocks list for a quiz in a list, before its full record is loaded. */
-export const quizScopes = ({ id, source, bank, title }) => scopesOf({ kind: 'exam', id, source, title }, { bank });
+/** What opens a book: the book itself, its group, or its bank. */
+export const bookScopes = ({ source, group = '', bank }) => scopesOf({ kind: 'book', source }, { bank, group });
+
+/** What opens a whole bank. */
+export const bankScopes = (bank) => [scope('bank', bank)].filter(Boolean);
+
+/** What opens everything in a group: the group or its bank. */
+export const groupScopes = ({ group, bank }) => [scope('group', groupId(bank, group), group), scope('bank', bank)].filter(Boolean);
+
+/**
+ * The two unlocks the pop-up offers for a book or a group: the narrower one
+ * (its group, or the book when it is in no group) and the whole bank.
+ */
+export function unlockChoices({ bank = '', bankTitle = '', group = '', groupTitle = '', book = '', bookTitle = '' } = {}) {
+  const out = [];
+  if (group) out.push(scope('group', groupId(bank, group), [bankTitle || bank, groupTitle || group].join(' · ')));
+  else if (book) out.push(scope('book', book, bookTitle || book));
+  if (bank) out.push(scope('bank', bank, bankTitle || bank));
+  return out.filter(Boolean);
+}
 
 const unlockLive = (u, now) => !!u && (u === true || u === 'true' || !ms(u.until) || ms(u.until) > now);
 

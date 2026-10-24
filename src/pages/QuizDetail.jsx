@@ -5,7 +5,9 @@ import { BookOpenCheck, CheckCircle2, DownloadCloud, ListChecks, PlayCircle, Rot
 import { useAuth } from '../hooks/useAuth';
 import { useAsync, useOnline } from '../hooks/useData';
 import { useQuizAccess } from '../hooks/useQuizAccess';
-import LockPanel from '../components/LockPanel';
+import { unlockChoices } from '../lib/access';
+import { UnlockSheet } from '../components/LockPanel';
+import { LockOpen } from 'lucide-react';
 import { incrementString, str, updateAt } from '../lib/rtdb';
 import { downloadQuiz, findSavedSession, loadLeaderboard, loadQuestions, loadQuizMeta, playPath, quizPath, reviewPath } from '../lib/quizSource';
 import { BATCH, setId } from '../lib/questionBrowse';
@@ -33,6 +35,7 @@ export default function QuizDetail() {
   const online = useOnline();
   const toast = useToast();
   const qa = useQuizAccess(meta.data);
+  const [unlocking, setUnlocking] = useState(false);
   const locked = qa.level === 'locked';
   const full = qa.level === 'full';
 
@@ -134,7 +137,17 @@ export default function QuizDetail() {
             </div>
           </div>
           {qa.ready && !full && (
-            <LockPanel access={qa} scopes={qa.scopes} total={count} path={`${location.pathname}${location.search}`} />
+            <div className={`mt-5 rounded-2xl p-4 ${locked ? 'bg-slate-50' : 'bg-sky-50'}`}>
+              <p className="font-semibold text-slate-800">
+                {locked ? 'This quiz is locked' : `Preview: the first ${Math.min(qa.limit, count || qa.limit)} questions`}
+              </p>
+              <p className="text-sm text-slate-500 mt-0.5">
+                {locked ? 'Ask for access, start a free trial, or subscribe to open it.' : 'Unlock to answer every question.'}
+              </p>
+              <Button className="mt-3 w-full" onClick={() => setUnlocking(true)}>
+                <LockOpen size={18} /> Unlock
+              </Button>
+            </div>
           )}
           {paused && !locked && (
             <div className="mt-5 rounded-2xl border-2 border-amber-200 bg-amber-50 p-4">
@@ -238,6 +251,18 @@ export default function QuizDetail() {
           )}
         </Card>
       </Page>
+      <UnlockSheet
+        open={unlocking}
+        onClose={() => setUnlocking(false)}
+        title={qa.scopes.find((x) => x.type === 'group')?.title || q.name || q.title}
+        choices={unlockChoices({
+          bank: qa.scopes.find((x) => x.type === 'bank')?.id,
+          group: (qa.scopes.find((x) => x.type === 'group')?.id || '').split('|')[1],
+          book: q.source,
+          bookTitle: q.name,
+        })}
+        path={`${location.pathname}${location.search}`}
+      />
     </div>
   );
 }

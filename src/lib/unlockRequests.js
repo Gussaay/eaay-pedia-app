@@ -1,6 +1,6 @@
 // "Request unlock": each person asks for one quiz, chapter, book, bank, a
 // free trial or Pro, under unlock_requests/<uid>/<scope>. Managers answer them
-// on the Access page (pages/admin/AdminAccess.jsx); approving one writes the
+// on the Users & access page (pages/admin/AdminUsers.jsx); approving one writes the
 // unlock into access/<uid> (lib/access.js).
 import { removeAt, updateAt } from './rtdb';
 

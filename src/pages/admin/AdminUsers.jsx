@@ -1,61 +1,29 @@
-// User manager: who is using the app, what they have done, and the few
-// controls an admin needs over an account.
+// Users & access: one page for everything about people.
+//
+//   Requests   unlock, trial and Pro requests sent from the Unlock pop-up
+//   People     every account, its role and access; tap one to change them
+//   Settings   whether quizzes lock, what everyone else gets, trial length,
+//              and whether Subscribe is open yet
 //
 // The list is the existing `quizusers/<uid>` record that the Android app also
-// writes. This screen sets one field there:
-//
-//   blocked  "true" stops the account being used
-//
-// and keeps the older `admin` flag in step with the role. Roles, plans, trials,
-// Pro and unlocks live in access/<uid> (lib/access.js), which only the
-// superuser and managers may change.
+// writes; this page sets `blocked` there and keeps the older `admin` flag in
+// step with the role. Roles, plans, trials, Pro and unlocks live in
+// access/<uid> (lib/access.js), which only the superuser and managers change.
 import { useMemo, useState } from 'react';
-import { useNavigate, useSearchParams } from 'react-router-dom';
-import {
-  Ban,
-  BarChart3,
-  CheckCircle2,
-  Globe2,
-  Search,
-  Send,
-  Shield,
-  ShieldCheck,
-  Trash2,
-  Users,
-} from 'lucide-react';
+import { useSearchParams } from 'react-router-dom';
+import { Inbox, Search, Settings2, Users } from 'lucide-react';
 import { useAsync, useList } from '../../hooks/useData';
 import { useAuth } from '../../hooks/useAuth';
-import { getOne, num, removeAt, updateAt } from '../../lib/rtdb';
+import { getOne, num } from '../../lib/rtdb';
 import { isAdminEmail } from '../../config';
-import { ACCESS_GROUPS, ROLE_INFO, accessGroup, accessState, describeAccess, readConfig, roleOf } from '../../lib/access';
-import AccessEditor from './AccessEditor';
-import DangerConfirm from '../../components/DangerConfirm';
-import {
-  AppBar,
-  Avatar,
-  Button,
-  Card,
-  Empty,
-  ErrorBox,
-  Modal,
-  Page,
-  Select,
-  SkeletonList,
-  useToast,
-} from '../../components/ui';
+import { ACCESS_GROUPS, PLANS, accessGroup, accessState, readConfig, roleOf } from '../../lib/access';
+import { saveConfig } from '../../lib/accessAdmin';
+import PersonSheet from './PersonSheet';
+import { AccessPill, RequestCard, RolePill, daysSince, emailOf, nameOf } from './accessUi';
+import { AppBar, Avatar, Button, Card, Empty, ErrorBox, Input, Page, Select, SkeletonList, Toggle, useToast } from '../../components/ui';
 
 const PAGE = 60;
 const isTrue = (v) => v === true || v === 'true';
-const emailOf = (u) => u.mail || u.email || '';
-const nameOf = (u) => u.name || emailOf(u) || u._key;
-
-/** The records store "YYYY-MM-DD"; anything else is treated as never seen. */
-function daysSince(date) {
-  if (!date) return Infinity;
-  const t = Date.parse(date);
-  if (Number.isNaN(t)) return Infinity;
-  return Math.floor((Date.now() - t) / 86_400_000);
-}
 
 const SORTS = {
   recent: { label: 'Recently active', fn: (a, b) => daysSince(a.date) - daysSince(b.date) },
@@ -64,32 +32,157 @@ const SORTS = {
   played: { label: 'Most quizzes played', fn: (a, b) => num(b.total_play) - num(a.total_play) },
 };
 
-function Stat({ icon: Icon, value, label }) {
+const ROLE_FILTERS = {
+  '': 'All roles',
+  staff: 'Staff',
+  pro: 'Pro subscribers',
+  user: 'Users',
+};
+const roleFilter = (key, role) =>
+  !key || (key === 'staff' ? ['superuser', 'manager', 'editor', 'reviewer'].includes(role) : role === key);
+
+function Kpi({ value, label, tone = 'slate', onClick, active }) {
+  const tones = {
+    slate: 'text-slate-900',
+    amber: 'text-amber-600',
+    violet: 'text-violet-700',
+    emerald: 'text-emerald-700',
+    red: 'text-red-600',
+  };
   return (
-    <div className="flex-1 min-w-[7rem] rounded-2xl bg-white border border-slate-100 p-4 shadow-sm">
-      <Icon size={18} className="text-brand-600" />
-      <p className="font-display text-2xl mt-1 text-slate-900">{value}</p>
-      <p className="text-xs text-slate-500">{label}</p>
+    <button
+      onClick={onClick}
+      className={`rounded-2xl border bg-white p-3 text-left shadow-sm transition hover:shadow-md ${
+        active ? 'border-brand-400 ring-2 ring-brand-100' : 'border-slate-100'
+      }`}
+    >
+      <p className={`font-display text-2xl leading-none ${tones[tone]}`}>{Number(value || 0).toLocaleString()}</p>
+      <p className="text-[11px] text-slate-500 mt-1.5 leading-tight">{label}</p>
+    </button>
+  );
+}
+
+function Tabs({ tab, onChange, waiting }) {
+  const tabs = [
+    ['requests', 'Requests', Inbox],
+    ['people', 'People', Users],
+    ['settings', 'Settings', Settings2],
+  ];
+  return (
+    <div className="flex rounded-2xl bg-slate-100 p-1">
+      {tabs.map(([k, label, Icon]) => (
+        <button
+          key={k}
+          onClick={() => onChange(k)}
+          className={`flex-1 flex items-center justify-center gap-1.5 rounded-xl py-2 text-sm font-semibold transition ${
+            tab === k ? 'bg-white text-brand-700 shadow-sm' : 'text-slate-500 hover:text-slate-700'
+          }`}
+        >
+          <Icon size={16} />
+          {label}
+          {k === 'requests' && waiting > 0 && (
+            <span className="rounded-full bg-amber-500 px-1.5 text-[11px] leading-5 text-white">{waiting}</span>
+          )}
+        </button>
+      ))}
+    </div>
+  );
+}
+
+function SettingsTab({ config, onSaved }) {
+  const toast = useToast();
+  const [form, setForm] = useState(() => readConfig(config));
+  const [busy, setBusy] = useState(false);
+  const set = (k) => (v) => setForm((f) => ({ ...f, [k]: v }));
+  return (
+    <div className="space-y-3">
+      <Card className="p-5 space-y-3">
+        <p className="font-display text-lg">Quiz locking</p>
+        <Toggle label="Lock quizzes" checked={form.enabled} onChange={set('enabled')} />
+        <p className="text-xs text-slate-500 -mt-2">
+          Off opens every quiz to everyone. On, people see banks, groups and books with their quiz and question counts,
+          and unlock them from a pop-up.
+        </p>
+        <Select
+          label="Everyone without a role, trial or unlock gets"
+          hint={PLANS[form.default_plan].desc}
+          value={form.default_plan}
+          onChange={(e) => set('default_plan')(e.target.value)}
+        >
+          {Object.entries(PLANS).map(([k, p]) => (
+            <option key={k} value={k}>
+              {p.label}
+            </option>
+          ))}
+        </Select>
+        <div className="grid grid-cols-2 gap-3">
+          <Input
+            label="Preview questions"
+            hint="For the Preview plan"
+            type="number"
+            min="1"
+            value={form.partial_count}
+            onChange={(e) => set('partial_count')(e.target.value)}
+          />
+          <Input label="Free trial (days)" type="number" min="1" value={form.trial_days} onChange={(e) => set('trial_days')(e.target.value)} />
+        </div>
+      </Card>
+      <Card className="p-5 space-y-2">
+        <p className="font-display text-lg">Subscriptions</p>
+        <Toggle label="Open subscriptions" checked={form.subscriptions} onChange={set('subscriptions')} />
+        <p className="text-xs text-slate-500">
+          Off, the Subscribe button shows "Coming soon". On, it sends a Pro request you approve under Requests, until a
+          payment system takes that over.
+        </p>
+      </Card>
+      <Button
+        className="w-full"
+        loading={busy}
+        onClick={async () => {
+          setBusy(true);
+          try {
+            await saveConfig(form);
+            toast('Settings saved.', 'success');
+            onSaved();
+          } catch (e) {
+            toast(e.message || 'Could not save', 'error');
+          } finally {
+            setBusy(false);
+          }
+        }}
+      >
+        Save settings
+      </Button>
     </div>
   );
 }
 
 export default function AdminUsers() {
-  const toast = useToast();
-  const navigate = useNavigate();
-  const list = useList('quizusers');
-  const accessData = useAsync(() => Promise.all([getOne('access'), getOne('access_config')]), []);
-  const [accessAll, accessConfig] = accessData.data || [];
+  const { user: me } = useAuth();
   const [params, setParams] = useSearchParams();
+  const tab = params.get('tab') || 'people';
   const group = params.get('access') || '';
+  const setParam = (k, v) => {
+    const next = new URLSearchParams(params);
+    if (v) next.set(k, v);
+    else next.delete(k);
+    setParams(next, { replace: true });
+  };
+
+  const list = useList('quizusers');
+  const accessData = useAsync(() => Promise.all([getOne('access'), getOne('access_config'), getOne('unlock_requests')]), []);
+  const [accessAll, accessConfig, requestsRaw] = accessData.data || [];
+  const reloadAll = () => {
+    accessData.reload();
+    list.reload();
+  };
 
   const [q, setQ] = useState('');
   const [sort, setSort] = useState('recent');
-  const [level, setLevel] = useState('');
+  const [role, setRole] = useState('');
   const [limit, setLimit] = useState(PAGE);
-  const [open, setOpen] = useState(null);
-  const [confirm, setConfirm] = useState(null);
-  const [busy, setBusy] = useState(false);
+  const [openUid, setOpenUid] = useState(null);
+  const [history, setHistory] = useState(false);
 
   // Each person's role and access, worked out as if locking were on so the
   // groups mean the same whatever the setting.
@@ -97,37 +190,37 @@ export default function AdminUsers() {
     const on = { ...readConfig(accessConfig), enabled: true };
     return list.data.map((u) => {
       const record = accessAll?.[u._key] || null;
-      const role = roleOf({ email: emailOf(u), record, legacyAdmin: isAdminEmail(emailOf(u)) || isTrue(u.admin) });
-      const state = accessState({ role, record, config: on });
-      return { ...u, _role: role, _record: record, _access: state, _group: accessGroup(state) };
+      const r = roleOf({ email: emailOf(u), record, legacyAdmin: isAdminEmail(emailOf(u)) || isTrue(u.admin) });
+      const state = accessState({ role: r, record, config: on });
+      return { ...u, _role: r, _record: record, _access: state, _group: accessGroup(state) };
     });
   }, [list.data, accessAll, accessConfig]);
+  const byUid = useMemo(() => new Map(users.map((u) => [u._key, u])), [users]);
 
-  const stats = useMemo(() => {
-    const byLevel = {};
-    const byCountry = {};
-    let active7 = 0;
-    let active30 = 0;
+  const requests = useMemo(() => {
+    const out = [];
+    Object.entries(requestsRaw || {}).forEach(([uid, byKey]) =>
+      Object.entries(byKey || {}).forEach(([key, r]) => out.push({ ...r, uid, key })),
+    );
+    return out.sort((a, b) => Number(b.at || 0) - Number(a.at || 0));
+  }, [requestsRaw]);
+  const pending = requests.filter((r) => r.status === 'pending');
+
+  const kpi = useMemo(() => {
+    const c = { total: users.length, active7: 0, pro: 0, trial: 0, subscribe: 0 };
     users.forEach((u) => {
-      const d = daysSince(u.date);
-      if (d <= 7) active7 += 1;
-      if (d <= 30) active30 += 1;
-      if (u.level) byLevel[u.level] = (byLevel[u.level] || 0) + 1;
-      if (u.residency) byCountry[u.residency] = (byCountry[u.residency] || 0) + 1;
+      if (daysSince(u.date) <= 7) c.active7 += 1;
+      if (u._group === 'pro') c.pro += 1;
+      if (u._group === 'trial') c.trial += 1;
+      if (u._group === 'subscribe') c.subscribe += 1;
     });
-    return {
-      total: users.length,
-      active7,
-      active30,
-      byLevel,
-      countries: Object.entries(byCountry).sort((a, b) => b[1] - a[1]).slice(0, 5),
-    };
+    return c;
   }, [users]);
 
   const shown = useMemo(() => {
     const needle = q.trim().toLowerCase();
     return users
-      .filter((u) => !level || u.level === level)
+      .filter((u) => roleFilter(role, u._role))
       .filter((u) => !group || u._group === group)
       .filter(
         (u) =>
@@ -137,307 +230,170 @@ export default function AdminUsers() {
           String(u.residency || '').toLowerCase().includes(needle),
       )
       .sort(SORTS[sort].fn);
-  }, [users, q, level, sort, group]);
+  }, [users, q, role, group, sort]);
 
-  const patch = async (uid, values, message) => {
-    setBusy(true);
-    try {
-      await updateAt(`quizusers/${uid}`, values);
-      toast(message, 'success');
-      list.reload();
-      setOpen((cur) => (cur && cur._key === uid ? { ...cur, ...values } : cur));
-    } catch (e) {
-      toast(e.message || 'Could not save', 'error');
-    } finally {
-      setBusy(false);
-    }
+  const showGroup = (g) => {
+    const next = new URLSearchParams(params);
+    next.set('tab', 'people');
+    if (g && g !== group) next.set('access', g);
+    else next.delete('access');
+    setParams(next, { replace: true });
   };
 
-  const isSuperAdmin = (u) => u._role === 'superuser';
-  const { role: myRole } = useAuth();
-  const current = open && users.find((u) => u._key === open._key);
+  const open = openUid ? byUid.get(openUid) : null;
+  const by = me?.email || me?.uid || '';
+  const loading = list.loading || accessData.loading;
 
   return (
     <div className="min-h-screen">
-      <AppBar title="User manager" subtitle={`${stats.total} accounts`} />
+      <AppBar title="Users & access" subtitle={`${kpi.total.toLocaleString()} accounts`} />
       <Page className="space-y-4">
-        <ErrorBox error={list.error} onRetry={list.reload} />
-        <ErrorBox error={accessData.error} onRetry={accessData.reload} />
+        <ErrorBox error={list.error || accessData.error} onRetry={reloadAll} />
 
-        <div className="flex flex-wrap gap-3">
-          <Stat icon={Users} value={stats.total} label="Total accounts" />
-          <Stat icon={CheckCircle2} value={stats.active7} label="Active in 7 days" />
-          <Stat icon={BarChart3} value={stats.active30} label="Active in 30 days" />
+        <div className="grid grid-cols-3 gap-2 sm:grid-cols-6">
+          <Kpi value={kpi.total} label="Accounts" onClick={() => showGroup('')} active={tab === 'people' && !group} />
+          <Kpi value={kpi.active7} label="Active this week" tone="emerald" onClick={() => {
+            setSort('recent');
+            showGroup('');
+          }} />
+          <Kpi value={pending.length} label="Waiting requests" tone={pending.length ? 'amber' : 'slate'} onClick={() => setParam('tab', 'requests')} active={tab === 'requests'} />
+          <Kpi value={kpi.pro} label="Pro" tone="violet" onClick={() => showGroup('pro')} active={group === 'pro'} />
+          <Kpi value={kpi.trial} label="On a trial" tone="amber" onClick={() => showGroup('trial')} active={group === 'trial'} />
+          <Kpi value={kpi.subscribe} label="Trial or Pro ended" tone="red" onClick={() => showGroup('subscribe')} active={group === 'subscribe'} />
         </div>
 
-        {stats.countries.length > 0 && (
-          <Card className="p-5">
-            <div className="flex items-center gap-2">
-              <Globe2 size={18} className="text-slate-400" />
-              <p className="font-display text-lg">Top countries</p>
-            </div>
-            <div className="mt-3 space-y-2">
-              {stats.countries.map(([country, count]) => (
-                <div key={country}>
-                  <div className="flex justify-between text-sm">
-                    <span className="text-slate-700">{country}</span>
-                    <span className="text-slate-500">{count}</span>
-                  </div>
-                  <div className="mt-1 h-1.5 w-full overflow-hidden rounded-full bg-slate-100">
-                    <div
-                      className="h-full bg-brand-500"
-                      style={{ width: `${Math.round((count / (stats.countries[0][1] || 1)) * 100)}%` }}
-                    />
-                  </div>
-                </div>
-              ))}
-            </div>
-          </Card>
-        )}
+        <Tabs tab={tab} onChange={(t) => setParam('tab', t === 'people' ? '' : t)} waiting={pending.length} />
 
-        <div className="space-y-2">
-          <div className="flex items-center gap-2 rounded-xl border border-slate-300 bg-white px-3">
-            <Search size={16} className="text-slate-400" />
-            <input
-              className="flex-1 py-2.5 outline-none"
-              placeholder="Search name, email or country"
-              value={q}
-              onChange={(e) => {
-                setQ(e.target.value);
-                setLimit(PAGE);
-              }}
-            />
-          </div>
-          <div className="flex gap-2">
-            <Select value={sort} onChange={(e) => setSort(e.target.value)} className="flex-1">
-              {Object.entries(SORTS).map(([key, s]) => (
-                <option key={key} value={key}>
-                  {s.label}
-                </option>
-              ))}
-            </Select>
-            <Select
-              value={group}
-              onChange={(e) => {
-                const next = new URLSearchParams(params);
-                if (e.target.value) next.set('access', e.target.value);
-                else next.delete('access');
-                setParams(next, { replace: true });
-              }}
-              className="flex-1"
-            >
-              <option value="">All access</option>
-              {Object.entries(ACCESS_GROUPS).map(([k, label]) => (
-                <option key={k} value={k}>
-                  {label}
-                </option>
-              ))}
-            </Select>
-            <Select value={level} onChange={(e) => setLevel(e.target.value)} className="flex-1">
-              <option value="">All levels</option>
-              {Object.keys(stats.byLevel).map((l) => (
-                <option key={l} value={l}>
-                  {l} ({stats.byLevel[l]})
-                </option>
-              ))}
-            </Select>
-          </div>
-        </div>
-
-        {list.loading ? (
+        {loading ? (
           <SkeletonList />
-        ) : shown.length === 0 ? (
-          <Empty icon={<Users size={36} />} title="No accounts match" />
-        ) : (
-          <>
-            <p className="text-sm text-slate-500">
-              {shown.length} account{shown.length === 1 ? '' : 's'}
-            </p>
-            <div className="space-y-2">
-              {shown.slice(0, limit).map((u) => {
-                const days = daysSince(u.date);
-                return (
-                  <button
-                    key={u._key}
-                    onClick={() => setOpen(u)}
-                    className="w-full text-left flex items-center gap-3 rounded-2xl border border-slate-100 bg-white p-3 shadow-sm hover:shadow-md"
-                  >
-                    <Avatar src={u.img} size={44} />
-                    <div className="min-w-0 flex-1">
-                      <p className="font-semibold text-slate-800 truncate flex items-center gap-1.5">
-                        {nameOf(u)}
-                        {['superuser', 'manager', 'editor'].includes(u._role) && (
-                          <ShieldCheck size={14} className="shrink-0 text-brand-600" />
-                        )}
-                        {isTrue(u.blocked) && <Ban size={14} className="shrink-0 text-red-600" />}
-                      </p>
-                      <p className="text-xs text-slate-500 truncate">
-                        {u.level || 'No level'}
-                        {u.residency ? ` · ${u.residency}` : ''}
-                      </p>
-                      <p className="text-xs text-brand-700 truncate">
-                        {ROLE_INFO[u._role]?.label} · {describeAccess(u._access)}
-                      </p>
-                    </div>
-                    <div className="shrink-0 text-right">
-                      <p className="text-sm font-semibold text-slate-700">{num(u.over_all)}</p>
-                      <p className="text-xs text-slate-400">
-                        {days === Infinity ? 'never' : days === 0 ? 'today' : `${days}d ago`}
-                      </p>
-                    </div>
-                  </button>
-                );
-              })}
+        ) : tab === 'requests' ? (
+          <div className="space-y-2">
+            <div className="flex items-center justify-between">
+              <p className="text-sm text-slate-500">{history ? 'Answered requests' : `${pending.length} waiting`}</p>
+              <button className="text-sm font-semibold text-brand-700" onClick={() => setHistory((h) => !h)}>
+                {history ? 'Show waiting' : 'Show answered'}
+              </button>
             </div>
-            {shown.length > limit && (
-              <Button variant="outline" className="w-full justify-center" onClick={() => setLimit((n) => n + PAGE)}>
-                Show more ({shown.length - limit} left)
-              </Button>
+            {(history ? requests.filter((r) => r.status !== 'pending').slice(0, 100) : pending).length === 0 ? (
+              <Empty icon={<Inbox size={36} />} title={history ? 'Nothing answered yet' : 'No requests waiting'} />
+            ) : (
+              (history ? requests.filter((r) => r.status !== 'pending').slice(0, 100) : pending).map((r) => (
+                <RequestCard
+                  key={`${r.uid}/${r.key}`}
+                  r={r}
+                  person={byUid.get(r.uid)}
+                  config={accessConfig}
+                  by={by}
+                  onDone={reloadAll}
+                  onOpenPerson={() => setOpenUid(r.uid)}
+                />
+              ))
             )}
-          </>
+          </div>
+        ) : tab === 'settings' ? (
+          <SettingsTab key={JSON.stringify(accessConfig || {})} config={accessConfig} onSaved={reloadAll} />
+        ) : (
+          <div className="space-y-3">
+            <label className="flex items-center gap-2 rounded-xl border border-slate-200 bg-white px-3 focus-within:border-brand-400">
+              <Search size={16} className="text-slate-400" />
+              <input
+                className="flex-1 py-2.5 outline-none"
+                placeholder="Search name, email or country"
+                value={q}
+                onChange={(e) => {
+                  setQ(e.target.value);
+                  setLimit(PAGE);
+                }}
+              />
+            </label>
+            <div className="grid grid-cols-3 gap-2">
+              <Select value={role} onChange={(e) => setRole(e.target.value)}>
+                {Object.entries(ROLE_FILTERS).map(([k, label]) => (
+                  <option key={k} value={k}>
+                    {label}
+                  </option>
+                ))}
+              </Select>
+              <Select value={group} onChange={(e) => setParam('access', e.target.value)}>
+                <option value="">All access</option>
+                {Object.entries(ACCESS_GROUPS).map(([k, label]) => (
+                  <option key={k} value={k}>
+                    {label}
+                  </option>
+                ))}
+              </Select>
+              <Select value={sort} onChange={(e) => setSort(e.target.value)}>
+                {Object.entries(SORTS).map(([k, s]) => (
+                  <option key={k} value={k}>
+                    {s.label}
+                  </option>
+                ))}
+              </Select>
+            </div>
+
+            {shown.length === 0 ? (
+              <Empty icon={<Users size={36} />} title="No accounts match" />
+            ) : (
+              <>
+                <p className="text-xs text-slate-500">
+                  {shown.length.toLocaleString()} account{shown.length === 1 ? '' : 's'}
+                </p>
+                <div className="overflow-hidden rounded-2xl border border-slate-100 bg-white shadow-sm divide-y divide-slate-100">
+                  {shown.slice(0, limit).map((u) => {
+                    const days = daysSince(u.date);
+                    const waiting = pending.filter((r) => r.uid === u._key).length;
+                    return (
+                      <button
+                        key={u._key}
+                        onClick={() => setOpenUid(u._key)}
+                        className="w-full text-left flex items-center gap-3 px-3 py-2.5 hover:bg-slate-50"
+                      >
+                        <Avatar src={u.img} size={40} />
+                        <div className="min-w-0 flex-1">
+                          <p className="flex items-center gap-1.5 text-sm font-semibold text-slate-800">
+                            <span className="truncate">{nameOf(u)}</span>
+                            {u._role !== 'user' && <RolePill role={u._role} />}
+                            {isTrue(u.blocked) && <span className="rounded-md bg-red-50 px-1.5 text-[11px] font-semibold text-red-600">Blocked</span>}
+                          </p>
+                          <p className="truncate text-xs text-slate-500">{emailOf(u) || u.level || '—'}</p>
+                        </div>
+                        <div className="shrink-0 text-right">
+                          <AccessPill state={u._access} />
+                          <p className="mt-0.5 text-[11px] text-slate-400">
+                            {waiting ? (
+                              <span className="font-semibold text-amber-600">{waiting} request{waiting === 1 ? '' : 's'}</span>
+                            ) : days === Infinity ? (
+                              'never seen'
+                            ) : days === 0 ? (
+                              'today'
+                            ) : (
+                              `${days}d ago`
+                            )}
+                          </p>
+                        </div>
+                      </button>
+                    );
+                  })}
+                </div>
+                {shown.length > limit && (
+                  <Button variant="outline" className="w-full" onClick={() => setLimit((n) => n + PAGE)}>
+                    Show more ({(shown.length - limit).toLocaleString()} left)
+                  </Button>
+                )}
+              </>
+            )}
+          </div>
         )}
       </Page>
 
-      {/* --- One account --- */}
-      <Modal
-        open={!!open}
-        onClose={() => setOpen(null)}
-        title={open ? nameOf(open) : ''}
-        footer={
-          <Button variant="outline" onClick={() => setOpen(null)}>
-            Close
-          </Button>
-        }
-      >
-        {open && (
-          <div>
-            <div className="flex items-center gap-3">
-              <Avatar src={open.img} size={56} />
-              <div className="min-w-0">
-                <p className="font-semibold text-slate-800 truncate">{nameOf(open)}</p>
-                <p className="text-sm text-slate-500 truncate">{emailOf(open) || 'No email on record'}</p>
-              </div>
-            </div>
-
-            <dl className="mt-4 divide-y divide-slate-100 text-sm">
-              {[
-                ['Level', open.level],
-                ['Country', open.residency],
-                ['Overall score', num(open.over_all)],
-                ['Quizzes played', num(open.total_play)],
-                ['Correct answers', num(open.total_correct)],
-                ['Last seen', open.date ? `${open.date}${open.time ? ` ${open.time}` : ''}` : 'never'],
-                ['App version', open.ver],
-              ].map(([label, value]) => (
-                <div key={label} className="flex justify-between gap-3 py-2">
-                  <dt className="text-slate-500">{label}</dt>
-                  <dd className="font-medium text-slate-800 text-right">{value || '—'}</dd>
-                </div>
-              ))}
-            </dl>
-
-            <div className="mt-5 space-y-2">
-              <Button
-                variant="outline"
-                className="w-full justify-center"
-                onClick={() => {
-                  setOpen(null);
-                  navigate(`/admin/notifications?to=${encodeURIComponent(open._key)}`);
-                }}
-              >
-                <Send size={16} /> Send this person a notification
-              </Button>
-
-              {current && !isSuperAdmin(current) && (
-                <AccessEditor
-                  user={current}
-                  myRole={myRole}
-                  config={accessConfig}
-                  onChanged={() => {
-                    accessData.reload();
-                    list.reload();
-                  }}
-                />
-              )}
-
-              {isSuperAdmin(open) && (
-                <p className="flex items-center justify-center gap-2 rounded-xl bg-brand-50 py-2.5 text-sm text-brand-700">
-                  <Shield size={16} /> Superuser: always has every right (set in the app's code)
-                </p>
-              )}
-
-              {!isSuperAdmin(open) && (
-                <Button
-                  variant={isTrue(open.blocked) ? 'outline' : 'danger'}
-                  className="w-full justify-center"
-                  loading={busy}
-                  onClick={() =>
-                    isTrue(open.blocked)
-                      ? patch(open._key, { blocked: 'false' }, 'Account unblocked.')
-                      : setConfirm({ user: open, kind: 'block' })
-                  }
-                >
-                  <Ban size={16} /> {isTrue(open.blocked) ? 'Unblock account' : 'Block account'}
-                </Button>
-              )}
-
-              {!isSuperAdmin(open) && (
-                <Button
-                  variant="danger"
-                  className="w-full justify-center"
-                  onClick={() => setConfirm({ user: open, kind: 'delete' })}
-                >
-                  <Trash2 size={16} /> Delete this account's record
-                </Button>
-              )}
-            </div>
-          </div>
-        )}
-      </Modal>
-
-      <DangerConfirm
-        open={confirm?.kind === 'block'}
-        title="Block this account?"
-        message={`${confirm ? nameOf(confirm.user) : ''} will be signed out and cannot use the app until you unblock them.`}
-        impact={['They are signed out on every device the next time the app opens.']}
-        keeps={['Their scores and history are kept, and unblocking restores everything.']}
-        confirmWord="BLOCK"
-        confirmLabel="Block"
-        busy={busy}
-        onCancel={() => setConfirm(null)}
-        onConfirm={async () => {
-          await patch(confirm.user._key, { blocked: 'true' }, 'Account blocked.');
-          setConfirm(null);
-        }}
-      />
-
-      <DangerConfirm
-        open={confirm?.kind === 'delete'}
-        title="Delete this account's record?"
-        message={`Everything stored about ${confirm ? nameOf(confirm.user) : ''} in the user list will be removed.`}
-        impact={['Their name, avatar, level, country and score totals are deleted.']}
-        keeps={[
-          'Their sign-in still exists, so opening the app creates a fresh empty record.',
-          'To stop them using the app, block the account instead.',
-        ]}
-        confirmWord="DELETE"
-        busy={busy}
-        onCancel={() => setConfirm(null)}
-        onConfirm={async () => {
-          setBusy(true);
-          try {
-            await removeAt(`quizusers/${confirm.user._key}`);
-            toast('Account record deleted.', 'success');
-            list.reload();
-            setOpen(null);
-          } catch (e) {
-            toast(e.message || 'Could not delete', 'error');
-          } finally {
-            setBusy(false);
-            setConfirm(null);
-          }
-        }}
+      <PersonSheet
+        person={open}
+        requests={open ? pending.filter((r) => r.uid === open._key) : []}
+        config={accessConfig}
+        onClose={() => setOpenUid(null)}
+        onChanged={reloadAll}
       />
     </div>
   );
 }
+

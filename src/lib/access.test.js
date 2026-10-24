@@ -1,8 +1,8 @@
 import { test } from 'node:test';
 import assert from 'node:assert/strict';
 import {
-  accessGroup, accessState, assignableRoles, quizAccess, quizScopes, readConfig, roleOf, scopeKey,
-  scopesOf, visibleQuestions,
+  accessGroup, accessState, assignableRoles, bookScopes, groupScopes, quizAccess, readConfig, roleOf, scopeKey,
+  scopesOf, unlockChoices, visibleQuestions,
 } from './access.js';
 
 const NOW = Date.parse('2026-10-24T12:00:00Z');
@@ -24,9 +24,9 @@ test('only the superuser hands out the manager role', () => {
 });
 
 test('config falls back to locked, 10 questions, 7 days', () => {
-  assert.deepEqual(readConfig(null), { enabled: true, default_plan: 'locked', partial_count: 10, trial_days: 7 });
-  assert.deepEqual(readConfig({ enabled: 'false', default_plan: 'partial', partial_count: '20', trial_days: 3 }), {
-    enabled: false, default_plan: 'partial', partial_count: 20, trial_days: 3,
+  assert.deepEqual(readConfig(null), { enabled: true, default_plan: 'locked', partial_count: 10, trial_days: 7, subscriptions: false });
+  assert.deepEqual(readConfig({ enabled: 'false', default_plan: 'partial', partial_count: '20', trial_days: 3, subscriptions: true }), {
+    enabled: false, default_plan: 'partial', partial_count: 20, trial_days: 3, subscriptions: true,
   });
   assert.equal(readConfig({ default_plan: 'gold' }).default_plan, 'locked');
 });
@@ -79,7 +79,7 @@ test('scopes run from the quiz itself out to its bank', () => {
 });
 
 test('an unlock opens the quizzes under it, and can expire', () => {
-  const scopes = quizScopes({ id: '-N1', source: 'doh_haad', bank: 'gulf_licensing' });
+  const scopes = scopesOf({ kind: 'exam', id: '-N1', source: 'doh_haad' }, { bank: 'gulf_licensing' });
   const state = (unlocks) => accessState({ record: { unlocks }, now: NOW });
   assert.equal(quizAccess(state({}), scopes).level, 'locked');
   assert.equal(quizAccess(state({ 'quiz~-N1': { at: NOW } }), scopes).level, 'full');
@@ -96,4 +96,25 @@ test('partial access shows only the first questions', () => {
   assert.deepEqual(visibleQuestions(list, a), [0, 1, 2, 3, 4]);
   assert.deepEqual(visibleQuestions(list, { level: 'locked' }), []);
   assert.equal(visibleQuestions(list, { level: 'full' }).length, 30);
+});
+
+test('a book opens through itself, its group or its bank', () => {
+  const scopes = bookScopes({ source: 'fopsample', group: 'FOP', bank: 'mrcpch' });
+  assert.deepEqual(scopes.map((x) => x.key), ['book~fopsample', 'group~mrcpch|FOP', 'bank~mrcpch']);
+  const st = (unlocks) => accessState({ record: { unlocks }, now: NOW });
+  assert.equal(quizAccess(st({ 'group~mrcpch|FOP': true }), scopes).level, 'full');
+  assert.equal(quizAccess(st({ 'group~mrcpch|TAS': true }), scopes).level, 'locked');
+  assert.equal(quizAccess(st({ 'group~mrcpch|FOP': true }), scopesOf({ kind: 'exam', id: 'q', source: 'fopsample' }, { bank: 'mrcpch', group: 'FOP' })).level, 'full');
+  assert.deepEqual(groupScopes({ group: 'FOP', bank: 'mrcpch' }).map((x) => x.key), ['group~mrcpch|FOP', 'bank~mrcpch']);
+});
+
+test('the pop-up offers the group (or book) and the whole bank', () => {
+  assert.deepEqual(
+    unlockChoices({ bank: 'mrcpch', bankTitle: 'MRCPCH', group: 'FOP', book: 'fopsample' }).map((x) => [x.key, x.title]),
+    [['group~mrcpch|FOP', 'MRCPCH · FOP'], ['bank~mrcpch', 'MRCPCH']],
+  );
+  assert.deepEqual(
+    unlockChoices({ bank: 'gulf', bankTitle: 'Gulf', book: 'doh', bookTitle: 'DOH' }).map((x) => x.key),
+    ['book~doh', 'bank~gulf'],
+  );
 });

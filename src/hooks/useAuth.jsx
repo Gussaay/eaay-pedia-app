@@ -5,7 +5,7 @@ import { auth } from '../firebase';
 import { subscribe, updateAt } from '../lib/rtdb';
 import { forgetPushToken } from '../lib/push';
 import { APP_VERSION_NUMBER, isAdminEmail } from '../config';
-import { accessState, canAdmin, canManage, roleOf } from '../lib/access';
+import { accessState, canAdmin, canManage, readConfig, roleOf } from '../lib/access';
 
 const AuthContext = createContext(null);
 
@@ -118,6 +118,7 @@ export function AuthProvider({ children }) {
       // The admin panel: managers and editors.
       isAdmin: canAdmin(role),
       accessRecord: accessRecord || null,
+      accessConfig: readConfig(accessConfig),
       accessLoading,
       // Who may open which quiz: lib/access.js, hooks/useQuizAccess.js.
       access: accessLoading ? null : accessState({ role, record: accessRecord, config: accessConfig }),

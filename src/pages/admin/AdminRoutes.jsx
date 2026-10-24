@@ -1,5 +1,5 @@
 import { Navigate, Route, Routes, useNavigate } from 'react-router-dom';
-import { ArrowUpCircle, BellRing, BookPlus, Eye, FolderTree, KeyRound, Layers, Lightbulb, PencilLine, Users } from 'lucide-react';
+import { ArrowUpCircle, BellRing, BookPlus, Eye, FolderTree, Layers, Lightbulb, PencilLine, Users } from 'lucide-react';
 import { useAuth } from '../../hooks/useAuth';
 import { AppBar, Page } from '../../components/ui';
 import { Categories, CategoryBooks, BookQuizzes } from './AdminCatalog';
@@ -15,7 +15,6 @@ import { MnemonicAdminEdit, MnemonicAdminHome, MnemonicAdminPaper } from './Admi
 import AdminUpdates from './AdminUpdates';
 import AdminUsers from './AdminUsers';
 import AdminNotify from './AdminNotify';
-import AdminAccess from './AdminAccess';
 
 /** Users, roles, access, updates and pushes: managers only, not editors. */
 function ManagerOnly({ children }) {
@@ -34,8 +33,7 @@ function AdminHome() {
     { icon: Layers, title: 'Flashcards', desc: 'Categories → books → decks → cards', to: '/admin/flashcards' },
     { icon: Lightbulb, title: 'Mnemonics', desc: 'Exams → papers → chapters, illustrations and flashcard links', to: '/admin/mnemonics' },
     { icon: ArrowUpCircle, title: 'Update manager', desc: 'Roll out, pause or roll back app updates', to: '/admin/updates', manager: true },
-    { icon: Users, title: 'User manager', desc: 'Accounts, roles, access, trials and blocking', to: '/admin/users', manager: true },
-    { icon: KeyRound, title: 'Access & unlocks', desc: 'Unlock requests, trials, Pro and locking settings', to: '/admin/access', manager: true },
+    { icon: Users, title: 'Users & access', desc: 'Unlock requests, roles, trials, Pro, locking settings and accounts', to: '/admin/users', manager: true },
     { icon: BellRing, title: 'Notification manager', desc: 'Announcements and push notifications', to: '/admin/notifications', manager: true },
   ].filter((i) => isManager || !i.manager);
   return (
@@ -79,7 +77,7 @@ export default function AdminRoutes() {
       <Route path="mnemonics/edit" element={<MnemonicAdminEdit />} />
       <Route path="updates" element={<ManagerOnly><AdminUpdates /></ManagerOnly>} />
       <Route path="users" element={<ManagerOnly><AdminUsers /></ManagerOnly>} />
-      <Route path="access" element={<ManagerOnly><AdminAccess /></ManagerOnly>} />
+      <Route path="access" element={<Navigate to="/admin/users?tab=requests" replace />} />
       <Route path="notifications" element={<ManagerOnly><AdminNotify /></ManagerOnly>} />
     </Routes>
   );

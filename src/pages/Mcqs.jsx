@@ -6,10 +6,14 @@ import { useAuth } from '../hooks/useAuth';
 import { useList } from '../hooks/useData';
 import { num } from '../lib/rtdb';
 import BottomNav from '../components/BottomNav';
+import { AccessMark } from '../components/LockPanel';
+import { useAccessCheck } from '../hooks/useQuizAccess';
+import { bankScopes, scopeKey } from '../lib/access';
+import { countLine, countsBySource, sumCounts } from '../lib/catalogCounts';
 import DailyQuiz, { useDailyQuiz } from '../components/DailyQuiz';
 import { AppBar, Empty, ErrorBox, Page, Thumb } from '../components/ui';
 
-function CategoryCard({ c, onClick, hidden }) {
+function CategoryCard({ c, onClick, hidden, line, level }) {
   return (
     <button
       onClick={onClick}
@@ -19,8 +23,9 @@ function CategoryCard({ c, onClick, hidden }) {
       <div className="flex-1 p-4 flex items-center gap-2 min-w-0">
         <div className="min-w-0 flex-1">
           <p className="font-display text-slate-900 leading-snug line-clamp-2">{c.title}</p>
-          <p className="text-xs text-slate-500 mt-1">{hidden ? 'Not published' : 'Tap to open'}</p>
+          <p className="text-xs text-slate-500 mt-1">{hidden ? 'Not published' : line || 'Tap to open'}</p>
         </div>
+        <AccessMark level={level} />
         <ChevronRight className="text-slate-300 group-hover:text-brand-500 shrink-0" size={20} />
       </div>
     </button>
@@ -28,7 +33,8 @@ function CategoryCard({ c, onClick, hidden }) {
 }
 
 export default function Mcqs() {
-  const { isAdmin } = useAuth();
+  const { isAdmin, access } = useAuth();
+  const levelOf = useAccessCheck();
   const navigate = useNavigate();
   const daily = useDailyQuiz();
 
@@ -37,6 +43,23 @@ export default function Mcqs() {
     filter: (c) => isAdmin || String(c.publish) === 'true',
   });
   const quizzes = useList('allquiz');
+  const books = useList('mcqs');
+  const counts = countsBySource(quizzes.data);
+  const bankLine = (bank) => {
+    const sources = books.data.filter((b) => b.main_category === bank && String(b.type) === 'quiz');
+    return sources.length ? countLine(sumCounts(counts, sources.map((b) => b.source))) : '';
+  };
+  // Locked only when nothing in the bank is unlocked: a bank with one open
+  // group or book shows no lock.
+  const bankLevel = (bank) => {
+    const level = levelOf(bankScopes(bank));
+    if (level !== 'locked') return level;
+    const keys = Object.keys(access?.unlocks || {});
+    const mine = new Set([
+      ...books.data.filter((b) => b.main_category === bank).map((b) => scopeKey('book', b.source)),
+    ]);
+    return keys.some((k) => k.startsWith(`group~${bank}|`) || mine.has(k)) ? 'full' : 'locked';
+  };
 
   const totalQuestions = quizzes.data
     .filter((q) => String(q.preview) !== 'true')
@@ -74,6 +97,8 @@ export default function Mcqs() {
                   key={c._key}
                   c={c}
                   hidden={isAdmin && String(c.publish) !== 'true'}
+                  line={bankLine(c.source)}
+                  level={bankLevel(c.source)}
                   onClick={() =>
                     navigate(`/cat/${encodeURIComponent(c.source)}?title=${encodeURIComponent(c.title || '')}`)
                   }

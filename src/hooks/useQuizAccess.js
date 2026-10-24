@@ -3,7 +3,7 @@
 import { useCallback, useEffect, useMemo, useState } from 'react';
 import { useAuth } from './useAuth';
 import { subscribe } from '../lib/rtdb';
-import { bankOfSource } from '../lib/banks';
+import { placeOfSource } from '../lib/banks';
 import { quizAccess, scopesOf } from '../lib/access';
 
 /**
@@ -15,21 +15,28 @@ export function useQuizAccess(meta) {
   const { access } = useAuth();
   const source = meta?.source || meta?.book || '';
   const needBank = !!meta && !meta.bank && !!source && access?.level !== 'full';
-  const [bank, setBank] = useState({ source: null, value: '' });
+  const [bank, setBank] = useState({ source: null, value: '', group: '' });
 
   useEffect(() => {
     if (!needBank || bank.source === source) return undefined;
     let live = true;
-    bankOfSource(source)
-      .catch(() => '')
-      .then((value) => live && setBank({ source, value }));
+    placeOfSource(source)
+      .catch(() => ({ bank: '', group: '' }))
+      .then((p) => live && setBank({ source, value: p.bank, group: p.group }));
     return () => {
       live = false;
     };
   }, [needBank, source, bank.source]);
 
   const scopes = useMemo(
-    () => (meta ? scopesOf(meta, { bank: meta.bank || (bank.source === source ? bank.value : ''), bookTitle: meta.name }) : []),
+    () =>
+      meta
+        ? scopesOf(meta, {
+            bank: meta.bank || (bank.source === source ? bank.value : ''),
+            group: bank.source === source ? bank.group : '',
+            bookTitle: meta.name,
+          })
+        : [],
     [meta, bank, source],
   );
   const result = useMemo(() => quizAccess(access, scopes), [access, scopes]);

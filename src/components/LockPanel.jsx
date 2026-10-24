@@ -1,104 +1,24 @@
-// Shown on a quiz page when the quiz is locked, or opens only in part: what
-// the person can do now, and a button to ask for it to be unlocked.
+// Everything a locked person sees: the lock mark on lists, the "Unlock" pop-up
+// (request a group, book or whole bank, a free trial, or Pro), the notice on
+// a locked book or quiz page, and "My access" on the profile page.
+//
+// Requests go to unlock_requests (lib/unlockRequests.js) and are answered on
+// the admin Users & access page.
 import { useState } from 'react';
-import { Clock, Crown, Gift, KeyRound, Lock, LockOpen, Send, X } from 'lucide-react';
+import { Check, Clock, Crown, Gift, KeyRound, Library, Lock, LockOpen, X } from 'lucide-react';
 import { useAuth } from '../hooks/useAuth';
 import { useMyRequests } from '../hooks/useQuizAccess';
-import { describeAccess, ROLE_INFO, SCOPE_LABELS } from '../lib/access';
+import { describeAccess, ROLE_INFO } from '../lib/access';
+import { countLine } from '../lib/catalogCounts';
 import { cancelRequest, PRO_SCOPE, requestUnlock, TRIAL_SCOPE } from '../lib/unlockRequests';
-import { Button, Card, useToast } from './ui';
+import { Button, Card, Modal, useToast } from './ui';
 
-const NOUN = { quiz: 'quiz', chapter: 'chapter', science: 'section', book: 'book', bank: 'bank' };
-
-function Status({ request, onCancel }) {
-  if (!request) return null;
-  if (request.status === 'pending')
-    return (
-      <span className="inline-flex items-center gap-1 text-xs font-semibold text-amber-700">
-        <Clock size={14} /> Request sent
-        <button onClick={onCancel} className="ml-1 text-slate-400 hover:text-red-600" aria-label="Cancel request">
-          <X size={14} />
-        </button>
-      </span>
-    );
-  if (request.status === 'denied') return <span className="text-xs font-semibold text-red-600">Not approved</span>;
-  return null;
-}
-
-/**
- * `access` and `scopes` come from useQuizAccess; `total` is the quiz's real
- * question count, `path` the page to come back to once it is unlocked.
- */
-export default function LockPanel({ access, scopes, total, path }) {
-  const { user, profile, access: state } = useAuth();
-  const requests = useMyRequests();
-  const toast = useToast();
-  const [busy, setBusy] = useState('');
-  const partial = access.level === 'partial';
-
-  const ask = async (s) => {
-    setBusy(s.key);
-    try {
-      await requestUnlock({ user, profile }, { key: s.key, type: s.type, id: s.id, title: s.title, path });
-      toast('Request sent. You will be able to open it once it is approved.', 'success');
-    } catch (e) {
-      toast(e.message || 'Could not send the request', 'error');
-    } finally {
-      setBusy('');
-    }
-  };
-
-  const options = [
-    ...scopes.map((s) => ({ ...s, icon: LockOpen, label: `${SCOPE_LABELS[s.type] || 'Unlock'}: ${s.title}` })),
-    ...(state && !state.trialUsed
-      ? [{ key: TRIAL_SCOPE, type: 'trial', id: '', title: 'Free trial', icon: Gift, label: 'Free trial of every quiz' }]
-      : []),
-    { key: PRO_SCOPE, type: 'pro', id: '', title: 'Pro subscription', icon: Crown, label: 'Subscribe to Pro' },
-  ];
-
-  return (
-    <div className={`mt-5 rounded-2xl border-2 p-4 ${partial ? 'border-sky-200 bg-sky-50' : 'border-slate-200 bg-slate-50'}`}>
-      <p className="flex items-center gap-2 font-semibold text-slate-900">
-        <Lock size={18} className={partial ? 'text-sky-600' : 'text-slate-500'} />
-        {partial ? `Preview: the first ${Math.min(access.limit, total || access.limit)} of ${total ?? '…'} questions` : 'This quiz is locked'}
-      </p>
-      <p className="text-sm text-slate-600 mt-1">
-        {partial
-          ? 'Ask for it to be unlocked to answer every question.'
-          : `It has ${total ?? '…'} questions. Ask for it to be unlocked, and you can open it as soon as it is approved.`}
-      </p>
-      <div className="mt-3 space-y-2">
-        {options.map((o, i) => {
-          const Icon = o.icon;
-          const req = requests[o.key];
-          const pending = req?.status === 'pending';
-          return (
-            <div key={o.key} className="flex items-center gap-2">
-              <Button
-                variant={i === 0 ? 'primary' : 'outline'}
-                className="flex-1 min-w-0 !justify-start text-left"
-                loading={busy === o.key}
-                disabled={pending}
-                onClick={() => ask(o)}
-              >
-                {i === 0 ? <Send size={16} className="shrink-0" /> : <Icon size={16} className="shrink-0" />}
-                <span className="truncate">{i === 0 ? `Request unlock: this ${NOUN[o.type] || 'quiz'}` : o.label}</span>
-              </Button>
-              <Status request={req} onCancel={() => cancelRequest(user.uid, o.key).catch(() => {})} />
-            </div>
-          );
-        })}
-      </div>
-    </div>
-  );
-}
-
-/** The small mark a list shows beside a quiz that does not open in full. */
+/** The small mark a list shows beside something that does not open in full. */
 export function AccessMark({ level }) {
   if (level === 'locked')
     return (
-      <span className="shrink-0 text-slate-400" title="Locked: open it to request an unlock">
-        <Lock size={16} />
+      <span className="shrink-0 h-7 w-7 rounded-full bg-slate-100 text-slate-500 flex items-center justify-center" title="Locked">
+        <Lock size={14} />
       </span>
     );
   if (level === 'partial')
@@ -106,69 +26,190 @@ export function AccessMark({ level }) {
   return null;
 }
 
-/** "My access" on the profile page: role, plan, trial, and the two requests. */
-export function MyAccessCard() {
-  const { user, profile, role, access } = useAuth();
+/** One row of the pop-up: icon, what it is, and its button or status. */
+function Option({ icon: Icon, tone = 'brand', title, desc, request, action, busy, disabled, onAsk, onCancel }) {
+  const pending = request?.status === 'pending';
+  const tones = {
+    brand: 'bg-brand-50 text-brand-700',
+    amber: 'bg-amber-50 text-amber-700',
+    violet: 'bg-violet-50 text-violet-700',
+  };
+  return (
+    <div className="flex items-center gap-3 rounded-2xl border border-slate-100 bg-white p-3">
+      <span className={`h-10 w-10 shrink-0 rounded-xl flex items-center justify-center ${tones[tone]}`}>
+        <Icon size={18} />
+      </span>
+      <div className="min-w-0 flex-1">
+        <p className="font-semibold text-slate-800 leading-snug">{title}</p>
+        <p className="text-xs text-slate-500 leading-snug">{desc}</p>
+        {pending && (
+          <p className="mt-1 inline-flex items-center gap-1 text-xs font-semibold text-amber-700">
+            <Clock size={12} /> Requested, waiting for approval
+            <button onClick={onCancel} className="ml-1 text-slate-400 hover:text-red-600" aria-label="Cancel request">
+              <X size={12} />
+            </button>
+          </p>
+        )}
+        {request?.status === 'denied' && <p className="mt-1 text-xs font-semibold text-red-600">Not approved last time</p>}
+      </div>
+      {!pending && (
+        <Button className="!px-3 !py-2 text-sm shrink-0" variant={disabled ? 'outline' : 'primary'} loading={busy} disabled={disabled} onClick={onAsk}>
+          {action}
+        </Button>
+      )}
+    </div>
+  );
+}
+
+/**
+ * The Unlock pop-up. `title` names what was tapped ("FOP"), `counts` its size,
+ * `choices` the unlocks to offer (lib/access.js unlockChoices) and `path` the
+ * page to come back to once approved.
+ */
+export function UnlockSheet({ open, onClose, title, counts, choices = [], path = '' }) {
+  const { user, profile, access, accessConfig } = useAuth();
   const requests = useMyRequests();
   const toast = useToast();
   const [busy, setBusy] = useState('');
-  if (!access) return null;
-  const pendingCount = Object.values(requests).filter((r) => r?.status === 'pending').length;
+  if (!open || !access) return null;
 
-  const ask = async (key, type, title) => {
-    setBusy(key);
+  const ask = async (s) => {
+    setBusy(s.key);
     try {
-      await requestUnlock({ user, profile }, { key, type, title, path: '/profile' });
-      toast('Request sent.', 'success');
+      await requestUnlock({ user, profile }, { key: s.key, type: s.type, id: s.id || '', title: s.title, path });
+      toast('Request sent. We will let you know when it is approved.', 'success');
     } catch (e) {
       toast(e.message || 'Could not send the request', 'error');
     } finally {
       setBusy('');
     }
   };
+  const cancel = (key) => cancelRequest(user.uid, key).catch(() => {});
+  const trialDays = accessConfig.trial_days;
+
+  return (
+    <Modal open={open} onClose={onClose} title={title ? `Unlock ${title}` : 'Unlock quizzes'}>
+      <div className="space-y-4">
+        <div className="flex items-center gap-3 rounded-2xl bg-slate-50 p-3">
+          <span className="h-10 w-10 shrink-0 rounded-xl bg-slate-200 text-slate-600 flex items-center justify-center">
+            <Lock size={18} />
+          </span>
+          <div className="min-w-0">
+            <p className="text-sm font-semibold text-slate-800">{counts ? countLine(counts) : 'These quizzes are locked'}</p>
+            <p className="text-xs text-slate-500">Choose how you would like to open them.</p>
+          </div>
+        </div>
+
+        {choices.length > 0 && (
+          <div className="space-y-2">
+            <p className="text-xs font-semibold uppercase tracking-wide text-slate-500">Request access</p>
+            {choices.map((c, i) => (
+              <Option
+                key={c.key}
+                icon={i === 0 ? LockOpen : Library}
+                title={c.type === 'bank' ? `All of ${c.title}` : c.title}
+                desc={c.type === 'bank' ? 'Every book and quiz in this bank' : 'Every quiz in this part'}
+                request={requests[c.key]}
+                action="Request"
+                busy={busy === c.key}
+                onAsk={() => ask(c)}
+                onCancel={() => cancel(c.key)}
+              />
+            ))}
+          </div>
+        )}
+
+        <div className="space-y-2">
+          <p className="text-xs font-semibold uppercase tracking-wide text-slate-500">Everything</p>
+          {!access.trialUsed ? (
+            <Option
+              icon={Gift}
+              tone="amber"
+              title={`Free trial · ${trialDays} days`}
+              desc="Every quiz in every bank, once per account"
+              request={requests[TRIAL_SCOPE]}
+              action="Ask"
+              busy={busy === TRIAL_SCOPE}
+              onAsk={() => ask({ key: TRIAL_SCOPE, type: 'trial', title: 'Free trial' })}
+              onCancel={() => cancel(TRIAL_SCOPE)}
+            />
+          ) : (
+            <p className="rounded-2xl bg-slate-50 px-3 py-2 text-xs text-slate-500">
+              {access.trialActive ? 'Your free trial is running.' : 'You have used your free trial.'}
+            </p>
+          )}
+          <Option
+            icon={Crown}
+            tone="violet"
+            title="Pro subscription"
+            desc={accessConfig.subscriptions ? 'Every quiz in every bank' : 'Coming soon'}
+            request={requests[PRO_SCOPE]}
+            action={accessConfig.subscriptions ? 'Subscribe' : 'Soon'}
+            disabled={!accessConfig.subscriptions}
+            busy={busy === PRO_SCOPE}
+            onAsk={() => ask({ key: PRO_SCOPE, type: 'pro', title: 'Pro subscription' })}
+            onCancel={() => cancel(PRO_SCOPE)}
+          />
+        </div>
+      </div>
+    </Modal>
+  );
+}
+
+/** In place of a locked book's quiz list, or a locked quiz's start buttons. */
+export function LockedNotice({ title, counts, extra, onUnlock }) {
+  return (
+    <Card className="p-6 text-center">
+      <span className="mx-auto h-14 w-14 rounded-2xl bg-slate-100 text-slate-500 flex items-center justify-center">
+        <Lock size={26} />
+      </span>
+      <p className="font-display text-xl text-slate-900 mt-3">{title} is locked</p>
+      {counts && <p className="text-sm text-slate-600 mt-1">{countLine(counts, extra)}</p>}
+      <p className="text-sm text-slate-500 mt-2 max-w-sm mx-auto">
+        Ask for access, start a free trial, or subscribe to open the quizzes.
+      </p>
+      <Button className="mt-4 !px-6" onClick={onUnlock}>
+        <LockOpen size={18} /> Unlock
+      </Button>
+    </Card>
+  );
+}
+
+/** "My access" on the profile page. */
+export function MyAccessCard() {
+  const { role, access } = useAuth();
+  const requests = useMyRequests();
+  const [open, setOpen] = useState(false);
+  if (!access) return null;
+  const pending = Object.values(requests).filter((r) => r?.status === 'pending').length;
+  const full = access.level === 'full';
 
   return (
     <Card className="p-4">
-      <p className="flex items-center gap-2 font-display text-lg text-slate-800">
-        <KeyRound size={18} className="text-brand-600" /> My access
-      </p>
-      <p className="text-sm text-slate-700 mt-1">
-        <span className="font-semibold">{ROLE_INFO[role]?.label || 'User'}</span> · {describeAccess(access)}
-      </p>
-      {pendingCount > 0 && (
-        <p className="text-xs text-amber-700 mt-1">
-          {pendingCount} unlock request{pendingCount === 1 ? '' : 's'} waiting for approval
-        </p>
-      )}
-      {access.level !== 'full' && (
-        <div className="mt-3 grid gap-2 sm:grid-cols-2">
-          {!access.trialUsed && (
-            <div className="flex items-center gap-2">
-              <Button
-                variant="secondary"
-                className="flex-1"
-                loading={busy === TRIAL_SCOPE}
-                disabled={requests[TRIAL_SCOPE]?.status === 'pending'}
-                onClick={() => ask(TRIAL_SCOPE, 'trial', 'Free trial')}
-              >
-                <Gift size={16} /> Ask for a free trial
-              </Button>
-              <Status request={requests[TRIAL_SCOPE]} onCancel={() => cancelRequest(user.uid, TRIAL_SCOPE).catch(() => {})} />
-            </div>
+      <div className="flex items-center gap-3">
+        <span
+          className={`h-11 w-11 shrink-0 rounded-xl flex items-center justify-center ${
+            full ? 'bg-emerald-50 text-emerald-700' : 'bg-slate-100 text-slate-500'
+          }`}
+        >
+          {full ? <Check size={20} /> : <KeyRound size={20} />}
+        </span>
+        <div className="min-w-0 flex-1">
+          <p className="font-semibold text-slate-800">{ROLE_INFO[role]?.label || 'User'}</p>
+          <p className="text-sm text-slate-500 truncate">{describeAccess(access)}</p>
+          {pending > 0 && (
+            <p className="text-xs font-semibold text-amber-700">
+              {pending} request{pending === 1 ? '' : 's'} waiting for approval
+            </p>
           )}
-          <div className="flex items-center gap-2">
-            <Button
-              className="flex-1"
-              loading={busy === PRO_SCOPE}
-              disabled={requests[PRO_SCOPE]?.status === 'pending'}
-              onClick={() => ask(PRO_SCOPE, 'pro', 'Pro subscription')}
-            >
-              <Crown size={16} /> Subscribe to Pro
-            </Button>
-            <Status request={requests[PRO_SCOPE]} onCancel={() => cancelRequest(user.uid, PRO_SCOPE).catch(() => {})} />
-          </div>
         </div>
-      )}
+        {!full && (
+          <Button className="!px-3 !py-2 text-sm" onClick={() => setOpen(true)}>
+            <LockOpen size={16} /> Unlock
+          </Button>
+        )}
+      </div>
+      <UnlockSheet open={open} onClose={() => setOpen(false)} path="/profile" />
     </Card>
   );
 }

@@ -40,7 +40,7 @@ import { loadHistory, recordSession } from '../lib/quizHistory';
 import { saveAttempt } from '../lib/quizReview';
 import { findSavedSession, invalidateQuestions, loadQuestions, loadQuizMeta, playPath, quizPath, reviewPath } from '../lib/quizSource';
 import { quizAccess, scopesOf, visibleQuestions } from '../lib/access';
-import { bankOfSource } from '../lib/banks';
+import { placeOfSource } from '../lib/banks';
 import { queuePendingResult } from '../lib/sync';
 import { AppBar, Button, Card, ErrorBox, Input, Modal, Page, Spinner, Textarea, ZoomImage, useToast } from '../components/ui';
 import QuestionEditModal from '../components/QuestionEditModal';
@@ -149,8 +149,8 @@ export default function QuizPlay() {
         // a preview plays only its first questions (lib/access.js).
         let qa = quizAccess(accessRef.current, scopesOf(m));
         if (qa.level !== 'full' && !m.bank && m.source) {
-          const bank = await bankOfSource(m.source).catch(() => '');
-          qa = quizAccess(accessRef.current, scopesOf(m, { bank }));
+          const place = await placeOfSource(m.source).catch(() => ({}));
+          qa = quizAccess(accessRef.current, scopesOf(m, place));
         }
         if (cancelled) return;
         if (qa.level === 'locked') {

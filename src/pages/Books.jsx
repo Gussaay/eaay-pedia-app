@@ -3,15 +3,16 @@
 // chapter or by basic science (components/QuestionBrowser.jsx). A bank can
 // gather its books into groups (lib/bookGroups.js); ?group=<key> lists one.
 import { useMemo, useState } from 'react';
+import { countLine, countsBySource, sumCounts } from '../lib/catalogCounts';
 import { useNavigate, useParams, useSearchParams } from 'react-router-dom';
 import { BookMarked, FileQuestion, FlaskConical, FolderOpen, Layers, Library, Search } from 'lucide-react';
 import { useList } from '../hooks/useData';
 import { num } from '../lib/rtdb';
 import { quizPath } from '../lib/quizSource';
 import QuestionBrowser, { BrowseTabs } from '../components/QuestionBrowser';
-import { AccessMark } from '../components/LockPanel';
+import { AccessMark, UnlockSheet } from '../components/LockPanel';
 import { useAccessCheck } from '../hooks/useQuizAccess';
-import { quizScopes } from '../lib/access';
+import { bookScopes, groupScopes, unlockChoices } from '../lib/access';
 import { groupBooks } from '../lib/bookGroups';
 import { AppBar, Empty, ErrorBox, ListCard, Page, SkeletonList } from '../components/ui';
 
@@ -31,10 +32,15 @@ const readTab = (source) => {
   }
 };
 
-function QuizzesByName({ books, bank }) {
+/** Every quiz by name, from the books this person may open: locked books keep their quiz names to themselves. */
+function QuizzesByName({ books: allBooks, bank }) {
   const navigate = useNavigate();
   const levelOf = useAccessCheck();
   const [q, setQ] = useState('');
+  const books = useMemo(
+    () => allBooks.filter((b) => levelOf(bookScopes({ source: b.source, group: b.group, bank })) !== 'locked'),
+    [allBooks, levelOf, bank],
+  );
   const titleOf = useMemo(() => new Map(books.map((b) => [b.source, b.title])), [books]);
   const quizzes = useList('allquiz', {
     filter: (x) => titleOf.has(x.source) && String(x.preview) === 'false',
@@ -58,7 +64,11 @@ function QuizzesByName({ books, bank }) {
         />
       </label>
       <ErrorBox error={!quizzes.data.length && quizzes.error} onRetry={quizzes.reload} />
-      {quizzes.loading ? (
+      {books.length === 0 ? (
+        <Empty icon={<FileQuestion size={40} />} title="Quizzes are locked">
+          Open a book under Sources and tap Unlock to see its quizzes.
+        </Empty>
+      ) : quizzes.loading ? (
         <SkeletonList rows={6} />
       ) : list.length === 0 ? (
         <Empty icon={<FileQuestion size={40} />} title={q ? 'No quiz matches' : 'No quizzes yet'} />
@@ -71,12 +81,9 @@ function QuizzesByName({ books, bank }) {
               title={String(x.title || '').replace('MCQs', '').trim()}
               subtitle={titleOf.get(x.source)}
               badge={
-                <>
-                  <AccessMark level={levelOf(quizScopes({ id: x._key, source: x.source, bank }))} />
-                  {num(x.number) ? (
-                    <span className="text-xs font-semibold bg-brand-50 text-brand-700 rounded-full px-2 py-1 shrink-0">{num(x.number)} Qs</span>
-                  ) : null}
-                </>
+                num(x.number) ? (
+                  <span className="text-xs font-semibold bg-brand-50 text-brand-700 rounded-full px-2 py-1 shrink-0">{num(x.number)} Qs</span>
+                ) : null
               }
               onClick={() => navigate(quizPath('exam', x._key, { name: titleOf.get(x.source) || '', source: x.source }))}
             />
@@ -111,9 +118,30 @@ export default function Books() {
   const { groups, loose } = groupBooks(books.data, bankRecord.data[0]);
   const openGroup = groups.find((g) => g.key === group);
   const shown = group ? openGroup?.books || [] : loose;
-  const bankTitle = params.get('title') || 'Books';
+  const bankTitle = params.get('title') || bankRecord.data[0]?.title || 'Books';
+  const levelOf = useAccessCheck();
+  const allQuizzes = useList(editMode ? null : 'allquiz');
+  const counts = useMemo(() => countsBySource(allQuizzes.data), [allQuizzes.data]);
+  const [sheet, setSheet] = useState(null);
+  const bookLevel = (b) => (editMode ? 'full' : levelOf(bookScopes({ source: b.source, group: b.group, bank: b.main_category })));
 
   const openBook = (b) => {
+    if (bookLevel(b) === 'locked') {
+      const g = groups.find((x) => x.key === String(b.group || '').trim());
+      setSheet({
+        title: g ? g.title : b.title,
+        counts: g ? sumCounts(counts, g.books.map((x) => x.source)) : counts.get(b.source),
+        choices: unlockChoices({
+          bank: b.main_category,
+          bankTitle,
+          group: g?.key,
+          groupTitle: g?.title,
+          book: b.source,
+          bookTitle: b.title,
+        }),
+      });
+      return;
+    }
     const qs = new URLSearchParams({ name: b.title || '', type: b.sub_category || '' });
     if (editMode) qs.set('mode', 'edit');
     navigate(`/book/${encodeURIComponent(b.source)}?${qs}`);
@@ -123,6 +151,15 @@ export default function Books() {
     qs.set('group', g.key);
     navigate(`/cat/${encodeURIComponent(source)}?${qs}`);
   };
+
+  // Chapter and science sets gather questions from every book, so only the
+  // whole bank opens them.
+  const lockedBank = () =>
+    setSheet({
+      title: bankTitle,
+      counts: sumCounts(counts, books.data.map((b) => b.source)),
+      choices: unlockChoices({ bank: source, bankTitle }),
+    });
 
   return (
     <div className="min-h-screen">
@@ -150,13 +187,29 @@ export default function Books() {
                       key={`group:${g.key}`}
                       img={g.img}
                       title={g.subtitle ? `${g.title} · ${g.subtitle}` : g.title}
-                      subtitle={`${g.books.length} ${g.books.length === 1 ? 'book' : 'books'}`}
-                      badge={<FolderOpen size={18} className="text-brand-500 shrink-0" />}
+                      subtitle={countLine(
+                        sumCounts(counts, g.books.map((b) => b.source)),
+                        `${g.books.length} ${g.books.length === 1 ? 'book' : 'books'}`,
+                      )}
+                      badge={
+                        editMode ? (
+                          <FolderOpen size={18} className="text-brand-500 shrink-0" />
+                        ) : (
+                          <AccessMark level={levelOf(groupScopes({ group: g.key, bank: source }))} />
+                        )
+                      }
                       onClick={() => openGroupPage(g)}
                     />
                   ))}
                 {shown.map((b) => (
-                  <ListCard key={b._key} img={b.img} title={b.title} onClick={() => openBook(b)} />
+                  <ListCard
+                    key={b._key}
+                    img={b.img}
+                    title={b.title}
+                    subtitle={counts.get(b.source) ? countLine(counts.get(b.source)) : undefined}
+                    badge={<AccessMark level={bookLevel(b)} />}
+                    onClick={() => openBook(b)}
+                  />
                 ))}
               </div>
             )}
@@ -164,9 +217,17 @@ export default function Books() {
         )}
 
         {tab === 'quizzes' && (books.loading ? <SkeletonList /> : <QuizzesByName books={books.data} bank={source} />)}
-        {tab === 'chapters' && <QuestionBrowser bank={source} name={params.get('title') || ''} mode="chapters" />}
-        {tab === 'science' && <QuestionBrowser bank={source} name={params.get('title') || ''} mode="science" />}
+        {tab === 'chapters' && <QuestionBrowser bank={source} name={params.get('title') || ''} mode="chapters" onLocked={lockedBank} />}
+        {tab === 'science' && <QuestionBrowser bank={source} name={params.get('title') || ''} mode="science" onLocked={lockedBank} />}
       </Page>
+      <UnlockSheet
+        open={!!sheet}
+        onClose={() => setSheet(null)}
+        title={sheet?.title}
+        counts={sheet?.counts}
+        choices={sheet?.choices}
+        path={`/cat/${encodeURIComponent(source)}?${params}`}
+      />
     </div>
   );
 }
