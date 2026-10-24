@@ -72,7 +72,7 @@ const groqKey = process.env.GROQ_API_KEY || '';
 // keeps headroom: CLAUDE_MAX_CALLS calls per workflow round (count in .tmp,
 // which lasts one round), CLAUDE_WEEK_CALLS calls per week (count in the
 // database, aitag/claude, from Monday 00:00 UTC), 8 s apart (CLAUDE_WORKERS calls side by side). On a usage-limit
-// reply Claude rests until the reset time it gives (an hour for the 5-hour
+// reply Claude rests until the reset time it gives (15 minutes for the 5-hour, then it tries again
 // limit, a day at a time for the weekly one when no time is given).
 const claudeUse = path.join('.tmp', 'claude-use.json');
 const claudeMax = Number(process.env.CLAUDE_MAX_CALLS || 50);
@@ -170,7 +170,7 @@ async function askClaude(model, prompt) {
   if (limited) {
     // reset time when the message gives one (epoch seconds after "|"), else rest a while
     const epoch = Number(text.match(/\|(\d{10})\b/)?.[1]) * 1000;
-    claudeWeek.until = epoch > Date.now() ? epoch : Date.now() + (/week/i.test(text) ? 24 : 1) * 3600000;
+    claudeWeek.until = epoch > Date.now() ? epoch : Date.now() + (/week/i.test(text) ? 24 * 3600000 : 15 * 60000);
   }
   saveWeek();
   if (j.is_error === false && j.result) return [200, j.result];
