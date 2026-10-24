@@ -1,4 +1,3 @@
-# Saudi Prometric topic tags, "<paper>.<n> Main topic; Other tag" (paper = position in saudi-prometric-papers.json)
 00.1 Encephalocele
 00.2 Omphalocele
 00.3 Supraventricular tachycardia
