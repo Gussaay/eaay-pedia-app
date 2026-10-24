@@ -49,6 +49,7 @@ jobs:
           CLAUDE_MAX_CALLS: '80'
           CLAUDE_WEEK_CALLS: '220'
           CLAUDE_WEEK_RESET: '2T19:59'
+          CLAUDE_MODEL: haiku # Qusay's choice: uses far less of the Pro limits than sonnet
           GH_TOKEN: ${{ github.token }}
           WRITE: dry
         run: |
