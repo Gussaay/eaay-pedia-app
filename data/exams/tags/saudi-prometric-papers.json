@@ -1,0 +1,50 @@
+[
+ {
+  "file": "data/exams/saudi-prometric-2026-10-09-khobar.json",
+  "title": "9 Oct 2026 (Khobar)"
+ },
+ {
+  "file": "data/exams/saudi-prometric-2026-10-madinah.json",
+  "title": "Oct 2026 (Madinah)"
+ },
+ {
+  "file": "data/exams/saudi-prometric-2026-10-06-hail.json",
+  "title": "6 Oct 2026 (Hail)"
+ },
+ {
+  "file": "data/exams/saudi-prometric-2026-10-01-cairo.json",
+  "title": "1 Oct 2026 (Cairo)"
+ },
+ {
+  "file": "data/exams/saudi-prometric-2026-09-21-riyadh.json",
+  "title": "21 Sep 2026 (Riyadh)"
+ },
+ {
+  "file": "data/exams/saudi-prometric-2026-08-24-jeddah.json",
+  "title": "24 Aug 2026 (Jeddah)"
+ },
+ {
+  "file": "data/exams/saudi-prometric-2026-08-19.json",
+  "title": "19 Aug 2026"
+ },
+ {
+  "file": "data/exams/saudi-prometric-2026-08-17-riyadh.json",
+  "title": "17 Aug 2026 (Riyadh)"
+ },
+ {
+  "file": "data/exams/saudi-prometric-2026-08-16-taif.json",
+  "title": "16 Aug 2026 (Taif)"
+ },
+ {
+  "file": "data/exams/saudi-prometric-2026-08-12-jeddah.json",
+  "title": "12 Aug 2026 (Jeddah)"
+ },
+ {
+  "file": "data/exams/saudi-prometric-2026-08-12-cairo.json",
+  "title": "12 Aug 2026 (Cairo)"
+ },
+ {
+  "file": "data/exams/saudi-prometric-2026-08-03-madinah.json",
+  "title": "3 Aug 2026 (Madinah)"
+ }
+]

@@ -1,0 +1,1451 @@
+# Saudi Prometric topic tags, "<paper>.<n> Main topic; Other tag" (paper = position in saudi-prometric-papers.json)
+00.1 Encephalocele
+00.2 Omphalocele
+00.3 Supraventricular tachycardia
+00.4 Atrial septal defect
+00.5 Aortic stenosis; Williams syndrome
+00.6 Hereditary spherocytosis
+00.7 Infective endocarditis; Acute rheumatic fever
+00.8 Respiratory failure
+00.9 Ataxia telangiectasia
+00.10 Congenital chloride diarrhoea
+00.11 Cystic fibrosis
+00.12 Cystic fibrosis; Meconium ileus
+00.13 Hand hygiene
+00.14 Hand hygiene; Infection control
+00.15 Vitamin D toxicity; Hypercalcaemia
+00.16 Sarcoidosis
+00.17 Sweat test; Cystic fibrosis
+00.18 Foreign body ingestion; Button battery
+00.19 Lobar pneumonia; Pneumonia
+00.20 Scorpion sting
+00.21 Scorpion sting
+00.22 Toxic megacolon; Ulcerative colitis
+00.23 Necrotising enterocolitis
+00.24 Bronchiolitis; Respiratory syncytial virus
+00.25 Pulmonary sequestration; Bronchogenic cyst
+00.26 Intussusception; Meckel diverticulum
+00.27 Abdominal migraine
+00.28 Brain abscess
+00.29 Nephrotic syndrome
+00.30 Pyelonephritis; Urinary tract infection
+00.31 Renal vein thrombosis
+00.32 Lumbar puncture
+00.33 Septic arthritis
+00.34 Coagulation disorders
+00.35 Diabetic ketoacidosis; Hypokalaemia
+00.36 Rickets; Vitamin D deficiency
+00.37 Wilson disease
+00.38 Coma; Glasgow Coma Scale
+01.1 Pulseless electrical activity
+01.2 Supraventricular tachycardia
+01.3 Hyperkalaemia
+01.4 Digoxin toxicity
+01.5 Tetralogy of Fallot
+01.6 Tetralogy of Fallot
+01.7 Patent ductus arteriosus
+01.8 Atrial septal defect
+01.9 Ventricular septal defect; Heart failure
+01.10 Infective endocarditis
+01.11 Infective endocarditis
+01.12 Infective endocarditis
+01.13 Acute rheumatic fever
+01.14 Pyelonephritis
+01.15 Post-streptococcal glomerulonephritis
+01.16 Urinary tract infection
+01.17 Cystitis; Urinary tract infection
+01.18 Haemolytic uraemic syndrome; Best interests
+01.19 Steroid-resistant nephrotic syndrome
+01.20 Bartter syndrome
+01.21 Chronic kidney disease; Renal osteodystrophy
+01.22 Urinary tract infection; Overactive bladder
+01.23 Separation anxiety
+01.24 Biting; Behaviour problems
+01.25 Hepatitis B; Perinatal infection
+01.26 Vaccination; Epilepsy
+01.27 Tetanus
+01.28 Anaphylaxis; Vaccination
+01.29 Iron deficiency anaemia
+01.30 Sickle cell disease; Stroke
+01.31 Vitamin K; Coagulation disorders
+01.32 Blood transfusion
+01.33 Factor XIII deficiency
+01.34 Immune thrombocytopenia
+01.35 Developmental milestones
+01.36 Langerhans cell histiocytosis
+01.37 Kallmann syndrome; Delayed puberty
+01.38 Turner syndrome
+01.39 Down syndrome
+01.40 Down syndrome
+01.41 Spinal muscular atrophy
+01.42 Choanal atresia
+01.43 Febrile neutropenia
+01.44 Neutropenic enterocolitis
+01.45 Febrile neutropenia
+01.46 Pneumococcal meningitis
+01.47 Scarlet fever
+01.48 Neonatal sepsis
+01.49 Central line infection
+01.50 Bronchiolitis
+01.51 Spontaneous bacterial peritonitis
+01.52 MRSA; Infection control
+01.53 Infection control
+01.54 Parotitis
+01.55 Infant of diabetic mother; Polycythaemia
+01.56 Neonatal hypothermia
+01.57 Neonatal resuscitation; Neonatal hypothermia
+01.58 Otitis media with effusion
+01.59 Acute otitis media
+01.60 Meningitis; Otitis media
+01.61 Oral candidiasis
+01.62 Lichen planus
+01.63 Encephalocele
+01.64 Sarcoidosis
+01.65 Congenital syphilis
+01.66 Kwashiorkor; Malnutrition
+01.67 Growth hormone deficiency
+01.68 Aortic stenosis; Williams syndrome
+01.69 Tension pneumothorax
+01.70 Round pneumonia
+01.71 Epiglottitis
+01.72 Bacterial tracheitis
+01.73 Linear growth
+01.74 Hydrocephalus; Macrocephaly
+01.75 Inflammatory bowel disease
+01.76 Croup
+01.77 Superior mesenteric artery syndrome
+01.78 Caput succedaneum
+01.79 Renal tumours
+01.80 Tuberous sclerosis complex
+01.81 Adrenoleukodystrophy
+01.82 Foreign body ingestion
+01.83 Lead poisoning
+01.84 Lead poisoning; Pica
+01.85 Infantile spasms
+01.86 Recurrent infections
+01.87 Masturbation
+01.88 Juvenile dermatomyositis
+01.89 Abusive head trauma; Subdural haematoma
+01.90 Extradural haematoma
+01.91 Toxic megacolon; Ulcerative colitis
+01.92 Helicobacter pylori
+01.93 Shock; Septic shock
+01.94 Orbital cellulitis
+01.95 Nasal polyps; Encephalocele
+01.96 SCIWORA; Spinal cord injury
+01.97 Acute disseminated encephalomyelitis
+01.98 Transverse myelitis
+01.99 Transverse myelitis
+01.100 Hypernatraemia; Dehydration
+01.101 Raised intracranial pressure
+01.102 Functional constipation; Spinal cord lesion
+01.103 Malrotation and volvulus
+01.104 Malrotation and volvulus
+01.105 Hirschsprung disease
+01.106 Gastric volvulus
+01.107 Hirschsprung-associated enterocolitis
+01.108 Meckel diverticulum
+01.109 Pyloric stenosis
+01.110 Cystic fibrosis
+01.111 Tuberculin skin test
+01.112 Sweat test
+01.113 Carbohydrate malabsorption
+01.114 Hereditary fructose intolerance
+01.115 Clostridioides difficile
+01.116 Professionalism; Teamwork
+01.117 Patient safety
+01.118 Disclosure of errors
+01.119 Conflict of interest
+01.120 Child sexual abuse
+01.121 Patient safety
+01.122 Public health ethics
+01.123 Medical ethics
+01.124 Professionalism
+01.125 Justice
+01.126 Informed consent; Research ethics
+01.127 Patient safety
+01.128 Patient safety
+01.129 Neuronal migration disorders
+01.130 Carbon monoxide poisoning
+01.131 Type 1 diabetes
+01.132 Status epilepticus
+01.133 Strabismus
+01.134 Pain assessment
+01.135 Febrile seizures
+01.136 Epilepsy
+01.137 Abdominal migraine
+01.138 Migraine
+01.139 Tic disorders
+01.140 Breath-holding spells
+01.141 Fanconi anaemia
+01.142 Acute kidney injury
+01.143 Asthma
+01.144 Epistaxis
+01.145 Allergic rhinitis; Epistaxis
+01.146 Allergic rhinitis
+01.147 Tonsillectomy
+01.148 Breast milk jaundice
+01.149 Neonatal cholestasis; Biliary atresia
+01.150 Trauma
+01.151 Ataxia telangiectasia
+01.152 Cognitive behavioural therapy
+01.153 Faecal impaction
+01.154 Hypothyroidism; Functional constipation
+01.155 Haematocolpos
+01.156 Bell palsy
+01.157 Umbilical hernia
+01.158 Meconium aspiration; Neonatal resuscitation
+01.159 Parapneumonic effusion; Empyema
+01.160 Night terrors
+01.161 Obstructive sleep apnoea
+01.162 Respiratory failure
+01.163 Pulmonary sequestration
+01.164 Rett syndrome
+01.165 Hepatitis A; Vaccination
+01.166 Streptococcal pharyngitis
+01.167 Haematuria
+01.168 Haematuria
+01.169 Bronchiolitis
+01.170 Sixth nerve palsy
+02.1 Acute cerebellar ataxia
+02.2 Infantile spasms
+02.3 Bacterial meningitis
+02.4 Septic shock; Meningococcal disease
+02.5 Extradural haematoma
+02.6 Neurofibromatosis type 1; Optic glioma
+02.7 Meningitis; Otitis media
+02.8 Migraine; Abdominal migraine
+02.9 Transverse myelitis
+02.10 Renal vein thrombosis
+02.11 Renal vein thrombosis
+02.12 Glomerulonephritis
+02.13 Urinary tract infection; Renal scarring
+02.14 Beta-thalassaemia trait
+02.15 Wiskott-Aldrich syndrome
+02.16 Sickle cell disease
+02.17 Haemophilia A; Inhibitors
+02.18 Tetralogy of Fallot; Hypercyanotic spells
+02.19 Cyanotic congenital heart disease; Stroke
+02.20 Atrial septal defect
+02.21 Heart failure
+02.22 Ventricular fibrillation
+02.23 Appendicitis
+02.24 Pyloric stenosis
+02.25 Congenital diaphragmatic hernia
+02.26 Intestinal obstruction
+02.27 Carotenaemia
+02.28 Probiotics
+02.29 Intestinal obstruction
+02.30 Infantile colic
+02.31 Functional constipation; Encopresis
+02.32 ADHD
+02.33 Stuttering
+02.34 Gynaecomastia
+02.35 Energy requirements
+02.36 Choanal atresia
+02.37 Developmental milestones
+02.38 Bronchiolitis; Respiratory syncytial virus
+02.39 Aplastic crisis; Parvovirus B19
+02.40 Candidiasis; Nappy rash
+02.41 Nasal foreign body
+02.42 Obstructive sleep apnoea
+02.43 Ataxia telangiectasia
+02.44 Wilson disease
+02.45 Sturge-Weber syndrome
+02.46 Fragile X syndrome
+02.47 Turner syndrome
+02.48 HIV infection; Vaccination
+02.49 Vaccination; Febrile seizures
+02.50 Vaccination; Immunocompromised host
+02.51 Osteomyelitis
+02.52 Spinal muscular atrophy
+02.53 Breastfeeding
+02.54 Mid-parental height
+02.55 Urinary tract infection
+02.56 Hypotonia
+02.57 Foreign body ingestion
+02.58 Diamond-Blackfan anaemia
+02.59 Guillain-Barré syndrome
+02.60 Infection control; Personal protective equipment
+02.61 Fluid therapy
+02.62 Post-streptococcal glomerulonephritis
+02.63 Linear growth
+02.64 Central line infection
+02.65 Vaccination; Corticosteroids
+02.66 Oppositional defiant disorder
+02.67 Gastric volvulus
+02.68 Vitamin K deficiency bleeding
+02.69 Congenital rubella; Congenital infections
+02.70 Tuberculin skin test
+02.71 Sweat test
+02.72 Patient safety
+02.73 Growth hormone deficiency
+02.74 Cystic fibrosis; Bartter syndrome
+02.75 Antimicrobial resistance
+02.76 Cardiopulmonary resuscitation; Teamwork
+02.77 Child sexual abuse; Safeguarding
+02.78 Conflict of interest
+02.79 Epidemiology
+02.80 Congenital hypothyroidism
+02.81 Meningococcal disease
+02.82 Malrotation and volvulus
+02.83 Transient neonatal pustular melanosis
+02.84 Encephalocele
+02.85 Mastoiditis
+02.86 Epiglottitis
+02.87 Pneumothorax
+02.88 Varicella
+02.89 Communication
+02.90 Patient safety; Diagnostic error
+02.91 Handover; Communication
+02.92 Consent; Best interests
+02.93 Professionalism
+03.1 Acute cerebellar ataxia
+03.2 Tuberculin skin test
+03.3 Sweat test; Cystic fibrosis
+03.4 Informed consent
+03.5 Health systems
+03.6 Patient safety
+03.7 Vaccine hesitancy
+03.8 Public health ethics
+03.9 Medical ethics
+03.10 Impaired colleague; Professionalism
+03.11 Patient safety
+03.12 Patient safety
+03.13 Hirschsprung disease
+03.14 Hirschsprung-associated enterocolitis
+03.15 Gastric volvulus; Intestinal obstruction
+03.16 Crohn disease
+03.17 Ventricular septal defect; Pulmonary hypertension
+03.18 Tetralogy of Fallot; Hypercyanotic spells
+03.19 Inborn errors of metabolism; Vomiting
+03.20 Rubella
+03.21 Measles
+03.22 Kawasaki disease
+03.23 Supraventricular tachycardia
+03.24 Supraventricular tachycardia
+03.25 Tricyclic antidepressant poisoning
+03.26 Tyrosinaemia
+03.27 Breastfeeding; Galactosaemia
+03.28 Hepatitis B; Breastfeeding
+03.29 Bilious vomiting; Malrotation and volvulus
+03.30 Oesophageal varices; Upper GI bleeding
+03.31 Infection control; Personal protective equipment
+03.32 Infection control
+03.33 Vaccination; Immunocompromised host
+03.34 Asthma
+03.35 Bronchiolitis; Respiratory syncytial virus
+03.36 Nasal congestion
+03.37 CHARGE syndrome; Choanal atresia
+03.38 Heart failure
+03.39 Febrile neutropenia
+03.40 Varicella; Immunocompromised host
+03.41 Hepatitis A
+03.42 Vaccination; Acute otitis media
+03.43 Bronchiolitis
+03.44 Acute asthma; Preschool wheeze
+03.45 Atrial septal defect
+03.46 Haemorrhagic shock; Trauma
+03.47 Guillain-Barré syndrome
+03.48 Guillain-Barré syndrome
+03.49 Transverse myelitis; Spinal cord lesion
+03.50 Sturge-Weber syndrome
+03.51 Infantile spasms
+03.52 Tuberous sclerosis complex
+03.53 Neurofibromatosis type 1; Optic glioma
+03.54 Malnutrition
+03.55 Mid-parental height
+03.56 Cri du chat syndrome
+03.57 Hypopituitarism
+03.58 Autosomal recessive inheritance
+03.59 Fragile X syndrome
+03.60 Spinal muscular atrophy
+03.61 Juvenile dermatomyositis
+03.62 Scleroderma
+03.63 Primary immunodeficiency
+03.64 Tension pneumothorax
+03.65 Common variable immunodeficiency
+03.66 Bacterial meningitis
+03.67 Physiological anaemia of infancy
+03.68 Diamond-Blackfan anaemia
+03.69 Iron deficiency anaemia
+03.70 Renal osteodystrophy; Rickets
+03.71 Hydrocephalus
+03.72 Renal vein thrombosis
+03.73 Urinary tract infection; Renal scarring
+03.74 Intraosseous access
+03.75 Nasal polyps; Encephalocele
+03.76 Choanal atresia
+03.77 Sick sinus syndrome; Transposition of the great arteries
+03.78 Child abuse; Safeguarding
+03.79 Meningitis; Otitis media
+03.80 Oral candidiasis
+03.81 Diabetic ketoacidosis
+03.82 Metabolic alkalosis
+03.83 Separation anxiety
+03.84 Autism spectrum disorder
+03.85 Oppositional defiant disorder
+03.86 Sibling rivalry
+03.87 Pectus carinatum
+03.88 Congenital pulmonary airway malformation
+03.89 Pulmonary sequestration
+03.90 Developmental dysplasia of the hip
+03.91 Paracetamol poisoning
+03.92 Status epilepticus; Febrile seizures
+03.93 Congenital syphilis
+03.94 Turner syndrome
+03.95 Down syndrome; Leukaemia
+03.96 Adrenoleukodystrophy
+03.97 Ataxia telangiectasia
+03.98 Wiskott-Aldrich syndrome
+03.99 Haemophilia A; Inhibitors
+03.100 Speech delay
+03.101 Congenital hypothyroidism
+03.102 Congenital hypothyroidism
+03.103 Appendicitis; Appendiceal abscess
+03.104 Abdominal migraine
+03.105 Migraine
+03.106 Medication errors; High-alert medications
+03.107 Abdominal trauma
+03.108 Nasal foreign body
+03.109 Foreign body ingestion
+03.110 Oesophageal atresia
+03.111 Short stature; Normal variant short stature
+03.112 Gastro-oesophageal reflux
+03.113 Epistaxis; Allergic rhinitis
+03.114 Vesicoureteral reflux
+03.115 Drowning
+03.116 Henoch-Schönlein purpura
+03.117 Neonatal GI bleeding
+03.118 Inguinal hernia
+03.119 Hydrocele
+03.120 Functional constipation
+03.121 Infective endocarditis
+03.122 Tetralogy of Fallot
+03.123 Otitis media with effusion
+03.124 Alport syndrome
+03.125 Congenital nephrotic syndrome
+03.126 Consent; Best interests
+03.127 Haematocolpos; Imperforate hymen
+03.128 Asthma
+03.129 Hepatitis B
+03.130 Bacterial meningitis
+03.131 Obstructive sleep apnoea
+03.132 Pulseless electrical activity
+03.133 Focal seizures
+03.134 Tetralogy of Fallot
+03.135 Tourette syndrome
+03.136 Hyperkalaemia
+03.137 Adverse drug reactions
+03.138 Scorpion sting
+03.139 Neonatal hypoglycaemia
+03.140 Masturbation
+04.1 Acute cerebellar ataxia
+04.2 Acute disseminated encephalomyelitis
+04.3 Status epilepticus; Febrile seizures
+04.4 Febrile seizures
+04.5 Focal seizures; Epilepsy
+04.6 Hydrocephalus; Macrocephaly
+04.7 Microcephaly
+04.8 Breath-holding spells
+04.9 Breath-holding spells
+04.10 Linear growth
+04.11 Head circumference; Growth
+04.12 Pain assessment
+04.13 Bacterial meningitis
+04.14 Meningococcal disease
+04.15 Meningococcal disease
+04.16 Gastro-oesophageal reflux; Sandifer syndrome
+04.17 Tic disorders
+04.18 Infantile spasms
+04.19 Spinal cord injury; SCIWORA
+04.20 Abdominal migraine
+04.21 Cyclic vomiting syndrome
+04.22 Cephalhaematoma
+04.23 Septic shock
+04.24 Extradural haematoma
+04.25 Sturge-Weber syndrome
+04.26 Ataxia telangiectasia
+04.27 Juvenile dermatomyositis
+04.28 Transverse myelitis
+04.29 Transverse myelitis
+04.30 Meningitis; Otitis media
+04.31 Tuberous sclerosis complex
+04.32 Speech delay; Hearing loss
+04.33 Renal vein thrombosis
+04.34 Nephrotic syndrome
+04.35 Spinal muscular atrophy
+04.36 Fragile X syndrome
+04.37 Wilms tumour
+04.38 Neuroblastoma
+04.39 Encephalocele
+04.40 Respiratory distress syndrome
+04.41 Rickettsial infection
+04.42 Rubella
+04.43 Mumps
+04.44 Congenital adrenal hyperplasia
+04.45 Vaccination; Immunocompromised host
+04.46 Nocturnal enuresis
+04.47 Nocturnal enuresis
+04.48 Hypercalcaemia
+04.49 Pyelonephritis; Urinary tract infection
+04.50 Urinary tract infection
+04.51 Epididymitis
+04.52 Leydig cell tumour; Precocious puberty
+04.53 Urinary tract infection; Renal scarring
+04.54 Phaeochromocytoma
+04.55 Nephrogenic diabetes insipidus
+04.56 Sickle cell disease; Vaccination
+04.57 Iron deficiency anaemia
+04.58 Hodgkin lymphoma
+04.59 Wiskott-Aldrich syndrome
+04.60 Von Willebrand disease
+04.61 Transient abnormal myelopoiesis; Down syndrome
+04.62 Immune thrombocytopenia
+04.63 Neonatal resuscitation; Meconium aspiration
+04.64 Sickle cell disease
+04.65 Anaphylaxis
+04.66 Shock
+04.67 Tetralogy of Fallot
+04.68 Tetralogy of Fallot
+04.69 Shock; Cardiac tamponade
+04.70 Infective endocarditis
+04.71 Hyperkalaemia
+04.72 Supraventricular tachycardia
+04.73 Aortic stenosis; Williams syndrome
+04.74 Ventricular septal defect; Pulmonary hypertension
+04.75 Overactive bladder; Urinary incontinence
+04.76 Fluid therapy
+04.77 Sick sinus syndrome
+04.78 Infective endocarditis
+04.79 Down syndrome; Atrioventricular septal defect
+04.80 Pericarditis
+04.81 Raised intracranial pressure; Head injury
+04.82 Head injury
+04.83 Haemophilia A; Inhibitors
+04.84 Growth hormone deficiency
+04.85 Pyloric stenosis; Dehydration
+04.86 Duodenal atresia
+04.87 Gastric volvulus
+04.88 Meckel diverticulum
+04.89 Crohn disease; Inflammatory bowel disease
+04.90 Cystic fibrosis
+04.91 Malrotation and volvulus
+04.92 Dermatitis herpetiformis; Coeliac disease
+04.93 Foreign body ingestion
+04.94 Foreign body ingestion
+04.95 Choking; Foreign body aspiration
+04.96 Foreign body aspiration
+04.97 Juvenile polyps
+04.98 Short bowel syndrome; Parenteral nutrition
+04.99 Fungal infection
+04.100 Neonatal cholestasis; Biliary atresia
+04.101 Cystic fibrosis
+04.102 Intestinal obstruction
+04.103 Stuttering
+04.104 Schizophrenia
+04.105 Oppositional defiant disorder
+04.106 Conduct disorder
+04.107 Behaviour problems
+04.108 Thumb sucking
+04.109 Short stature; Mid-parental height
+04.110 Precocious puberty; Short stature
+04.111 Lowe syndrome
+04.112 Bronchiolitis
+04.113 Scarlet fever
+04.114 Hand, foot and mouth disease
+04.115 Acute kidney injury; Haemolytic uraemic syndrome
+04.116 Cow's milk; Breastfeeding
+04.117 Cystic fibrosis; Pseudomonas
+04.118 Oral candidiasis
+04.119 Informed consent; Research ethics
+04.120 Hepatitis B; Vaccination
+04.121 HIV infection; Perinatal infection
+04.122 Febrile neutropenia
+04.123 Pyelonephritis
+04.124 Croup
+04.125 Epiglottitis
+04.126 Vaccination; Asthma
+04.127 Acute asthma
+04.128 Asthma; Influenza vaccine
+04.129 Bruxism
+04.130 Pneumothorax; Tension pneumothorax
+04.131 Hereditary fructose intolerance
+04.132 End-of-life care; Withdrawal of treatment
+04.133 Patient safety
+04.134 Medical ethics; Professionalism
+04.135 Medication errors; Patient safety
+04.136 Child abuse; Safeguarding
+04.137 Scorpion sting
+04.138 Glycogen storage disease type I
+04.139 Carbon monoxide poisoning; Smoke inhalation
+04.140 Mycoplasma pneumonia
+04.141 Parapneumonic effusion
+04.142 Epistaxis
+04.143 Allergic rhinitis
+04.144 Allergic rhinitis; Epistaxis
+04.145 Sleep problems
+04.146 Bacterial tracheitis
+04.147 Occult bacteraemia
+04.148 Developmental milestones
+04.149 Pneumonia
+04.150 Organophosphate poisoning
+04.151 Acute dystonic reaction
+04.152 Infection control
+04.153 MRSA; Infection control
+04.154 Discharge planning
+04.155 Medication errors; Prescribing
+04.156 Nasal polyps; Encephalocele
+04.157 Nasal dermoid
+05.1 Acute cerebellar ataxia
+05.2 Glasgow Coma Scale
+05.3 Linear growth
+05.4 Hydrocephalus; Macrocephaly
+05.5 Meningococcal disease
+05.6 Meningococcal disease; Bacterial meningitis
+05.7 Meningococcal disease
+05.8 Fragile X syndrome
+05.9 Rett syndrome
+05.10 Breath-holding spells
+05.11 Infantile spasms
+05.12 Tuberous sclerosis complex
+05.13 Haemolytic uraemic syndrome
+05.14 Acute disseminated encephalomyelitis
+05.15 Hypoxic-ischaemic encephalopathy; Cerebral palsy
+05.16 Transverse myelitis
+05.17 Transverse myelitis
+05.18 Transverse myelitis
+05.19 Parapneumonic effusion; Empyema
+05.20 Mid-parental height
+05.21 Migraine
+05.22 Subdural haematoma; Head injury
+05.23 Extradural haematoma; Head injury
+05.24 Spinal cord injury; SCIWORA
+05.25 Malnutrition; Waterlow classification
+05.26 Autosomal recessive inheritance
+05.27 Todd paralysis; Focal seizures
+05.28 Trauma; Airway management
+05.29 Sickle cell disease; Osteomyelitis
+05.30 Ataxia telangiectasia
+05.31 Medulloblastoma; Brain tumours
+05.32 Tuberculin skin test
+05.33 Sweat test; Cystic fibrosis
+05.34 Acute rheumatic fever
+05.35 Professionalism; Teamwork
+05.36 Absence seizures
+05.37 Neurofibromatosis type 1; Optic glioma
+05.38 Tourette syndrome
+05.39 Tourette syndrome
+05.40 Stuttering
+05.41 Sibling rivalry
+05.42 Nocturnal enuresis
+05.43 Nocturnal enuresis
+05.44 Speech delay; Hearing loss
+05.45 Brain abscess
+05.46 Gastric volvulus; Intestinal obstruction
+05.47 Gastric volvulus
+05.48 Developmental milestones
+05.49 Infective endocarditis
+05.50 Consent
+05.51 Vaccine hesitancy
+05.52 Conflict of interest
+05.53 Conflict of interest
+05.54 Medical ethics
+05.55 Developmental milestones
+05.56 Hand, foot and mouth disease
+05.57 Supraventricular tachycardia
+05.58 Supraventricular tachycardia
+05.59 Juvenile dermatomyositis
+05.60 Scleroderma; Raynaud phenomenon
+05.61 Encephalocele
+05.62 Measles
+05.63 Acute otitis media
+05.64 Meningitis; Otitis media
+05.65 Clonidine poisoning
+05.66 Renal vein thrombosis
+05.67 Renal vein thrombosis
+05.68 Congenital adrenal hyperplasia
+05.69 Malrotation and volvulus
+05.70 Malrotation and volvulus
+05.71 Hirschsprung disease
+05.72 Hirschsprung-associated enterocolitis
+05.73 Diabetic ketoacidosis; Hypokalaemia
+05.74 Bernard-Soulier syndrome; Platelet disorders
+05.75 Haemophilia A; Inhibitors
+05.76 Growth hormone deficiency
+05.77 Growth hormone deficiency
+05.78 Peritonitis; Dialysis
+05.79 Physiological anaemia of infancy
+05.80 Febrile neutropenia
+05.81 Central line infection; Febrile neutropenia
+05.82 Obesity; Hyperlipidaemia
+05.83 Post-streptococcal glomerulonephritis
+05.84 Septic shock
+05.85 Infection control
+05.86 Infection control
+05.87 Urinary tract infection; Vesicoureteral reflux
+05.88 Blood transfusion
+05.89 Health systems
+05.90 Bronchiolitis; Respiratory syncytial virus
+05.91 Sick sinus syndrome; Transposition of the great arteries
+05.92 Varicella; Immunocompromised host
+05.93 Hyperkalaemia
+05.94 Tricyclic antidepressant poisoning
+05.95 Tricyclic antidepressant poisoning
+05.96 Pneumothorax
+05.97 Breast milk jaundice; Neonatal jaundice
+05.98 Meckel diverticulum
+05.99 Oesophageal atresia
+05.100 Mycoplasma pneumonia; Pneumonia
+05.101 Developmental delay; Hypotonia
+05.102 Functional abdominal pain; Somatic symptom disorder
+05.103 Bartter syndrome
+05.104 Choanal atresia
+05.105 Choanal atresia
+05.106 Nasal polyps; Encephalocele
+05.107 Precocious puberty; Short stature
+05.108 Acute kidney injury
+05.109 Foreign body aspiration
+05.110 Neonatal lupus; Congenital heart block
+05.111 Liver transplantation; Hepatitis B
+05.112 Williams syndrome; Aortic stenosis
+05.113 Acute asthma
+05.114 Asthma; Influenza vaccine
+05.115 HIV infection; Vaccination
+05.116 Anaphylaxis; Vaccination
+05.117 Patient safety
+05.118 Sleepwalking; Sleep problems
+05.119 Ventricular septal defect; Heart failure
+05.120 Ventricular septal defect; Pulmonary hypertension
+05.121 Osteosarcoma
+05.122 Ventricular septal defect; Pulmonary hypertension
+05.123 Fanconi anaemia
+05.124 Atrial septal defect
+05.125 Epiglottitis
+05.126 Epiglottitis
+05.127 Intestinal obstruction
+05.128 Congenital pulmonary airway malformation
+05.129 Functional constipation; Faecal impaction
+06.1 Transient neonatal pustular melanosis
+06.2 Erythema toxicum neonatorum
+06.3 Acute cerebellar ataxia; Varicella
+06.4 Medical ethics
+06.5 Quality improvement; Patient safety
+06.6 Patient safety; Clinical governance
+06.7 Acute liver failure
+06.8 Necrotising enterocolitis
+06.9 Malrotation and volvulus; Bilious vomiting
+06.10 Malrotation and volvulus
+06.11 Nasal foreign body
+06.12 Nasal foreign body
+06.13 Duchenne muscular dystrophy
+06.14 Scorpion sting
+06.15 Functional constipation; Faecal impaction
+06.16 Spinal cord lesion; Urinary incontinence
+06.17 Transverse myelitis
+06.18 Acute disseminated encephalomyelitis
+06.19 Round pneumonia; Pneumonia
+06.20 Pneumonia
+06.21 Pulmonary sequestration
+06.22 Bronchogenic cyst
+06.23 Iron deficiency anaemia
+06.24 Cardiac tamponade; Trauma
+06.25 Shock; Trauma
+06.26 Foreign body ingestion
+06.27 Foreign body ingestion
+06.28 Sick sinus syndrome; Transposition of the great arteries
+06.29 Ventricular fibrillation; Tetralogy of Fallot
+06.30 Migraine
+06.31 Cyclic vomiting syndrome
+06.32 Abdominal migraine
+06.33 Kawasaki disease
+06.34 Hand, foot and mouth disease
+06.35 Oppositional defiant disorder
+06.36 Behaviour problems
+06.37 Thumb sucking
+06.38 Head circumference; Growth
+06.39 Apgar score
+06.40 Haemophilia B
+06.41 Mid-parental height
+06.42 MRSA; Infection control
+06.43 Varicella; Immunocompromised host
+06.44 Varicella; Immunocompromised host
+06.45 HIV infection; Vaccination
+06.46 Adrenoleukodystrophy
+06.47 Rett syndrome
+06.48 Infantile spasms
+06.49 Poisoning; Phenothiazine toxicity
+06.50 Acute dystonic reaction
+06.51 Opioid poisoning
+06.52 Renal vein thrombosis
+06.53 Fragile X syndrome
+06.54 Coeliac disease
+06.55 Short bowel syndrome
+06.56 Precocious puberty; Short stature
+06.57 Hand hygiene; Infection control
+06.58 Professionalism; Teamwork
+06.59 Conflict of interest
+06.60 Research ethics; Informed consent
+06.61 Vaccine hesitancy
+06.62 Child abuse; Safeguarding
+06.63 Meningitis
+06.64 Meningitis; Otitis media
+06.65 Transposition of the great arteries
+06.66 Renal tubular acidosis
+06.67 Cystic fibrosis
+06.68 Infective endocarditis; Acute rheumatic fever
+06.69 Organic acidaemias
+06.70 Ascariasis; Intestinal obstruction
+06.71 Rhesus haemolytic disease; Exchange transfusion
+06.72 Urinary tract infection
+06.73 Physiological anaemia of infancy
+06.74 Blood transfusion; Coagulation disorders
+06.75 Turner syndrome
+06.76 Williams syndrome; Aortic stenosis
+06.77 Linear growth
+06.78 Hydrocephalus; Macrocephaly
+06.79 Dehydration; Gastroenteritis
+06.80 Haemorrhagic shock; Trauma
+06.81 Hirschsprung disease
+06.82 Neonatal hypothermia
+06.83 Systemic juvenile idiopathic arthritis
+06.84 Scleroderma
+06.85 Juvenile dermatomyositis
+06.86 Anaphylaxis; Vaccination
+06.87 Separation anxiety
+06.88 Streptococcal pharyngitis
+06.89 Parotitis
+06.90 Congenital nephrotic syndrome
+06.91 Congenital nephrotic syndrome
+06.92 Acute kidney injury; Hypoxic-ischaemic encephalopathy
+06.93 Aplastic crisis; Sickle cell disease
+06.94 Fanconi anaemia
+06.95 Bacterial meningitis
+06.96 Brain abscess
+06.97 Breath-holding spells
+06.98 Masturbation
+06.99 Epilepsy
+06.100 Public health ethics
+06.101 Vaccination
+06.102 Communication; Patient safety
+06.103 Patient safety; Communication
+06.104 Hepatitis B; Perinatal infection
+06.105 Hydrocarbon ingestion
+06.106 Tuberculosis; Tuberculin skin test
+06.107 Cystic fibrosis; Sweat test
+06.108 Acute asthma
+06.109 Fungal infection; Immunocompromised host
+06.110 Hypophosphataemic rickets
+06.111 Constitutional delay of growth and puberty
+06.112 Cystic fibrosis
+06.113 Organophosphate poisoning
+06.114 Cardiopulmonary resuscitation
+06.115 Ataxia telangiectasia
+06.116 Febrile neutropenia
+06.117 Short bowel syndrome; Small intestinal bacterial overgrowth
+06.118 Appendicitis
+06.119 Appendicitis
+06.120 Infective endocarditis
+06.121 Acute pancreatitis; Cystic fibrosis
+06.122 Liver transplantation; Cholangitis
+06.123 Germ cell tumours; Precocious puberty
+06.124 Neurofibromatosis type 1; Optic glioma
+06.125 Congenital hypothyroidism
+06.126 Encephalocele; Neural tube defects
+06.127 Retropharyngeal abscess
+06.128 Epiglottitis
+06.129 Nephrotic syndrome; Spontaneous bacterial peritonitis
+06.130 Sickle cell disease
+06.131 Hereditary fructose intolerance
+06.132 Abdominal trauma
+06.133 Tic disorders
+06.134 Tic disorders; Tourette syndrome
+06.135 Hydrops fetalis
+06.136 Ventricular septal defect; Pulmonary hypertension
+06.137 Tetralogy of Fallot
+06.138 Asthma; Influenza vaccine
+06.139 Tetanus
+06.140 Upper GI bleeding; Shock
+06.141 Faecal impaction; Functional constipation
+06.142 Ataxia telangiectasia
+06.143 Lead poisoning; Pica
+06.144 Developmental milestones
+06.145 Bronchiolitis
+06.146 Communication; Patient safety
+06.147 Pulseless ventricular tachycardia; Cardiopulmonary resuscitation
+06.148 Basic life support; Foreign body aspiration
+06.149 Foreign body aspiration
+06.150 Spinal muscular atrophy
+06.151 Hypoxic-ischaemic encephalopathy; Cerebral palsy
+06.152 Infant of diabetic mother; Polycythaemia
+06.153 Respiratory distress syndrome
+06.154 Urinary tract infection; Functional constipation
+06.155 Urinary tract infection
+06.156 Third nerve palsy
+06.157 Bacterial meningitis
+06.158 Status epilepticus
+06.159 Headache; Raised intracranial pressure
+06.160 Immune thrombocytopenia
+06.161 Spinal cord injury; SCIWORA
+06.162 Night terrors; Sleep problems
+06.163 Langerhans cell histiocytosis
+06.164 Extradural haematoma; Head injury
+06.165 Status epilepticus
+06.166 Tuberous sclerosis complex
+06.167 Urinary tract infection
+06.168 Obesity; Hyperlipidaemia
+06.169 Supraventricular tachycardia
+06.170 Supraventricular tachycardia; Arrhythmias
+06.171 Choanal atresia
+06.172 Asthma
+06.173 Croup
+06.174 Paracetamol poisoning
+06.175 Sickle cell disease; Autosomal recessive inheritance
+06.176 Epistaxis; Allergic rhinitis
+06.177 Orbital cellulitis; Sinusitis
+06.178 Developmental milestones
+06.179 Occult bacteraemia; Pneumococcal infection
+06.180 Obstructive sleep apnoea
+06.181 Appendicitis
+06.182 Head injury
+06.183 Neonatal jaundice; Newborn examination
+06.184 Neonatal jaundice
+06.185 Depression
+06.186 Schizophrenia; Psychosis
+06.187 Carbon monoxide poisoning
+07.1 Facial nerve anatomy
+07.2 Hydrocephalus; Macrocephaly
+07.3 Breath-holding spells
+07.4 Guillain-Barre syndrome
+07.5 Headache
+07.6 Infantile spasms
+07.7 Birth injury
+07.8 Physiological anaemia of infancy
+07.9 Raised intracranial pressure; Head injury
+07.10 Head injury; Abusive head trauma
+07.11 Head injury
+07.12 Status epilepticus
+07.13 Brain abscess
+07.14 Otitis media; Bacterial meningitis
+07.15 Transverse myelitis
+07.16 Renal vein thrombosis; Nephrotic syndrome
+07.17 Glomerulonephritis
+07.18 Nocturnal enuresis
+07.19 Urinary tract infection; Renal imaging
+07.20 Renal imaging
+07.21 Sickle cell disease; Septic arthritis
+07.22 Wiskott-Aldrich syndrome
+07.23 Bleeding disorders
+07.24 Haemophilia
+07.25 Vitamin K
+07.26 Idiopathic thrombocytopenic purpura
+07.27 Bronchiolitis
+07.28 Transposition of the great arteries
+07.29 Transposition of the great arteries
+07.30 Ventricular septal defect; Heart failure
+07.31 Aortic stenosis; Williams syndrome
+07.32 Shock; Cardiac tamponade
+07.33 Oesophageal atresia
+07.34 Prolonged neonatal jaundice
+07.35 Hirschsprung disease
+07.36 Meckel diverticulum
+07.37 Gastroschisis and exomphalos
+07.38 Oesophageal atresia
+07.39 Stuttering
+07.40 Functional disorders
+07.41 Behaviour problems
+07.42 Schizophrenia
+07.43 Hypopituitarism
+07.44 Ambiguous genitalia
+07.45 Salivary stones
+07.46 Hypopituitarism; Cleft lip and palate
+07.47 Congenital adrenal hyperplasia
+07.48 Choanal atresia
+07.49 Developmental milestones
+07.50 Precocious puberty
+07.51 Neonatal sepsis
+07.52 Turner syndrome
+07.53 Otitis media
+07.54 Nasal mass
+07.55 Respiratory physiology
+07.56 Allergic rhinitis
+07.57 Epiglottitis
+07.58 Obstructive sleep apnoea
+07.59 Inhaled foreign body
+07.60 Ranula
+07.61 Pneumonia
+07.62 Scorpion sting
+07.63 Supraventricular tachycardia
+07.64 Sturge-Weber syndrome
+07.65 Scleroderma
+07.66 Bartter syndrome
+07.67 Systemic lupus erythematosus
+07.68 Fragile X syndrome
+07.69 Spinal muscular atrophy
+07.70 Hypercalciuria
+07.71 Aortic stenosis
+07.72 Tetralogy of Fallot
+07.73 Growth
+07.74 Diabetic ketoacidosis; Cerebral oedema
+07.75 Egg allergy; Influenza vaccine
+07.76 Neuroblastoma
+07.77 Sweat test
+07.78 Juvenile dermatomyositis
+07.79 Oxygen dissociation curve
+07.80 Patient safety
+07.81 Acute disseminated encephalomyelitis
+07.82 Bacterial meningitis
+07.83 Oesophageal atresia
+07.84 Cyclic vomiting
+07.85 Sleep problems
+07.86 Ataxia telangiectasia
+07.87 Cow's milk protein allergy
+07.88 Coeliac disease
+07.89 Fluid therapy
+07.90 Rubella
+07.91 Hand, foot and mouth disease
+07.92 Infection transmission
+07.93 Infection transmission
+07.94 Pneumonia
+07.95 Inhaled foreign body
+07.96 Autosomal dominant inheritance
+07.97 X-linked inheritance
+07.98 Fluid therapy
+07.99 Visual impairment
+07.100 Autism spectrum disorder
+07.101 Pericarditis
+07.102 Kwashiorkor
+07.103 Shock
+08.1 Paediatric resuscitation
+08.2 Consent
+08.3 Consent; Adolescent consultation
+08.4 Research ethics
+08.5 Conflict of interest
+08.6 Behaviour problems
+08.7 Breaking bad news
+08.8 Patient safety
+08.9 Oppositional defiant disorder
+08.10 Non-accidental injury; Safeguarding
+08.11 Ethics
+08.12 Behaviour problems
+08.13 Medication safety
+08.14 Ethics
+08.15 Drug rash; Adverse drug reactions
+08.16 Separation anxiety
+08.17 Professionalism
+08.18 Carbon monoxide poisoning
+08.19 Foreign body ingestion
+08.20 Otitis media
+08.21 Bacterial meningitis; Meningococcal disease
+08.22 Croup
+08.23 Inhaled foreign body
+08.24 Epiglottitis
+08.25 Cystic fibrosis
+08.26 Tricyclic antidepressant poisoning
+08.27 Fragile X syndrome
+08.28 Spinal muscular atrophy
+08.29 Turner syndrome
+08.30 Asthma; Spirometry
+08.31 Sturge-Weber syndrome
+08.32 Pneumonia; Parapneumonic effusion
+08.33 Growth
+08.34 Breath-holding spells
+08.35 Transverse myelitis
+08.36 Acute cerebellar ataxia
+08.37 Hydrocephalus
+08.38 Headache
+08.39 Headache
+08.40 Oxygen dissociation curve
+08.41 Mumps
+08.42 Pneumonia
+08.43 Head injury
+08.44 Tetralogy of Fallot
+08.45 Tetralogy of Fallot
+08.46 Cardiac arrest rhythms
+08.47 Aortic stenosis
+08.48 Ventricular septal defect
+08.49 Transverse myelitis
+08.50 Hyperkalaemia
+08.51 Short stature
+08.52 Acute disseminated encephalomyelitis
+08.53 Infantile spasms
+08.54 Erythema toxicum
+08.55 Scleroderma
+08.56 Febrile seizures
+08.57 Hypotonia
+08.58 Hirschsprung disease
+08.59 Hypothyroidism
+08.60 Cystic fibrosis
+08.61 Factor XIII deficiency
+08.62 Asthma; Inhaled corticosteroids
+08.63 Glomerulonephritis
+08.64 Hypokalaemic alkalosis
+08.65 Juvenile dermatomyositis
+08.66 Febrile seizures
+08.67 Vitamin K
+08.68 Upper respiratory tract infection
+08.69 Mastoiditis
+08.70 Pneumonia
+08.71 Asthma
+08.72 Febrile neutropenia
+08.73 Abusive head trauma
+08.74 Necrotising enterocolitis
+08.75 Neonatal resuscitation
+08.76 Breath-holding spells
+08.77 Tic disorders (Tourette syndrome)
+08.78 Brain abscess
+08.79 Iron deficiency anaemia
+08.80 Haemophilia
+08.81 Hyperkalaemia
+08.82 Meckel diverticulum
+08.83 Pain management
+08.84 Hereditary fructose intolerance
+08.85 Developmental milestones
+08.86 Ataxia telangiectasia
+08.87 Ataxia telangiectasia
+08.88 Dermatitis herpetiformis
+08.89 Otitis media; Bacterial meningitis
+08.90 Growth hormone
+08.91 Growth hormone
+08.92 Febrile seizures
+08.93 Tricyclic antidepressant poisoning
+08.94 Candidiasis
+08.95 ADHD
+08.96 Autism spectrum disorder
+08.97 Developmental milestones
+08.98 Herpetic gingivostomatitis; Aciclovir
+08.99 Type 1 diabetes
+08.100 Tricyclic antidepressant poisoning
+08.101 Hypernatraemia
+08.102 Nasal mass; Encephalocele
+08.103 Foreign body ingestion
+08.104 Foreign body ingestion
+08.105 Patent ductus arteriosus
+08.106 Hirschsprung disease
+08.107 Chronic kidney disease; Renal osteodystrophy
+08.108 Chronic kidney disease
+08.109 Rickets
+08.110 Gratification behaviour
+08.111 Streptococcal pharyngitis
+08.112 Systemic lupus erythematosus
+08.113 Transient neonatal pustular melanosis
+08.114 Neural tube defects
+08.115 Wilson disease
+08.116 Bronchiolitis
+08.117 Spina bifida occulta
+08.118 Paediatric resuscitation
+08.119 Infection transmission
+08.120 Epiglottitis
+08.121 Constipation; Spina bifida occulta
+08.122 Infective endocarditis
+08.123 Teething
+08.124 Asthma; Influenza vaccine
+08.125 Third nerve palsy
+08.126 Hydrocele
+08.127 Iron poisoning
+08.128 Wiskott-Aldrich syndrome
+08.129 Microcephaly
+08.130 Medication safety
+08.131 Invasive fungal infection
+08.132 Splenic sequestration
+08.133 Steroid side effects; Peritonitis
+08.134 Kwashiorkor
+08.135 Transposition of the great arteries
+08.136 Pneumonia
+08.137 Trauma
+08.138 Sleep problems
+08.139 Pertussis
+08.140 Pneumonia
+08.141 Transposition of the great arteries
+08.142 Urinary tract infection
+08.143 Raised intracranial pressure
+08.144 Nasal foreign body
+08.145 Ventricular septal defect
+08.146 Cardiac arrest rhythms
+08.147 Ventricular septal defect
+08.148 Hepatitis C
+08.149 Allergic rhinitis
+08.150 Bone tumours
+08.151 Cystic fibrosis
+08.152 Acute liver failure
+08.153 Systemic lupus erythematosus
+08.154 Drowning
+08.155 Infection transmission
+08.156 Infection transmission
+08.157 Wilms tumour
+08.158 Hypothyroidism
+08.159 Juvenile polyposis
+08.160 Pancreatitis
+08.161 Meckel diverticulum
+08.162 Urinary tract infection
+08.163 Urinary tract infection
+08.164 Nasal polyps
+08.165 Autoimmune hepatitis
+08.166 Congenital pulmonary airway malformation
+08.167 Shock
+08.168 Varicella
+08.169 Spinal cord
+08.170 Intussusception
+08.171 Tetanus
+08.172 Cardiac tamponade
+08.173 Encephalitis
+08.174 Screen time; Injury prevention
+08.175 Crohn disease
+08.176 Beta thalassaemia
+08.177 Dengue fever
+09.1 Acute cerebellar ataxia
+09.2 Hydrocephalus; Macrocephaly
+09.3 Breath-holding spells
+09.4 Neuroblastoma
+09.5 Guillain-Barre syndrome
+09.6 Pneumothorax
+09.7 Tic disorders (Tourette syndrome)
+09.8 Trauma; Spinal cord injury
+09.9 Bacterial meningitis
+09.10 Head injury; Paediatric resuscitation
+09.11 Head injury
+09.12 Abusive head trauma; Non-accidental injury
+09.13 Head injury
+09.14 Status epilepticus
+09.15 Juvenile dermatomyositis
+09.16 Tuberous sclerosis
+09.17 Brain abscess
+09.18 Otitis media; Bacterial meningitis
+09.19 Headache; Abdominal migraine
+09.20 Transverse myelitis
+09.21 Nephrotic syndrome; Renal vein thrombosis
+09.22 Glomerulonephritis
+09.23 Urinary tract infection
+09.24 Urinary tract infection
+09.25 Urinary tract infection; Haematuria
+09.26 Iron deficiency anaemia
+09.27 Thrombocytopenia; Bleeding disorders
+09.28 Sickle cell disease; Hyposplenism
+09.29 Vitamin K
+09.30 Aplastic anaemia
+09.31 Epididymitis
+09.32 Tetralogy of Fallot
+09.33 Croup
+09.34 Head injury
+09.35 Ventricular septal defect
+09.36 Transposition of the great arteries
+09.37 Hyperkalaemia
+09.38 Supraventricular tachycardia
+09.39 Atrial septal defect
+09.40 Cardiac arrest rhythms
+09.41 Ventricular septal defect; Eisenmenger syndrome
+09.42 Ventricular septal defect; Heart failure
+09.43 Persistent pulmonary hypertension of the newborn
+09.44 Infective endocarditis
+09.45 Gastroparesis
+09.46 Malrotation
+09.47 Constipation
+09.48 Hirschsprung disease
+09.49 Gastroenteritis; Dehydration
+09.50 Oesophageal atresia
+09.51 Intestinal obstruction
+09.52 Inflammatory bowel disease
+09.53 Hepatitis A
+09.54 Necrotising enterocolitis
+09.55 Trauma
+09.56 Nephrotic syndrome; Spontaneous bacterial peritonitis
+09.57 Gastroschisis and exomphalos
+09.58 Schizophrenia
+09.59 Autism spectrum disorder
+09.60 Habit disorders
+09.61 Autoimmune hepatitis
+09.62 Vitamin K
+09.63 Short stature
+09.64 Cyclic vomiting
+09.65 Fluid therapy
+09.66 Testicular torsion
+09.67 Febrile seizures
+09.68 Anaphylaxis
+09.69 Epiglottitis
+09.70 Paediatric resuscitation
+09.71 Hyperthyroidism; Graves disease
+09.72 Pneumonia
+09.73 Immunisation; Primary immunodeficiency
+09.74 HIV infection; Immunisation
+09.75 Dehydration
+09.76 Health systems
+09.77 Breaking bad news
+09.78 Withdrawing life-sustaining treatment
+09.79 Resuscitation decisions
+09.80 Ethics
+09.81 Conflict of interest
+09.82 Patient safety
+09.83 Tetanus
+09.84 Infection transmission; Clostridioides difficile
+09.85 Patient safety
+09.86 Patient safety
+09.87 Research ethics
+09.88 Immunisation
+09.89 Febrile neutropenia
+09.90 Infective endocarditis
+09.91 Heart failure
+09.92 Carbon monoxide poisoning; Smoke inhalation
+09.93 Carbon monoxide poisoning
+09.94 Meningococcal disease
+09.95 CHARGE syndrome; Choanal atresia
+09.96 Malrotation
+09.97 Autosomal recessive inheritance; Sickle cell disease
+09.98 Iron deficiency anaemia; Heart failure
+09.99 Epidermolysis bullosa
+09.100 Psoriasis
+09.101 Renal vein thrombosis
+09.102 Brain tumours
+09.103 Febrile neutropenia
+09.104 Congenital hypothyroidism
+09.105 Acute disseminated encephalomyelitis
+09.106 Malaria
+10.1 Acute cerebellar ataxia
+10.2 Pain management
+10.3 Acute disseminated encephalomyelitis
+10.4 Growth
+10.5 Breath-holding spells
+10.6 EEG; Epilepsy
+10.7 Tic disorders (Tourette syndrome)
+10.8 Autism spectrum disorder
+10.9 Ataxia telangiectasia
+10.10 Transverse myelitis
+10.11 Urinary tract infection; Renal imaging
+10.12 Renal vein thrombosis
+10.13 Acute kidney injury
+10.14 Membranoproliferative glomerulonephritis; Cyclophosphamide
+10.15 Haemolytic uraemic syndrome; Acute kidney injury
+10.16 Sickle cell disease; Septic arthritis
+10.17 Haemophilia
+10.18 Haemophilia; Coagulation tests
+10.19 Iron deficiency anaemia
+10.20 Myelodysplastic syndrome
+10.21 Beta thalassaemia; Fetal haemoglobin
+10.22 Atrial septal defect
+10.23 Aortic stenosis; Williams syndrome
+10.24 Ventricular septal defect; Heart failure
+10.25 Supraventricular tachycardia; Adenosine
+10.26 Transposition of the great arteries
+10.27 Infantile spasms; Tuberous sclerosis
+10.28 Tuberous sclerosis
+10.29 Malrotation
+10.30 Malrotation
+10.31 Pyloric stenosis
+10.32 Appendicitis
+10.33 Hirschsprung disease
+10.34 Coeliac disease
+10.35 Familial short stature; Growth
+10.36 Gastroschisis and exomphalos
+10.37 Congenital diaphragmatic hernia
+10.38 Neural tube defects
+10.39 Oesophageal atresia
+10.40 Pulmonary sequestration; Recurrent chest infections
+10.41 Headache; Migraine
+10.42 Screen time; Obesity
+10.43 Gratification behaviour
+10.44 Turner syndrome
+10.45 Spinal muscular atrophy
+10.46 Congenital pulmonary airway malformation
+10.47 Pneumonia; Mycoplasma
+10.48 Bacterial meningitis
+10.49 Febrile neutropenia
+10.50 Febrile neutropenia; Septic shock
+10.51 Otitis media; Bacterial meningitis
+10.52 Otitis media
+10.53 Otitis media
+10.54 Pneumonia; Parapneumonic effusion
+10.55 Pneumothorax
+10.56 Infective endocarditis
+10.57 Immunisation
+10.58 Immunisation; Steroid side effects
+10.59 Immunisation; Immunosuppressed child
+10.60 Quality improvement
+10.61 Patient safety
+10.62 Paediatric resuscitation
+10.63 Pneumonia
+10.64 Epiglottitis
+10.65 Obstructive sleep apnoea
+10.66 Hepatosplenic candidiasis
+10.67 Coeliac disease; Dermatitis herpetiformis
+10.68 Haemorrhagic shock; Abdominal trauma
+10.69 Aplastic anaemia
+10.70 Acanthosis nigricans; Insulin resistance
+10.71 Cystic fibrosis
+10.72 Sturge-Weber syndrome; Port-wine stain
+10.73 Bartter syndrome; Hypokalaemic alkalosis
+10.74 Sickle cell disease
+10.75 Varicella
+10.76 Fragile X syndrome
+10.77 Gastroenteritis
+10.78 Juvenile dermatomyositis
+10.79 Croup
+10.80 Behaviour problems
+10.81 Head injury
+10.82 Neonatal sepsis
+10.83 Diabetic ketoacidosis; Cerebral oedema
+10.84 Rubella
+10.85 Inhaled foreign body
+11.1 Nephrotic syndrome; Chronic kidney disease
+11.2 Beta thalassaemia; Aplastic anaemia
+11.3 Thrombocytopenia; Bleeding disorders
+11.4 Aplastic anaemia
+11.5 Iron deficiency anaemia; Preterm infant
+11.6 Nocturnal enuresis
+11.7 Organic acidaemias; Hyperammonaemia
+11.8 Tetralogy of Fallot; Thrombosis
+11.9 Sickle cell disease
+11.10 Atrial septal defect
+11.11 Aortic stenosis; Williams syndrome
+11.12 Infective endocarditis
+11.13 Transposition of the great arteries; Heart failure
+11.14 Oesophageal atresia
+11.15 Rocky Mountain spotted fever; Tick-borne infection
+11.16 Intraosseous access
+11.17 Hand, foot and mouth disease; Aciclovir
+11.18 Scleroderma; Raynaud phenomenon
+11.19 Infection transmission
+11.20 Malrotation
+11.21 Hirschsprung disease
+11.22 Shock; Cardiac tamponade
+11.23 Pneumothorax; Pneumonia
+11.24 Retropharyngeal abscess; Drooling
+11.25 Retropharyngeal abscess; Endotracheal intubation
+11.26 Congenital pulmonary airway malformation; Antenatal screening
+11.27 Congenital hypothyroidism
+11.28 Neural tube defects; Encephalocele
+11.29 Umbilical problems
+11.30 Hyperlipidaemia; Obesity
+11.31 Fragile X syndrome
+11.32 Turner syndrome
+11.33 Tic disorders (Tourette syndrome)
+11.34 Ethics
+11.35 Infantile spasms; Hypoxic-ischaemic encephalopathy
+11.36 Brain abscess
+11.37 Juvenile dermatomyositis
+11.38 Guillain-Barre syndrome
+11.39 Factor XIII deficiency; Blood products
+11.40 Short stature; Growth
+11.41 Ventricular septal defect
+11.42 Foreign body ingestion
+11.43 Foreign body ingestion
+11.44 Gratification behaviour
+11.45 Bronchiolitis; RSV
+11.46 Tuberous sclerosis
+11.47 Congenital rubella; Rubella
+11.48 Acute lymphoblastic leukaemia; Febrile neutropenia
+11.49 Tuberculosis
+11.50 Cystic fibrosis; Sweat test
+11.51 Psoas abscess
+11.52 Asthma; Acute severe asthma
+11.53 Phenylketonuria
+11.54 Supraventricular tachycardia; Adenosine
+11.55 Transient neonatal pustular melanosis
+11.56 Birth injury
+11.57 Varicella; Immunosuppressed child
+11.58 Nasal foreign body
+11.59 Nasal polyps
+11.60 Choanal atresia
+11.61 Patient safety
+11.62 Patient safety
+11.63 Ethics
+11.64 Congenital diaphragmatic hernia
+11.65 Oral candidiasis

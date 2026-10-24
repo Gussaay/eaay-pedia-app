@@ -1,0 +1,1034 @@
+# Saudi Prometric questions from different sittings linked as similar: same main topic tag
+# and overlapping wording or the same answer. "<paper>.<n> <paper>.<n>"
+0.1 1.63  # Encephalocele
+0.1 2.84  # Encephalocele
+0.1 4.39  # Encephalocele
+0.1 5.61  # Encephalocele
+0.1 6.126  # Encephalocele
+1.63 2.84  # Encephalocele
+1.63 4.39  # Encephalocele
+1.63 5.61  # Encephalocele
+1.63 6.126  # Encephalocele
+2.84 4.39  # Encephalocele
+2.84 5.61  # Encephalocele
+2.84 6.126  # Encephalocele
+4.39 5.61  # Encephalocele
+4.39 6.126  # Encephalocele
+5.61 6.126  # Encephalocele
+1.2 3.24  # Supraventricular tachycardia
+1.2 4.72  # Supraventricular tachycardia
+1.2 5.57  # Supraventricular tachycardia
+1.2 7.63  # Supraventricular tachycardia
+1.2 10.25  # Supraventricular tachycardia
+1.2 11.54  # Supraventricular tachycardia
+3.23 6.170  # Supraventricular tachycardia
+3.24 4.72  # Supraventricular tachycardia
+3.24 10.25  # Supraventricular tachycardia
+3.24 11.54  # Supraventricular tachycardia
+4.72 5.57  # Supraventricular tachycardia
+4.72 7.63  # Supraventricular tachycardia
+4.72 10.25  # Supraventricular tachycardia
+4.72 11.54  # Supraventricular tachycardia
+5.57 6.169  # Supraventricular tachycardia
+5.57 11.54  # Supraventricular tachycardia
+6.169 11.54  # Supraventricular tachycardia
+7.63 10.25  # Supraventricular tachycardia
+9.38 10.25  # Supraventricular tachycardia
+10.25 11.54  # Supraventricular tachycardia
+0.4 10.22  # Atrial septal defect
+0.4 11.10  # Atrial septal defect
+1.8 2.20  # Atrial septal defect
+1.8 3.45  # Atrial septal defect
+1.8 5.124  # Atrial septal defect
+1.8 9.39  # Atrial septal defect
+2.20 3.45  # Atrial septal defect
+2.20 5.124  # Atrial septal defect
+2.20 9.39  # Atrial septal defect
+3.45 5.124  # Atrial septal defect
+3.45 9.39  # Atrial septal defect
+5.124 9.39  # Atrial septal defect
+10.22 11.10  # Atrial septal defect
+0.5 1.68  # Aortic stenosis
+0.5 4.73  # Aortic stenosis
+0.5 7.31  # Aortic stenosis
+0.5 8.47  # Aortic stenosis
+0.5 10.23  # Aortic stenosis
+0.5 11.11  # Aortic stenosis
+1.68 4.73  # Aortic stenosis
+1.68 7.31  # Aortic stenosis
+1.68 8.47  # Aortic stenosis
+1.68 10.23  # Aortic stenosis
+1.68 11.11  # Aortic stenosis
+4.73 7.31  # Aortic stenosis
+4.73 8.47  # Aortic stenosis
+4.73 10.23  # Aortic stenosis
+4.73 11.11  # Aortic stenosis
+7.31 8.47  # Aortic stenosis
+7.31 10.23  # Aortic stenosis
+7.31 11.11  # Aortic stenosis
+7.71 8.47  # Aortic stenosis
+7.71 10.23  # Aortic stenosis
+7.71 11.11  # Aortic stenosis
+8.47 10.23  # Aortic stenosis
+8.47 11.11  # Aortic stenosis
+10.23 11.11  # Aortic stenosis
+0.7 1.12  # Infective endocarditis
+0.7 6.68  # Infective endocarditis
+0.7 8.122  # Infective endocarditis
+0.7 9.44  # Infective endocarditis
+0.7 9.90  # Infective endocarditis
+1.10 4.70  # Infective endocarditis
+1.10 5.49  # Infective endocarditis
+1.11 3.121  # Infective endocarditis
+1.11 8.122  # Infective endocarditis
+1.11 10.56  # Infective endocarditis
+1.11 11.12  # Infective endocarditis
+1.12 6.68  # Infective endocarditis
+1.12 8.122  # Infective endocarditis
+1.12 9.44  # Infective endocarditis
+1.12 9.90  # Infective endocarditis
+3.121 10.56  # Infective endocarditis
+4.70 5.49  # Infective endocarditis
+4.78 6.120  # Infective endocarditis
+6.68 8.122  # Infective endocarditis
+6.68 9.44  # Infective endocarditis
+6.68 9.90  # Infective endocarditis
+8.122 9.44  # Infective endocarditis
+8.122 9.90  # Infective endocarditis
+10.56 11.12  # Infective endocarditis
+0.8 1.162  # Respiratory failure
+1.151 8.87  # Ataxia telangiectasia
+2.43 4.26  # Ataxia telangiectasia
+2.43 5.30  # Ataxia telangiectasia
+2.43 6.142  # Ataxia telangiectasia
+2.43 8.86  # Ataxia telangiectasia
+2.43 8.87  # Ataxia telangiectasia
+2.43 10.9  # Ataxia telangiectasia
+3.97 4.26  # Ataxia telangiectasia
+3.97 5.30  # Ataxia telangiectasia
+3.97 6.115  # Ataxia telangiectasia
+3.97 7.86  # Ataxia telangiectasia
+3.97 8.87  # Ataxia telangiectasia
+4.26 5.30  # Ataxia telangiectasia
+4.26 6.115  # Ataxia telangiectasia
+4.26 7.86  # Ataxia telangiectasia
+4.26 8.86  # Ataxia telangiectasia
+4.26 8.87  # Ataxia telangiectasia
+4.26 10.9  # Ataxia telangiectasia
+5.30 6.115  # Ataxia telangiectasia
+5.30 7.86  # Ataxia telangiectasia
+5.30 8.86  # Ataxia telangiectasia
+5.30 8.87  # Ataxia telangiectasia
+5.30 10.9  # Ataxia telangiectasia
+6.115 7.86  # Ataxia telangiectasia
+6.115 8.87  # Ataxia telangiectasia
+6.142 8.86  # Ataxia telangiectasia
+6.142 10.9  # Ataxia telangiectasia
+7.86 8.87  # Ataxia telangiectasia
+8.86 10.9  # Ataxia telangiectasia
+8.87 10.9  # Ataxia telangiectasia
+0.11 1.110  # Cystic fibrosis
+0.11 4.101  # Cystic fibrosis
+0.11 6.112  # Cystic fibrosis
+0.11 8.25  # Cystic fibrosis
+0.11 10.71  # Cystic fibrosis
+0.12 8.151  # Cystic fibrosis
+1.110 4.101  # Cystic fibrosis
+1.110 6.112  # Cystic fibrosis
+1.110 8.25  # Cystic fibrosis
+1.110 10.71  # Cystic fibrosis
+4.90 6.67  # Cystic fibrosis
+4.101 6.112  # Cystic fibrosis
+4.101 8.25  # Cystic fibrosis
+4.101 10.71  # Cystic fibrosis
+4.117 8.60  # Cystic fibrosis
+6.107 11.50  # Cystic fibrosis
+6.112 8.25  # Cystic fibrosis
+6.112 10.71  # Cystic fibrosis
+8.25 10.71  # Cystic fibrosis
+0.13 6.57  # Hand hygiene
+0.17 1.112  # Sweat test
+0.17 2.71  # Sweat test
+0.17 3.3  # Sweat test
+0.17 5.33  # Sweat test
+1.112 2.71  # Sweat test
+1.112 3.3  # Sweat test
+1.112 5.33  # Sweat test
+2.71 3.3  # Sweat test
+2.71 5.33  # Sweat test
+3.3 5.33  # Sweat test
+1.82 4.93  # Foreign body ingestion
+2.57 6.26  # Foreign body ingestion
+3.109 4.94  # Foreign body ingestion
+3.109 6.26  # Foreign body ingestion
+4.94 6.26  # Foreign body ingestion
+8.104 11.43  # Foreign body ingestion
+0.20 7.62  # Scorpion sting
+0.21 4.137  # Scorpion sting
+0.21 6.14  # Scorpion sting
+4.137 6.14  # Scorpion sting
+0.23 6.8  # Necrotising enterocolitis
+0.23 8.74  # Necrotising enterocolitis
+6.8 8.74  # Necrotising enterocolitis
+3.43 4.112  # Bronchiolitis
+5.90 8.116  # Bronchiolitis
+5.90 11.45  # Bronchiolitis
+6.145 8.116  # Bronchiolitis
+0.25 1.163  # Pulmonary sequestration
+0.25 3.89  # Pulmonary sequestration
+0.25 6.21  # Pulmonary sequestration
+0.25 10.40  # Pulmonary sequestration
+1.163 3.89  # Pulmonary sequestration
+1.163 6.21  # Pulmonary sequestration
+1.163 10.40  # Pulmonary sequestration
+3.89 6.21  # Pulmonary sequestration
+3.89 10.40  # Pulmonary sequestration
+6.21 10.40  # Pulmonary sequestration
+0.27 1.137  # Abdominal migraine
+0.27 3.104  # Abdominal migraine
+0.27 4.20  # Abdominal migraine
+0.27 6.32  # Abdominal migraine
+1.137 3.104  # Abdominal migraine
+1.137 4.20  # Abdominal migraine
+1.137 6.32  # Abdominal migraine
+3.104 4.20  # Abdominal migraine
+3.104 6.32  # Abdominal migraine
+4.20 6.32  # Abdominal migraine
+0.28 5.45  # Brain abscess
+0.28 6.96  # Brain abscess
+0.28 7.13  # Brain abscess
+0.28 8.78  # Brain abscess
+0.28 9.17  # Brain abscess
+0.28 11.36  # Brain abscess
+5.45 6.96  # Brain abscess
+5.45 7.13  # Brain abscess
+5.45 8.78  # Brain abscess
+5.45 9.17  # Brain abscess
+5.45 11.36  # Brain abscess
+6.96 11.36  # Brain abscess
+7.13 8.78  # Brain abscess
+7.13 9.17  # Brain abscess
+7.13 11.36  # Brain abscess
+8.78 9.17  # Brain abscess
+8.78 11.36  # Brain abscess
+9.17 11.36  # Brain abscess
+6.129 9.56  # Nephrotic syndrome
+0.30 4.49  # Pyelonephritis
+1.14 4.123  # Pyelonephritis
+0.31 2.11  # Renal vein thrombosis
+0.31 5.67  # Renal vein thrombosis
+2.10 5.66  # Renal vein thrombosis
+2.10 9.101  # Renal vein thrombosis
+2.10 10.12  # Renal vein thrombosis
+2.11 5.67  # Renal vein thrombosis
+3.72 5.67  # Renal vein thrombosis
+4.33 5.66  # Renal vein thrombosis
+4.33 5.67  # Renal vein thrombosis
+4.33 6.52  # Renal vein thrombosis
+5.67 6.52  # Renal vein thrombosis
+5.67 10.12  # Renal vein thrombosis
+0.36 8.109  # Rickets
+0.37 2.44  # Wilson disease
+1.1 3.132  # Pulseless electrical activity
+1.3 3.136  # Hyperkalaemia
+1.3 4.71  # Hyperkalaemia
+1.3 5.93  # Hyperkalaemia
+1.3 8.50  # Hyperkalaemia
+1.3 9.37  # Hyperkalaemia
+3.136 4.71  # Hyperkalaemia
+3.136 5.93  # Hyperkalaemia
+3.136 8.50  # Hyperkalaemia
+3.136 9.37  # Hyperkalaemia
+4.71 5.93  # Hyperkalaemia
+4.71 8.50  # Hyperkalaemia
+4.71 9.37  # Hyperkalaemia
+5.93 8.50  # Hyperkalaemia
+5.93 9.37  # Hyperkalaemia
+8.50 9.37  # Hyperkalaemia
+1.5 3.134  # Tetralogy of Fallot
+1.5 4.67  # Tetralogy of Fallot
+1.5 7.72  # Tetralogy of Fallot
+1.5 8.44  # Tetralogy of Fallot
+1.5 11.8  # Tetralogy of Fallot
+1.6 3.122  # Tetralogy of Fallot
+1.6 4.68  # Tetralogy of Fallot
+1.6 6.137  # Tetralogy of Fallot
+1.6 8.45  # Tetralogy of Fallot
+2.18 9.32  # Tetralogy of Fallot
+3.122 6.137  # Tetralogy of Fallot
+3.134 4.67  # Tetralogy of Fallot
+3.134 7.72  # Tetralogy of Fallot
+3.134 8.44  # Tetralogy of Fallot
+3.134 11.8  # Tetralogy of Fallot
+4.67 7.72  # Tetralogy of Fallot
+4.67 8.44  # Tetralogy of Fallot
+4.67 11.8  # Tetralogy of Fallot
+4.68 6.137  # Tetralogy of Fallot
+4.68 8.45  # Tetralogy of Fallot
+6.137 8.45  # Tetralogy of Fallot
+7.72 8.44  # Tetralogy of Fallot
+7.72 11.8  # Tetralogy of Fallot
+8.44 11.8  # Tetralogy of Fallot
+1.7 8.105  # Patent ductus arteriosus
+1.9 3.17  # Ventricular septal defect
+1.9 5.122  # Ventricular septal defect
+1.9 10.24  # Ventricular septal defect
+3.17 5.122  # Ventricular septal defect
+3.17 10.24  # Ventricular septal defect
+4.74 5.120  # Ventricular septal defect
+5.120 11.41  # Ventricular septal defect
+5.122 8.48  # Ventricular septal defect
+5.122 9.35  # Ventricular septal defect
+5.122 10.24  # Ventricular septal defect
+8.147 9.41  # Ventricular septal defect
+1.13 5.34  # Acute rheumatic fever
+2.13 3.73  # Urinary tract infection
+2.13 4.53  # Urinary tract infection
+2.13 7.19  # Urinary tract infection
+2.13 10.11  # Urinary tract infection
+3.73 4.53  # Urinary tract infection
+3.73 7.19  # Urinary tract infection
+3.73 10.11  # Urinary tract infection
+4.50 6.72  # Urinary tract infection
+4.50 6.167  # Urinary tract infection
+4.53 7.19  # Urinary tract infection
+4.53 10.11  # Urinary tract infection
+7.19 10.11  # Urinary tract infection
+8.142 9.23  # Urinary tract infection
+8.162 9.23  # Urinary tract infection
+1.20 5.103  # Bartter syndrome
+1.20 7.66  # Bartter syndrome
+1.20 10.73  # Bartter syndrome
+5.103 7.66  # Bartter syndrome
+5.103 10.73  # Bartter syndrome
+7.66 10.73  # Bartter syndrome
+1.23 8.16  # Separation anxiety
+1.25 3.28  # Hepatitis B
+1.25 6.104  # Hepatitis B
+3.28 6.104  # Hepatitis B
+1.26 4.126  # Vaccination
+2.50 3.33  # Vaccination
+2.50 4.45  # Vaccination
+3.33 4.45  # Vaccination
+6.139 9.83  # Tetanus
+8.171 9.83  # Tetanus
+1.28 5.116  # Anaphylaxis
+1.28 6.86  # Anaphylaxis
+5.116 6.86  # Anaphylaxis
+1.29 4.57  # Iron deficiency anaemia
+1.29 6.23  # Iron deficiency anaemia
+1.29 8.79  # Iron deficiency anaemia
+1.29 9.26  # Iron deficiency anaemia
+4.57 6.23  # Iron deficiency anaemia
+4.57 8.79  # Iron deficiency anaemia
+4.57 9.26  # Iron deficiency anaemia
+6.23 8.79  # Iron deficiency anaemia
+6.23 9.26  # Iron deficiency anaemia
+8.79 9.26  # Iron deficiency anaemia
+2.16 4.64  # Sickle cell disease
+2.16 9.28  # Sickle cell disease
+5.29 7.21  # Sickle cell disease
+5.29 10.16  # Sickle cell disease
+7.21 10.16  # Sickle cell disease
+7.25 8.67  # Vitamin K
+7.25 9.29  # Vitamin K
+7.25 9.62  # Vitamin K
+8.67 9.29  # Vitamin K
+8.67 9.62  # Vitamin K
+1.32 5.88  # Blood transfusion
+5.88 6.74  # Blood transfusion
+8.61 11.39  # Factor XIII deficiency
+1.34 4.62  # Immune thrombocytopenia
+1.35 8.85  # Developmental milestones
+7.49 8.97  # Developmental milestones
+1.36 6.163  # Langerhans cell histiocytosis
+1.38 2.47  # Turner syndrome
+1.38 3.94  # Turner syndrome
+1.38 6.75  # Turner syndrome
+1.38 10.44  # Turner syndrome
+1.38 11.32  # Turner syndrome
+2.47 3.94  # Turner syndrome
+2.47 6.75  # Turner syndrome
+2.47 7.52  # Turner syndrome
+2.47 10.44  # Turner syndrome
+2.47 11.32  # Turner syndrome
+3.94 6.75  # Turner syndrome
+3.94 7.52  # Turner syndrome
+3.94 10.44  # Turner syndrome
+3.94 11.32  # Turner syndrome
+6.75 7.52  # Turner syndrome
+6.75 10.44  # Turner syndrome
+6.75 11.32  # Turner syndrome
+7.52 10.44  # Turner syndrome
+7.52 11.32  # Turner syndrome
+10.44 11.32  # Turner syndrome
+1.39 4.79  # Down syndrome
+1.41 3.60  # Spinal muscular atrophy
+1.41 6.150  # Spinal muscular atrophy
+1.41 10.45  # Spinal muscular atrophy
+2.52 3.60  # Spinal muscular atrophy
+2.52 6.150  # Spinal muscular atrophy
+2.52 7.69  # Spinal muscular atrophy
+2.52 8.28  # Spinal muscular atrophy
+2.52 10.45  # Spinal muscular atrophy
+3.60 4.35  # Spinal muscular atrophy
+3.60 6.150  # Spinal muscular atrophy
+3.60 10.45  # Spinal muscular atrophy
+4.35 10.45  # Spinal muscular atrophy
+6.150 10.45  # Spinal muscular atrophy
+7.69 8.28  # Spinal muscular atrophy
+2.36 7.48  # Choanal atresia
+3.76 5.105  # Choanal atresia
+3.76 6.171  # Choanal atresia
+3.76 11.60  # Choanal atresia
+5.105 6.171  # Choanal atresia
+5.105 11.60  # Choanal atresia
+6.171 11.60  # Choanal atresia
+1.43 4.122  # Febrile neutropenia
+1.43 5.80  # Febrile neutropenia
+1.43 9.103  # Febrile neutropenia
+1.43 10.49  # Febrile neutropenia
+1.43 10.50  # Febrile neutropenia
+1.45 3.39  # Febrile neutropenia
+1.45 4.122  # Febrile neutropenia
+1.45 10.50  # Febrile neutropenia
+4.122 5.80  # Febrile neutropenia
+4.122 9.103  # Febrile neutropenia
+4.122 10.49  # Febrile neutropenia
+4.122 10.50  # Febrile neutropenia
+5.80 9.103  # Febrile neutropenia
+5.80 10.50  # Febrile neutropenia
+6.116 8.72  # Febrile neutropenia
+6.116 9.89  # Febrile neutropenia
+8.72 9.89  # Febrile neutropenia
+9.103 10.49  # Febrile neutropenia
+9.103 10.50  # Febrile neutropenia
+1.47 4.113  # Scarlet fever
+1.49 2.64  # Central line infection
+2.64 5.81  # Central line infection
+1.52 4.153  # MRSA
+1.52 6.42  # MRSA
+4.153 6.42  # MRSA
+1.53 2.60  # Infection control
+1.53 4.152  # Infection control
+2.60 3.31  # Infection control
+1.54 6.89  # Parotitis
+1.56 6.82  # Neonatal hypothermia
+1.58 3.123  # Otitis media with effusion
+1.59 5.63  # Acute otitis media
+1.60 2.7  # Meningitis
+1.60 3.79  # Meningitis
+1.60 4.30  # Meningitis
+1.60 5.64  # Meningitis
+1.60 6.64  # Meningitis
+2.7 3.79  # Meningitis
+2.7 4.30  # Meningitis
+2.7 5.64  # Meningitis
+2.7 6.64  # Meningitis
+3.79 4.30  # Meningitis
+3.79 5.64  # Meningitis
+3.79 6.64  # Meningitis
+4.30 5.64  # Meningitis
+4.30 6.64  # Meningitis
+5.64 6.64  # Meningitis
+1.61 3.80  # Oral candidiasis
+1.61 4.118  # Oral candidiasis
+1.61 11.65  # Oral candidiasis
+4.118 11.65  # Oral candidiasis
+1.65 3.93  # Congenital syphilis
+1.66 7.102  # Kwashiorkor
+1.66 8.134  # Kwashiorkor
+1.67 4.84  # Growth hormone deficiency
+1.67 5.76  # Growth hormone deficiency
+2.73 4.84  # Growth hormone deficiency
+4.84 5.76  # Growth hormone deficiency
+4.84 5.77  # Growth hormone deficiency
+1.70 6.19  # Round pneumonia
+1.71 5.125  # Epiglottitis
+1.71 7.57  # Epiglottitis
+1.71 8.24  # Epiglottitis
+1.71 10.64  # Epiglottitis
+2.86 4.125  # Epiglottitis
+2.86 6.128  # Epiglottitis
+4.125 6.128  # Epiglottitis
+4.125 10.64  # Epiglottitis
+5.126 8.120  # Epiglottitis
+5.126 9.69  # Epiglottitis
+7.57 8.24  # Epiglottitis
+7.57 10.64  # Epiglottitis
+8.24 10.64  # Epiglottitis
+8.120 9.69  # Epiglottitis
+1.72 4.146  # Bacterial tracheitis
+1.73 2.63  # Linear growth
+1.73 4.10  # Linear growth
+1.73 5.3  # Linear growth
+1.73 6.77  # Linear growth
+2.63 4.10  # Linear growth
+2.63 5.3  # Linear growth
+2.63 6.77  # Linear growth
+4.10 5.3  # Linear growth
+4.10 6.77  # Linear growth
+5.3 6.77  # Linear growth
+1.74 3.71  # Hydrocephalus
+1.74 4.6  # Hydrocephalus
+1.74 5.4  # Hydrocephalus
+1.74 6.78  # Hydrocephalus
+3.71 4.6  # Hydrocephalus
+3.71 5.4  # Hydrocephalus
+3.71 6.78  # Hydrocephalus
+3.71 8.37  # Hydrocephalus
+4.6 5.4  # Hydrocephalus
+4.6 6.78  # Hydrocephalus
+4.6 7.2  # Hydrocephalus
+4.6 8.37  # Hydrocephalus
+4.6 9.2  # Hydrocephalus
+5.4 6.78  # Hydrocephalus
+5.4 7.2  # Hydrocephalus
+5.4 8.37  # Hydrocephalus
+5.4 9.2  # Hydrocephalus
+6.78 7.2  # Hydrocephalus
+6.78 8.37  # Hydrocephalus
+6.78 9.2  # Hydrocephalus
+7.2 8.37  # Hydrocephalus
+7.2 9.2  # Hydrocephalus
+8.37 9.2  # Hydrocephalus
+1.76 4.124  # Croup
+1.76 6.173  # Croup
+4.124 6.173  # Croup
+9.33 10.79  # Croup
+1.80 3.52  # Tuberous sclerosis complex
+1.80 4.31  # Tuberous sclerosis complex
+1.80 5.12  # Tuberous sclerosis complex
+1.80 6.166  # Tuberous sclerosis complex
+3.52 4.31  # Tuberous sclerosis complex
+3.52 5.12  # Tuberous sclerosis complex
+3.52 6.166  # Tuberous sclerosis complex
+4.31 5.12  # Tuberous sclerosis complex
+4.31 6.166  # Tuberous sclerosis complex
+5.12 6.166  # Tuberous sclerosis complex
+1.81 3.96  # Adrenoleukodystrophy
+1.84 6.143  # Lead poisoning
+1.85 2.2  # Infantile spasms
+1.85 5.11  # Infantile spasms
+2.2 5.11  # Infantile spasms
+2.2 8.53  # Infantile spasms
+2.2 11.35  # Infantile spasms
+3.51 4.18  # Infantile spasms
+3.51 6.48  # Infantile spasms
+4.18 6.48  # Infantile spasms
+5.11 8.53  # Infantile spasms
+5.11 11.35  # Infantile spasms
+7.6 10.27  # Infantile spasms
+8.53 11.35  # Infantile spasms
+3.140 6.98  # Masturbation
+1.88 3.61  # Juvenile dermatomyositis
+3.61 4.27  # Juvenile dermatomyositis
+3.61 6.85  # Juvenile dermatomyositis
+4.27 5.59  # Juvenile dermatomyositis
+4.27 6.85  # Juvenile dermatomyositis
+5.59 6.85  # Juvenile dermatomyositis
+6.85 11.37  # Juvenile dermatomyositis
+7.78 9.15  # Juvenile dermatomyositis
+7.78 10.78  # Juvenile dermatomyositis
+8.65 9.15  # Juvenile dermatomyositis
+8.65 11.37  # Juvenile dermatomyositis
+8.73 9.12  # Abusive head trauma
+1.90 2.5  # Extradural haematoma
+1.90 4.24  # Extradural haematoma
+1.90 5.23  # Extradural haematoma
+2.5 4.24  # Extradural haematoma
+2.5 5.23  # Extradural haematoma
+2.5 6.164  # Extradural haematoma
+4.24 5.23  # Extradural haematoma
+4.24 6.164  # Extradural haematoma
+5.23 6.164  # Extradural haematoma
+1.93 4.66  # Shock
+4.69 7.32  # Shock
+4.69 7.103  # Shock
+4.69 11.22  # Shock
+7.32 11.22  # Shock
+7.103 11.22  # Shock
+3.75 11.59  # Nasal polyps
+4.156 5.106  # Nasal polyps
+4.156 8.164  # Nasal polyps
+4.156 11.59  # Nasal polyps
+8.164 11.59  # Nasal polyps
+1.97 5.14  # Acute disseminated encephalomyelitis
+1.97 6.18  # Acute disseminated encephalomyelitis
+1.97 9.105  # Acute disseminated encephalomyelitis
+4.2 5.14  # Acute disseminated encephalomyelitis
+4.2 7.81  # Acute disseminated encephalomyelitis
+4.2 8.52  # Acute disseminated encephalomyelitis
+4.2 10.3  # Acute disseminated encephalomyelitis
+5.14 7.81  # Acute disseminated encephalomyelitis
+5.14 8.52  # Acute disseminated encephalomyelitis
+5.14 10.3  # Acute disseminated encephalomyelitis
+7.81 8.52  # Acute disseminated encephalomyelitis
+8.52 10.3  # Acute disseminated encephalomyelitis
+1.98 2.9  # Transverse myelitis
+1.98 5.16  # Transverse myelitis
+1.98 6.17  # Transverse myelitis
+1.98 7.15  # Transverse myelitis
+1.98 8.35  # Transverse myelitis
+1.98 9.20  # Transverse myelitis
+1.99 4.29  # Transverse myelitis
+1.99 5.18  # Transverse myelitis
+1.99 8.49  # Transverse myelitis
+2.9 4.28  # Transverse myelitis
+2.9 7.15  # Transverse myelitis
+2.9 8.35  # Transverse myelitis
+2.9 9.20  # Transverse myelitis
+4.28 7.15  # Transverse myelitis
+4.28 8.35  # Transverse myelitis
+4.28 9.20  # Transverse myelitis
+4.29 5.18  # Transverse myelitis
+4.29 8.49  # Transverse myelitis
+5.16 6.17  # Transverse myelitis
+5.17 6.17  # Transverse myelitis
+7.15 8.35  # Transverse myelitis
+7.15 9.20  # Transverse myelitis
+8.35 9.20  # Transverse myelitis
+1.101 4.81  # Raised intracranial pressure
+2.31 5.129  # Functional constipation
+1.103 2.82  # Malrotation and volvulus
+1.103 4.91  # Malrotation and volvulus
+1.103 5.69  # Malrotation and volvulus
+1.103 6.9  # Malrotation and volvulus
+1.104 5.70  # Malrotation and volvulus
+1.104 6.10  # Malrotation and volvulus
+2.82 4.91  # Malrotation and volvulus
+4.91 5.69  # Malrotation and volvulus
+4.91 6.9  # Malrotation and volvulus
+5.70 6.10  # Malrotation and volvulus
+1.105 3.13  # Hirschsprung disease
+1.105 5.71  # Hirschsprung disease
+1.105 11.21  # Hirschsprung disease
+3.13 5.71  # Hirschsprung disease
+3.13 8.106  # Hirschsprung disease
+3.13 11.21  # Hirschsprung disease
+5.71 8.106  # Hirschsprung disease
+5.71 11.21  # Hirschsprung disease
+6.81 11.21  # Hirschsprung disease
+7.35 9.48  # Hirschsprung disease
+8.58 10.33  # Hirschsprung disease
+8.106 11.21  # Hirschsprung disease
+1.106 3.15  # Gastric volvulus
+1.106 4.87  # Gastric volvulus
+1.106 5.46  # Gastric volvulus
+1.106 5.47  # Gastric volvulus
+2.67 5.47  # Gastric volvulus
+3.15 5.46  # Gastric volvulus
+4.87 5.46  # Gastric volvulus
+4.87 5.47  # Gastric volvulus
+1.107 3.14  # Hirschsprung-associated enterocolitis
+1.107 5.72  # Hirschsprung-associated enterocolitis
+3.14 5.72  # Hirschsprung-associated enterocolitis
+1.108 4.88  # Meckel diverticulum
+1.108 8.82  # Meckel diverticulum
+4.88 5.98  # Meckel diverticulum
+5.98 7.36  # Meckel diverticulum
+5.98 8.161  # Meckel diverticulum
+1.111 2.70  # Tuberculin skin test
+1.111 3.2  # Tuberculin skin test
+1.111 5.32  # Tuberculin skin test
+2.70 3.2  # Tuberculin skin test
+2.70 5.32  # Tuberculin skin test
+3.2 5.32  # Tuberculin skin test
+1.114 4.131  # Hereditary fructose intolerance
+1.114 6.131  # Hereditary fructose intolerance
+4.131 6.131  # Hereditary fructose intolerance
+5.35 6.58  # Professionalism
+1.117 3.12  # Patient safety
+1.117 4.133  # Patient safety
+1.117 5.117  # Patient safety
+1.121 11.61  # Patient safety
+1.121 11.62  # Patient safety
+3.11 9.86  # Patient safety
+3.12 4.133  # Patient safety
+3.12 5.117  # Patient safety
+4.133 5.117  # Patient safety
+6.6 9.85  # Patient safety
+6.103 10.61  # Patient safety
+8.8 10.61  # Patient safety
+5.53 6.59  # Conflict of interest
+5.53 8.5  # Conflict of interest
+6.59 8.5  # Conflict of interest
+1.122 3.8  # Public health ethics
+1.130 4.139  # Carbon monoxide poisoning
+4.139 8.18  # Carbon monoxide poisoning
+4.139 9.92  # Carbon monoxide poisoning
+6.187 9.93  # Carbon monoxide poisoning
+8.18 9.92  # Carbon monoxide poisoning
+1.131 8.99  # Type 1 diabetes
+1.132 4.3  # Status epilepticus
+7.12 9.14  # Status epilepticus
+1.134 4.12  # Pain assessment
+1.135 8.56  # Febrile seizures
+1.135 8.92  # Febrile seizures
+1.138 2.8  # Migraine
+1.138 3.105  # Migraine
+1.138 6.30  # Migraine
+2.8 3.105  # Migraine
+2.8 5.21  # Migraine
+3.105 5.21  # Migraine
+3.105 6.30  # Migraine
+4.17 6.133  # Tic disorders
+1.140 4.8  # Breath-holding spells
+1.140 5.10  # Breath-holding spells
+1.140 7.3  # Breath-holding spells
+1.140 9.3  # Breath-holding spells
+1.140 10.5  # Breath-holding spells
+4.8 5.10  # Breath-holding spells
+4.8 7.3  # Breath-holding spells
+4.8 9.3  # Breath-holding spells
+5.10 6.97  # Breath-holding spells
+5.10 7.3  # Breath-holding spells
+5.10 9.3  # Breath-holding spells
+5.10 10.5  # Breath-holding spells
+6.97 10.5  # Breath-holding spells
+7.3 9.3  # Breath-holding spells
+7.3 10.5  # Breath-holding spells
+9.3 10.5  # Breath-holding spells
+1.142 4.115  # Acute kidney injury
+4.115 10.13  # Acute kidney injury
+1.143 3.34  # Asthma
+1.143 6.172  # Asthma
+1.143 8.62  # Asthma
+3.128 8.30  # Asthma
+4.128 5.114  # Asthma
+4.128 6.138  # Asthma
+4.128 8.124  # Asthma
+5.114 6.138  # Asthma
+5.114 8.124  # Asthma
+6.172 8.62  # Asthma
+1.144 4.142  # Epistaxis
+3.113 6.176  # Epistaxis
+1.145 4.144  # Allergic rhinitis
+1.145 7.56  # Allergic rhinitis
+1.145 8.149  # Allergic rhinitis
+7.56 8.149  # Allergic rhinitis
+1.148 5.97  # Breast milk jaundice
+1.150 8.137  # Trauma
+1.150 9.55  # Trauma
+8.137 9.55  # Trauma
+1.155 3.127  # Haematocolpos
+4.141 5.19  # Parapneumonic effusion
+1.160 6.162  # Night terrors
+1.161 2.42  # Obstructive sleep apnoea
+1.161 6.180  # Obstructive sleep apnoea
+1.161 7.58  # Obstructive sleep apnoea
+1.161 10.65  # Obstructive sleep apnoea
+2.42 6.180  # Obstructive sleep apnoea
+2.42 7.58  # Obstructive sleep apnoea
+2.42 10.65  # Obstructive sleep apnoea
+3.131 10.65  # Obstructive sleep apnoea
+6.180 7.58  # Obstructive sleep apnoea
+6.180 10.65  # Obstructive sleep apnoea
+7.58 10.65  # Obstructive sleep apnoea
+1.164 5.9  # Rett syndrome
+5.9 6.47  # Rett syndrome
+3.41 9.53  # Hepatitis A
+1.166 6.88  # Streptococcal pharyngitis
+1.166 8.111  # Streptococcal pharyngitis
+6.88 8.111  # Streptococcal pharyngitis
+2.1 3.1  # Acute cerebellar ataxia
+2.1 4.1  # Acute cerebellar ataxia
+2.1 5.1  # Acute cerebellar ataxia
+2.1 8.36  # Acute cerebellar ataxia
+2.1 9.1  # Acute cerebellar ataxia
+2.1 10.1  # Acute cerebellar ataxia
+3.1 4.1  # Acute cerebellar ataxia
+3.1 5.1  # Acute cerebellar ataxia
+3.1 6.3  # Acute cerebellar ataxia
+3.1 8.36  # Acute cerebellar ataxia
+3.1 9.1  # Acute cerebellar ataxia
+3.1 10.1  # Acute cerebellar ataxia
+4.1 5.1  # Acute cerebellar ataxia
+4.1 6.3  # Acute cerebellar ataxia
+4.1 8.36  # Acute cerebellar ataxia
+4.1 9.1  # Acute cerebellar ataxia
+4.1 10.1  # Acute cerebellar ataxia
+5.1 6.3  # Acute cerebellar ataxia
+5.1 8.36  # Acute cerebellar ataxia
+5.1 9.1  # Acute cerebellar ataxia
+5.1 10.1  # Acute cerebellar ataxia
+8.36 9.1  # Acute cerebellar ataxia
+8.36 10.1  # Acute cerebellar ataxia
+9.1 10.1  # Acute cerebellar ataxia
+2.3 6.157  # Bacterial meningitis
+2.3 9.9  # Bacterial meningitis
+3.66 6.95  # Bacterial meningitis
+3.66 7.82  # Bacterial meningitis
+3.66 10.48  # Bacterial meningitis
+6.95 10.48  # Bacterial meningitis
+6.157 9.9  # Bacterial meningitis
+2.6 3.53  # Neurofibromatosis type 1
+2.6 5.37  # Neurofibromatosis type 1
+2.6 6.124  # Neurofibromatosis type 1
+3.53 5.37  # Neurofibromatosis type 1
+3.53 6.124  # Neurofibromatosis type 1
+5.37 6.124  # Neurofibromatosis type 1
+7.17 9.22  # Glomerulonephritis
+2.15 3.98  # Wiskott-Aldrich syndrome
+2.15 4.59  # Wiskott-Aldrich syndrome
+2.15 7.22  # Wiskott-Aldrich syndrome
+2.15 8.128  # Wiskott-Aldrich syndrome
+3.98 4.59  # Wiskott-Aldrich syndrome
+3.98 7.22  # Wiskott-Aldrich syndrome
+3.98 8.128  # Wiskott-Aldrich syndrome
+4.59 7.22  # Wiskott-Aldrich syndrome
+4.59 8.128  # Wiskott-Aldrich syndrome
+7.22 8.128  # Wiskott-Aldrich syndrome
+2.17 3.99  # Haemophilia A
+4.83 5.75  # Haemophilia A
+10.37 11.64  # Congenital diaphragmatic hernia
+2.29 4.102  # Intestinal obstruction
+2.29 9.51  # Intestinal obstruction
+4.102 5.127  # Intestinal obstruction
+4.102 9.51  # Intestinal obstruction
+4.103 5.40  # Stuttering
+2.40 8.94  # Candidiasis
+2.41 3.108  # Nasal foreign body
+2.41 6.11  # Nasal foreign body
+2.41 8.144  # Nasal foreign body
+2.41 11.58  # Nasal foreign body
+3.108 6.12  # Nasal foreign body
+3.108 8.144  # Nasal foreign body
+3.108 11.58  # Nasal foreign body
+6.11 11.58  # Nasal foreign body
+6.12 8.144  # Nasal foreign body
+8.144 11.58  # Nasal foreign body
+2.45 3.50  # Sturge-Weber syndrome
+2.45 4.25  # Sturge-Weber syndrome
+2.45 8.31  # Sturge-Weber syndrome
+2.45 10.72  # Sturge-Weber syndrome
+3.50 4.25  # Sturge-Weber syndrome
+3.50 8.31  # Sturge-Weber syndrome
+3.50 10.72  # Sturge-Weber syndrome
+4.25 8.31  # Sturge-Weber syndrome
+4.25 10.72  # Sturge-Weber syndrome
+7.64 8.31  # Sturge-Weber syndrome
+8.31 10.72  # Sturge-Weber syndrome
+2.46 3.59  # Fragile X syndrome
+2.46 7.68  # Fragile X syndrome
+2.46 8.27  # Fragile X syndrome
+2.46 11.31  # Fragile X syndrome
+3.59 4.36  # Fragile X syndrome
+3.59 7.68  # Fragile X syndrome
+3.59 8.27  # Fragile X syndrome
+3.59 10.76  # Fragile X syndrome
+3.59 11.31  # Fragile X syndrome
+4.36 5.8  # Fragile X syndrome
+4.36 6.53  # Fragile X syndrome
+4.36 10.76  # Fragile X syndrome
+5.8 6.53  # Fragile X syndrome
+5.8 10.76  # Fragile X syndrome
+6.53 10.76  # Fragile X syndrome
+7.68 8.27  # Fragile X syndrome
+7.68 11.31  # Fragile X syndrome
+8.27 11.31  # Fragile X syndrome
+5.115 6.45  # HIV infection
+5.115 9.74  # HIV infection
+6.45 9.74  # HIV infection
+3.55 5.20  # Mid-parental height
+3.55 6.41  # Mid-parental height
+5.20 6.41  # Mid-parental height
+2.56 8.57  # Hypotonia
+2.58 3.68  # Diamond-Blackfan anaemia
+2.59 3.47  # Guillain-Barré syndrome
+2.59 3.48  # Guillain-Barré syndrome
+2.61 9.65  # Fluid therapy
+2.66 3.85  # Oppositional defiant disorder
+2.66 8.9  # Oppositional defiant disorder
+3.85 4.105  # Oppositional defiant disorder
+3.85 6.35  # Oppositional defiant disorder
+3.85 8.9  # Oppositional defiant disorder
+4.105 6.35  # Oppositional defiant disorder
+4.105 8.9  # Oppositional defiant disorder
+6.35 8.9  # Oppositional defiant disorder
+2.80 6.125  # Congenital hypothyroidism
+3.101 6.125  # Congenital hypothyroidism
+6.125 11.27  # Congenital hypothyroidism
+9.104 11.27  # Congenital hypothyroidism
+2.81 9.94  # Meningococcal disease
+4.15 5.5  # Meningococcal disease
+4.15 9.94  # Meningococcal disease
+5.5 9.94  # Meningococcal disease
+2.83 8.113  # Transient neonatal pustular melanosis
+2.83 11.55  # Transient neonatal pustular melanosis
+8.113 11.55  # Transient neonatal pustular melanosis
+5.96 10.55  # Pneumothorax
+5.96 11.23  # Pneumothorax
+10.55 11.23  # Pneumothorax
+3.40 5.92  # Varicella
+5.92 6.43  # Varicella
+10.75 11.57  # Varicella
+2.92 3.126  # Consent
+3.5 5.89  # Health systems
+3.5 9.76  # Health systems
+5.89 9.76  # Health systems
+3.7 5.51  # Vaccine hesitancy
+5.51 6.61  # Vaccine hesitancy
+3.16 4.89  # Crohn disease
+4.89 8.175  # Crohn disease
+3.20 4.42  # Rubella
+3.20 10.84  # Rubella
+4.42 7.90  # Rubella
+4.42 10.84  # Rubella
+3.21 5.62  # Measles
+3.25 5.95  # Tricyclic antidepressant poisoning
+3.25 8.100  # Tricyclic antidepressant poisoning
+5.95 8.100  # Tricyclic antidepressant poisoning
+3.37 9.95  # CHARGE syndrome
+6.80 10.68  # Haemorrhagic shock
+5.26 9.97  # Autosomal recessive inheritance
+3.62 5.60  # Scleroderma
+3.62 6.84  # Scleroderma
+3.62 11.18  # Scleroderma
+5.60 6.84  # Scleroderma
+5.60 11.18  # Scleroderma
+6.84 11.18  # Scleroderma
+7.65 11.18  # Scleroderma
+8.55 11.18  # Scleroderma
+3.67 6.73  # Physiological anaemia of infancy
+5.79 6.73  # Physiological anaemia of infancy
+5.79 7.8  # Physiological anaemia of infancy
+6.73 7.8  # Physiological anaemia of infancy
+3.74 11.16  # Intraosseous access
+3.77 4.77  # Sick sinus syndrome
+3.77 5.91  # Sick sinus syndrome
+3.77 6.28  # Sick sinus syndrome
+4.77 5.91  # Sick sinus syndrome
+4.77 6.28  # Sick sinus syndrome
+5.91 6.28  # Sick sinus syndrome
+4.136 6.62  # Child abuse
+3.84 9.59  # Autism spectrum disorder
+3.84 10.8  # Autism spectrum disorder
+8.96 9.59  # Autism spectrum disorder
+3.88 5.128  # Congenital pulmonary airway malformation
+5.128 8.166  # Congenital pulmonary airway malformation
+5.128 10.46  # Congenital pulmonary airway malformation
+10.46 11.26  # Congenital pulmonary airway malformation
+3.107 6.132  # Abdominal trauma
+3.110 5.99  # Oesophageal atresia
+3.110 7.38  # Oesophageal atresia
+3.110 10.39  # Oesophageal atresia
+3.110 11.14  # Oesophageal atresia
+5.99 7.38  # Oesophageal atresia
+5.99 9.50  # Oesophageal atresia
+5.99 10.39  # Oesophageal atresia
+5.99 11.14  # Oesophageal atresia
+7.33 10.39  # Oesophageal atresia
+7.38 9.50  # Oesophageal atresia
+7.38 10.39  # Oesophageal atresia
+10.39 11.14  # Oesophageal atresia
+8.51 11.40  # Short stature
+3.125 6.91  # Congenital nephrotic syndrome
+3.133 4.5  # Focal seizures
+3.135 5.38  # Tourette syndrome
+4.7 8.129  # Microcephaly
+4.11 6.38  # Head circumference
+4.19 5.24  # Spinal cord injury
+4.19 6.161  # Spinal cord injury
+5.24 6.161  # Spinal cord injury
+4.21 6.31  # Cyclic vomiting syndrome
+4.40 6.153  # Respiratory distress syndrome
+4.44 7.47  # Congenital adrenal hyperplasia
+4.46 5.43  # Nocturnal enuresis
+7.18 11.6  # Nocturnal enuresis
+4.51 9.31  # Epididymitis
+7.11 9.13  # Head injury
+8.43 9.11  # Head injury
+4.92 8.88  # Dermatitis herpetiformis
+4.99 6.109  # Fungal infection
+4.104 6.186  # Schizophrenia
+4.104 7.42  # Schizophrenia
+4.104 9.58  # Schizophrenia
+6.186 7.42  # Schizophrenia
+6.186 9.58  # Schizophrenia
+7.42 9.58  # Schizophrenia
+4.107 6.36  # Behaviour problems
+7.41 8.6  # Behaviour problems
+7.41 10.80  # Behaviour problems
+8.6 10.80  # Behaviour problems
+4.108 6.37  # Thumb sucking
+4.110 5.107  # Precocious puberty
+4.114 5.56  # Hand, foot and mouth disease
+4.114 6.34  # Hand, foot and mouth disease
+4.114 11.17  # Hand, foot and mouth disease
+5.56 6.34  # Hand, foot and mouth disease
+5.56 7.91  # Hand, foot and mouth disease
+5.56 11.17  # Hand, foot and mouth disease
+6.34 11.17  # Hand, foot and mouth disease
+4.140 5.100  # Mycoplasma pneumonia
+6.20 8.140  # Pneumonia
+6.20 9.72  # Pneumonia
+7.94 8.136  # Pneumonia
+8.32 10.54  # Pneumonia
+8.42 10.63  # Pneumonia
+8.140 9.72  # Pneumonia
+4.150 6.113  # Organophosphate poisoning
+5.15 6.151  # Hypoxic-ischaemic encephalopathy
+5.82 6.168  # Obesity
+5.112 6.76  # Williams syndrome
+6.7 8.152  # Acute liver failure
+6.24 8.172  # Cardiac tamponade
+6.54 10.34  # Coeliac disease
+6.60 8.4  # Research ethics
+8.4 9.87  # Research ethics
+7.29 8.141  # Transposition of the great arteries
+7.29 9.36  # Transposition of the great arteries
+7.29 10.26  # Transposition of the great arteries
+8.141 9.36  # Transposition of the great arteries
+8.141 10.26  # Transposition of the great arteries
+9.36 10.26  # Transposition of the great arteries
+6.69 11.7  # Organic acidaemias
+6.106 11.49  # Tuberculosis
+6.127 11.24  # Retropharyngeal abscess
+6.156 8.125  # Third nerve palsy
+7.5 8.38  # Headache
+8.38 9.19  # Headache
+8.39 10.41  # Headache
+7.4 9.5  # Guillain-Barre syndrome
+7.4 11.38  # Guillain-Barre syndrome
+9.5 11.38  # Guillain-Barre syndrome
+7.7 11.56  # Birth injury
+7.14 8.89  # Otitis media
+7.14 9.18  # Otitis media
+7.14 10.51  # Otitis media
+7.14 10.52  # Otitis media
+7.53 10.53  # Otitis media
+8.20 10.53  # Otitis media
+8.89 9.18  # Otitis media
+8.89 10.51  # Otitis media
+8.89 10.52  # Otitis media
+9.18 10.51  # Otitis media
+7.24 8.80  # Haemophilia
+7.24 10.18  # Haemophilia
+8.80 10.18  # Haemophilia
+7.37 10.36  # Gastroschisis and exomphalos
+9.57 10.36  # Gastroschisis and exomphalos
+7.54 8.102  # Nasal mass
+7.59 8.23  # Inhaled foreign body
+7.59 10.85  # Inhaled foreign body
+8.23 10.85  # Inhaled foreign body
+7.67 8.112  # Systemic lupus erythematosus
+7.73 8.33  # Growth
+7.73 10.4  # Growth
+8.33 10.4  # Growth
+7.84 9.64  # Cyclic vomiting
+7.93 11.19  # Infection transmission
+8.1 10.62  # Paediatric resuscitation
+8.7 9.77  # Breaking bad news
+8.14 11.63  # Ethics
+8.146 9.40  # Cardiac arrest rhythms
+8.77 9.7  # Tic disorders (Tourette syndrome)
+9.7 10.7  # Tic disorders (Tourette syndrome)
+9.7 11.33  # Tic disorders (Tourette syndrome)
+10.7 11.33  # Tic disorders (Tourette syndrome)
+8.114 10.38  # Neural tube defects
+8.114 11.28  # Neural tube defects
+10.38 11.28  # Neural tube defects
+9.16 10.28  # Tuberous sclerosis
+9.16 11.46  # Tuberous sclerosis
+10.28 11.46  # Tuberous sclerosis

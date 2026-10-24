@@ -1,0 +1,59 @@
+name: Saudi Prometric exams
+
+# Writes the Saudi Prometric recall papers (data/exams/saudi-prometric-*.json)
+# into the Gulf Licensing bank as the book "Saudi Prometric", sorts its quizzes
+# newest first, writes their topic tags and similar pairs, then refreshes the
+# bank's chapter and science counts. Each step is safe to re-run: the upload
+# skips a paper that is already there and the others rewrite the same values.
+on:
+  push:
+    branches:
+      - claude/project-thread-ary6xc
+    paths:
+      - 'data/exams/saudi-prometric*.json'
+      - 'data/exams/tags/saudi-prometric*'
+      - '.github/workflows/saudi-prometric.yml'
+  workflow_dispatch:
+
+concurrency:
+  group: saudi-prometric
+  cancel-in-progress: false
+
+jobs:
+  upload:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+      - name: Install Firebase CLI
+        run: npm i -g firebase-tools@14
+      - name: Upload, sort, tag and count
+        env:
+          FIREBASE_SERVICE_ACCOUNT: ${{ secrets.FIREBASE_SERVICE_ACCOUNT_EASY_PEDIA }}
+        run: |
+          printf '%s' "$FIREBASE_SERVICE_ACCOUNT" > "$RUNNER_TEMP/sa.json"
+          export GOOGLE_APPLICATION_CREDENTIALS="$RUNNER_TEMP/sa.json"
+          for file in $(node -e "for (const p of require('./data/exams/tags/saudi-prometric-papers.json').reverse()) console.log(p.file)"); do
+            node scripts/upload-exam-json.mjs "$file" \
+              --bank gulf_licensing --bank-title "Gulf Licensing Exams" \
+              --book saudi_prometric --book-title "Saudi Prometric" --commit
+            paper=$(basename "$file" .json)
+            if [ -f .tmp/exam-upload-keys-saudi_prometric.json ]; then mv .tmp/exam-upload-keys-saudi_prometric.json ".tmp/exam-upload-keys-$paper.json"; fi
+          done
+          node scripts/arrange-exams.mjs --book saudi_prometric --order data/exams/saudi-prometric-order.json --commit
+          node --max-old-space-size=6000 scripts/tag-exam.mjs --book saudi_prometric \
+            --tags data/exams/tags/saudi-prometric.txt --papers data/exams/tags/saudi-prometric-papers.json \
+            --similar data/exams/tags/saudi-prometric-similar.txt --commit
+          node --max-old-space-size=6000 scripts/browse-exam.mjs --bank gulf_licensing --commit
+          rm -f "$RUNNER_TEMP/sa.json"
+      - uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: saudi-prometric-upload-keys
+          path: |
+            .tmp/exam-upload-keys-*.json
+            .tmp/arrange-saudi_prometric.json
+          if-no-files-found: ignore
+          include-hidden-files: true
