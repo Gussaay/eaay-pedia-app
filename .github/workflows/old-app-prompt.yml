@@ -1,0 +1,31 @@
+name: Old app update prompt
+
+# Sets update/app/ver to 6 so the old Android app asks its users to install
+# the new one (scripts/old-app-prompt.mjs). Run by hand.
+on:
+  workflow_dispatch:
+    inputs:
+      commit:
+        description: 'Write the change (otherwise only show the current value)'
+        type: boolean
+        default: false
+
+jobs:
+  prompt:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+      - name: Install Firebase CLI
+        run: npm i -g firebase-tools@14
+      - name: Set the prompt
+        env:
+          FIREBASE_SERVICE_ACCOUNT: ${{ secrets.FIREBASE_SERVICE_ACCOUNT_EASY_PEDIA }}
+          COMMIT: ${{ inputs.commit }}
+        run: |
+          printf '%s' "$FIREBASE_SERVICE_ACCOUNT" > "$RUNNER_TEMP/sa.json"
+          export GOOGLE_APPLICATION_CREDENTIALS="$RUNNER_TEMP/sa.json"
+          if [ "$COMMIT" = "true" ]; then node scripts/old-app-prompt.mjs --commit; else node scripts/old-app-prompt.mjs; fi
+          rm -f "$RUNNER_TEMP/sa.json"
