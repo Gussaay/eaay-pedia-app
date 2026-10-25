@@ -1,0 +1,31 @@
+name: App versions
+
+# Read only: counts which app version people use and lists the database's
+# top-level nodes (scripts/app-versions.mjs). Prints counts only.
+on:
+  push:
+    branches:
+      - claude/project-thread-e1fbvo
+    paths:
+      - 'scripts/app-versions.mjs'
+      - '.github/workflows/app-versions.yml'
+  workflow_dispatch:
+
+jobs:
+  count:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+      - name: Install Firebase CLI
+        run: npm i -g firebase-tools@14
+      - name: Count
+        env:
+          FIREBASE_SERVICE_ACCOUNT: ${{ secrets.FIREBASE_SERVICE_ACCOUNT_EASY_PEDIA }}
+        run: |
+          printf '%s' "$FIREBASE_SERVICE_ACCOUNT" > "$RUNNER_TEMP/sa.json"
+          export GOOGLE_APPLICATION_CREDENTIALS="$RUNNER_TEMP/sa.json"
+          node scripts/app-versions.mjs
+          rm -f "$RUNNER_TEMP/sa.json"
