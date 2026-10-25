@@ -1,12 +1,17 @@
 name: AI similar or linked write
 
 # Writes the Similar / Linked sorting into the questions (scripts/ai-tag.mjs
-# --phase kind-write --commit). Start by hand only, once Qusay has approved.
+# --phase kind-write --commit). Qusay approved writing it on 2026-10-25.
 # Linked pairs (and hand links judged not related) move from `similar` to
 # `related`; AI links judged not related are taken out. The sorting of every
 # changed pair is saved under aitag/written/kind first, so it can be undone.
 on:
   workflow_dispatch:
+  push:
+    branches:
+      - claude/project-thread-cop9he
+    paths:
+      - '.github/workflows/ai-tag-kind-write.yml'
 
 concurrency:
   group: ai-tag-kind-write
