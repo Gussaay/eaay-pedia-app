@@ -514,7 +514,7 @@ if (phase === 'link') {
   const recheck = !todo.length;
   if (recheck) {
     const top = Number(value('recheck', 6000));
-    const zeros = cand.filter(([k]) => state.pair[k] === 0 && pairIds(k)[0]).sort((a, b) => b[1].score - a[1].score).slice(0, top);
+    const zeros = cand.filter(([k]) => (state.pair[k] === 0 || state.re[k]) && pairIds(k)[0]) // already looked at again stay in the window.sort((a, b) => b[1].score - a[1].score).slice(0, top);
     todo.push(...zeros.filter(([k]) => !state.re[k]));
     console.log(`Second look: ${todo.length} of the ${zeros.length} most alike "not linked" pairs still to judge again from the full text.`);
   }
