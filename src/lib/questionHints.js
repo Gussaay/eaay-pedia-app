@@ -1,7 +1,8 @@
 // Two study aids stored on a quiz question (written offline by
 // .tmp/link/similar.mjs):
 //
-//   quizqq/<id>/similar   { "<otherQuestionId>": true, … }  questions on the same point
+//   quizqq/<id>/similar   { "<otherQuestionId>": true, … }  questions on the same fact
+//   quizqq/<id>/related   { "<otherQuestionId>": true, … }  same condition, a connected point
 //   quizqq/<id>/hint      "phrase | phrase"                  stem words that point to the answer
 //
 // Pure, so it can be unit-tested.
@@ -23,6 +24,16 @@ export const sameOf = (question) => idList(question?.same);
 export function similarOf(question) {
   const same = new Set(sameOf(question));
   return idList(question?.similar).filter((k) => !same.has(k));
+}
+
+/**
+ * Ids of the linked questions: the same condition but a different, connected
+ * point (e.g. its diagnosis and its embryology). Knowing one helps with the
+ * other but does not answer it, so these do not count as repeats.
+ */
+export function relatedOf(question) {
+  const skip = new Set([...sameOf(question), ...similarOf(question)]);
+  return idList(question?.related).filter((k) => !skip.has(k));
 }
 
 /** The hint phrases, from "a | b", a list, or a map of them. */

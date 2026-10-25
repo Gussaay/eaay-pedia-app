@@ -1,16 +1,18 @@
 // "Remember it" under a quiz explanation: the topic tags, the mnemonic, the
 // flashcards and the linked questions (quizqq/<id>/tags, mnem_links,
-// card_links, and same + similar), opened over the quiz so the session is not
-// lost. Linked questions are the copies of this question asked in other
-// sittings and the similar questions, all answerable in one list.
+// card_links, and same + similar + related), opened over the quiz so the
+// session is not lost. Linked questions are the copies of this question asked
+// in other sittings, the similar questions (the same fact) and the linked ones
+// (the same condition, a connected point), all answerable in one list.
 import { useState } from 'react';
 import { createPortal } from 'react-dom';
 import { ChevronRight, Layers, Lightbulb, Repeat2, Tag, X } from 'lucide-react';
 import { useAsync } from '../hooks/useData';
+import { sourcePath } from '../lib/banks';
 import { useBackHandler } from '../lib/back';
 import { loadByRefs } from '../lib/mnemonicData';
 import { questionLinks } from '../lib/mnemonicLinks';
-import { sameOf, similarOf } from '../lib/questionHints';
+import { relatedOf, sameOf, similarOf } from '../lib/questionHints';
 import { visibleOptions } from '../lib/quiz';
 import { getQuestion } from '../lib/quizSource';
 import { tagsOf } from '../lib/topicTags';
@@ -22,16 +24,17 @@ export default function StudyLinks({ question }) {
   const [mnemonic, setMnemonic] = useState(null);
   const similar = similarOf(question);
   const same = sameOf(question);
+  const related = relatedOf(question);
   const tags = tagsOf(question);
   const [cardsOpen, setCardsOpen] = useState(false);
   const [linkedOpen, setLinkedOpen] = useState(false);
-  const linked = same.length + similar.length;
+  const linked = same.length + similar.length + related.length;
   // Only the mnemonic titles are read up front; the flashcards wait for a tap.
   const titles = useAsync(
     () => (mnemonics.length ? loadByRefs(mnemonics) : Promise.resolve([])),
     [mnemonics.join(',')],
   );
-  if (!mnemonics.length && !flashcards.length && !similar.length && !same.length && !tags.length) return null;
+  if (!mnemonics.length && !flashcards.length && !linked && !tags.length) return null;
 
   return (
     <div className="mt-5 border-t border-slate-100 pt-4">
@@ -93,6 +96,7 @@ export default function StudyLinks({ question }) {
                 {[
                   same.length ? `Asked in ${same.length + 1} sittings` : '',
                   similar.length ? `${similar.length} similar` : '',
+                  related.length ? `${related.length} linked` : '',
                 ]
                   .filter(Boolean)
                   .join(' · ')}
@@ -104,7 +108,7 @@ export default function StudyLinks({ question }) {
       </div>
       {mnemonic && <MnemonicPeek mnemonicRef={mnemonic} onClose={() => setMnemonic(null)} />}
       {cardsOpen && <FlashcardsPeek refs={flashcards} onClose={() => setCardsOpen(false)} />}
-      {linkedOpen && <LinkedPeek same={same} similar={similar} onClose={() => setLinkedOpen(false)} />}
+      {linkedOpen && <LinkedPeek same={same} similar={similar} related={related} onClose={() => setLinkedOpen(false)} />}
     </div>
   );
 }
@@ -136,16 +140,26 @@ function Sheet({ icon, title, tone, onClose, children }) {
 }
 
 // The linked questions, each answerable in place: the copies of this same
-// question from other sittings first, then the similar questions. Pick an
-// option to see the answer and its explanation.
-function LinkedPeek({ same, similar, onClose }) {
-  const ids = [...same, ...similar];
+// question from other sittings first, then the similar questions, then the
+// linked ones, each kind sorted by its full source (bank, book, paper). Pick
+// an option to see the answer and its explanation.
+function LinkedPeek({ same, similar, related = [], onClose }) {
+  const ids = [...same, ...similar, ...related];
   const isSame = new Set(same);
+  const isRelated = new Set(related);
   const data = useAsync(
     () =>
-      Promise.all(ids.map(getQuestion)).then((l) =>
-        l.filter(Boolean),
-      ),
+      Promise.all(ids.map(getQuestion)).then(async (l) => {
+        const found = l.filter(Boolean);
+        const paths = await Promise.all(found.map((q) => sourcePath(q).catch(() => [])));
+        const kind = (q) => (isSame.has(q._key) ? 0 : isRelated.has(q._key) ? 2 : 1);
+        return found
+          .map((q, n) => ({ ...q, _from: paths[n].join(' › ') }))
+          .sort(
+            (a, b) =>
+              kind(a) - kind(b) || a._from.localeCompare(b._from, undefined, { numeric: true, sensitivity: 'base' }),
+          );
+      }),
     [ids.join(',')],
   );
   const [picked, setPicked] = useState({});
@@ -164,23 +178,26 @@ function LinkedPeek({ same, similar, onClose }) {
         <>
           <p className="text-xs text-slate-500 mb-3">
             {same.length ? `This question came up in ${same.length + 1} sittings. ` : ''}
-            The same question from other sittings and questions on the same point from other papers. Pick an answer to check it.
+            Same question: asked again in another sitting. Similar: another question on the same fact. Linked: the same
+            condition, a different connected point. Pick an answer to check it.
           </p>
           <ul className="space-y-3">
             {list.map((q, n) => {
               const answer = String(q.answer || '').trim().toLowerCase();
               const chosen = picked[q._key];
-              const from = q.title || q.quiztitle;
+              const from = q._from || q.title || q.quiztitle;
               return (
                 <li key={q._key} className="rounded-xl border border-slate-200 p-3">
                   <p className="flex flex-wrap items-center gap-1.5 text-xs font-semibold text-amber-700 mb-1">
                     Question {n + 1}
                     {isSame.has(q._key) ? (
                       <span className="rounded-full bg-violet-100 px-2 py-0.5 text-violet-800">Same question</span>
+                    ) : isRelated.has(q._key) ? (
+                      <span className="rounded-full bg-sky-100 px-2 py-0.5 text-sky-800">Linked</span>
                     ) : (
                       <span className="rounded-full bg-amber-100 px-2 py-0.5 text-amber-800">Similar</span>
                     )}
-                    {from ? <span className="font-normal text-slate-500">{from}</span> : null}
+                    {from ? <span className="basis-full font-normal text-slate-500">{from}</span> : null}
                   </p>
                   <p className="text-sm font-medium text-slate-800 whitespace-pre-line">{q.question}</p>
                   <ZoomImage src={q.question_img} className="mt-2" />
