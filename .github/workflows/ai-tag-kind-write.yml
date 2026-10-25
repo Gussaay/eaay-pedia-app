@@ -1,0 +1,39 @@
+name: AI similar or linked write
+
+# Writes the Similar / Linked sorting into the questions (scripts/ai-tag.mjs
+# --phase kind-write --commit). Start by hand only, once Qusay has approved.
+# Linked pairs (and hand links judged not related) move from `similar` to
+# `related`; AI links judged not related are taken out. The sorting of every
+# changed pair is saved under aitag/written/kind first, so it can be undone.
+on:
+  workflow_dispatch:
+
+concurrency:
+  group: ai-tag-kind-write
+  cancel-in-progress: false
+
+permissions:
+  contents: read
+
+jobs:
+  write:
+    runs-on: ubuntu-latest
+    timeout-minutes: 60
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+      - name: Install Firebase CLI
+        run: npm i -g firebase-tools@14
+      - name: Write the sorting
+        env:
+          FIREBASE_SERVICE_ACCOUNT: ${{ secrets.FIREBASE_SERVICE_ACCOUNT_EASY_PEDIA }}
+        run: |
+          printf '%s' "$FIREBASE_SERVICE_ACCOUNT" > "$RUNNER_TEMP/sa.json"
+          export GOOGLE_APPLICATION_CREDENTIALS="$RUNNER_TEMP/sa.json"
+          mkdir -p .tmp
+          node --max-old-space-size=6000 scripts/ai-tag.mjs --phase kind-write --commit
+          status=$?
+          rm -f "$RUNNER_TEMP/sa.json"
+          exit $status
