@@ -19,7 +19,8 @@ import { isAdminEmail } from '../../config';
 import { ACCESS_GROUPS, PLANS, accessGroup, accessState, readConfig, roleOf } from '../../lib/access';
 import { saveConfig } from '../../lib/accessAdmin';
 import PersonSheet from './PersonSheet';
-import { AccessPill, RequestCard, RolePill, daysSince, emailOf, nameOf } from './accessUi';
+import { AccessPill, AppPill, RequestCard, RolePill, daysSince, emailOf, nameOf } from './accessUi';
+import { APP_FILTERS, appOf } from '../../lib/appVersion';
 import { AppBar, Avatar, Button, Card, Empty, ErrorBox, Input, Page, Select, SkeletonList, Toggle, useToast } from '../../components/ui';
 
 const PAGE = 60;
@@ -180,6 +181,7 @@ export default function AdminUsers() {
   const [q, setQ] = useState('');
   const [sort, setSort] = useState('recent');
   const [role, setRole] = useState('');
+  const [app, setApp] = useState('');
   const [limit, setLimit] = useState(PAGE);
   const [openUid, setOpenUid] = useState(null);
   const [history, setHistory] = useState(false);
@@ -192,7 +194,7 @@ export default function AdminUsers() {
       const record = accessAll?.[u._key] || null;
       const r = roleOf({ email: emailOf(u), record, legacyAdmin: isAdminEmail(emailOf(u)) || isTrue(u.admin) });
       const state = accessState({ role: r, record, config: on });
-      return { ...u, _role: r, _record: record, _access: state, _group: accessGroup(state) };
+      return { ...u, _role: r, _record: record, _access: state, _group: accessGroup(state), _app: appOf(u).kind };
     });
   }, [list.data, accessAll, accessConfig]);
   const byUid = useMemo(() => new Map(users.map((u) => [u._key, u])), [users]);
@@ -207,9 +209,9 @@ export default function AdminUsers() {
   const pending = requests.filter((r) => r.status === 'pending');
 
   const kpi = useMemo(() => {
-    const c = { total: users.length, active7: 0, pro: 0, trial: 0, subscribe: 0 };
+    const c = { total: users.length, old: 0, pro: 0, trial: 0, subscribe: 0 };
     users.forEach((u) => {
-      if (daysSince(u.date) <= 7) c.active7 += 1;
+      if (u._app === 'old') c.old += 1;
       if (u._group === 'pro') c.pro += 1;
       if (u._group === 'trial') c.trial += 1;
       if (u._group === 'subscribe') c.subscribe += 1;
@@ -221,6 +223,7 @@ export default function AdminUsers() {
     const needle = q.trim().toLowerCase();
     return users
       .filter((u) => roleFilter(role, u._role))
+      .filter((u) => !app || u._app === app)
       .filter((u) => !group || u._group === group)
       .filter(
         (u) =>
@@ -230,7 +233,7 @@ export default function AdminUsers() {
           String(u.residency || '').toLowerCase().includes(needle),
       )
       .sort(SORTS[sort].fn);
-  }, [users, q, role, group, sort]);
+  }, [users, q, role, group, sort, app]);
 
   const showGroup = (g) => {
     const next = new URLSearchParams(params);
@@ -252,10 +255,16 @@ export default function AdminUsers() {
 
         <div className="grid grid-cols-3 gap-2 sm:grid-cols-6">
           <Kpi value={kpi.total} label="Accounts" onClick={() => showGroup('')} active={tab === 'people' && !group} />
-          <Kpi value={kpi.active7} label="Active this week" tone="emerald" onClick={() => {
-            setSort('recent');
-            showGroup('');
-          }} />
+          <Kpi
+            value={kpi.old}
+            label="On the old app"
+            tone={kpi.old ? 'red' : 'slate'}
+            onClick={() => {
+              setApp(app === 'old' ? '' : 'old');
+              setParam('tab', '');
+            }}
+            active={app === 'old'}
+          />
           <Kpi value={pending.length} label="Waiting requests" tone={pending.length ? 'amber' : 'slate'} onClick={() => setParam('tab', 'requests')} active={tab === 'requests'} />
           <Kpi value={kpi.pro} label="Pro" tone="violet" onClick={() => showGroup('pro')} active={group === 'pro'} />
           <Kpi value={kpi.trial} label="On a trial" tone="amber" onClick={() => showGroup('trial')} active={group === 'trial'} />
@@ -306,7 +315,14 @@ export default function AdminUsers() {
                 }}
               />
             </label>
-            <div className="grid grid-cols-3 gap-2">
+            <div className="grid grid-cols-2 gap-2 sm:grid-cols-4">
+              <Select value={app} onChange={(e) => setApp(e.target.value)}>
+                {Object.entries(APP_FILTERS).map(([k, label]) => (
+                  <option key={k} value={k}>
+                    {label}
+                  </option>
+                ))}
+              </Select>
               <Select value={role} onChange={(e) => setRole(e.target.value)}>
                 {Object.entries(ROLE_FILTERS).map(([k, label]) => (
                   <option key={k} value={k}>
@@ -355,7 +371,10 @@ export default function AdminUsers() {
                             {u._role !== 'user' && <RolePill role={u._role} />}
                             {isTrue(u.blocked) && <span className="rounded-md bg-red-50 px-1.5 text-[11px] font-semibold text-red-600">Blocked</span>}
                           </p>
-                          <p className="truncate text-xs text-slate-500">{emailOf(u) || u.level || '—'}</p>
+                          <p className="flex items-center gap-1.5 text-xs text-slate-500">
+                            <AppPill user={u} />
+                            <span className="truncate">{emailOf(u) || u.level || '—'}</span>
+                          </p>
                         </div>
                         <div className="shrink-0 text-right">
                           <AccessPill state={u._access} />

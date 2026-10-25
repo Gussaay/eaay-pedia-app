@@ -4,7 +4,9 @@ import { onAuthStateChanged, signOut } from 'firebase/auth';
 import { auth } from '../firebase';
 import { subscribe, updateAt } from '../lib/rtdb';
 import { forgetPushToken } from '../lib/push';
-import { APP_VERSION_NUMBER, isAdminEmail } from '../config';
+import { App as CapApp } from '@capacitor/app';
+import { APP_VERSION, APP_VERSION_NUMBER, isAdminEmail } from '../config';
+import { isNative } from '../lib/native';
 import { accessState, canAdmin, canManage, readConfig, roleOf } from '../lib/access';
 
 const AuthContext = createContext(null);
@@ -64,7 +66,18 @@ export function AuthProvider({ children }) {
     }
     setProfileLoading(true);
     // Last-seen info, as MainPageActivity did on every launch.
-    updateAt(`quizusers/${user.uid}`, { ...nowParts(), ver: String(APP_VERSION_NUMBER) }).catch(() => {});
+    // `ver` is what the old app wrote ("5"); `app` and `platform` say exactly
+    // which build this is, for the user list (lib/appVersion.js).
+    updateAt(`quizusers/${user.uid}`, {
+      ...nowParts(),
+      ver: String(APP_VERSION_NUMBER),
+      app: APP_VERSION,
+      platform: isNative ? 'android' : 'web',
+    }).catch(() => {});
+    if (isNative)
+      CapApp.getInfo()
+        .then((info) => updateAt(`quizusers/${user.uid}`, { apk: String(info.version || '') }))
+        .catch(() => {});
     return subscribe(`quizusers/${user.uid}`, (val) => {
       setProfile(val || {});
       setProfileLoading(false);

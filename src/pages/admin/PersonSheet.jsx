@@ -20,7 +20,7 @@ import {
 import { groupBooks } from '../../lib/bookGroups';
 import DangerConfirm from '../../components/DangerConfirm';
 import { Avatar, Button, Modal, useToast } from '../../components/ui';
-import { AccessPill, LENGTHS, RequestCard, RolePill, emailOf, nameOf } from './accessUi';
+import { AccessPill, AppPill, LENGTHS, RequestCard, RolePill, emailOf, nameOf } from './accessUi';
 
 const isTrue = (v) => v === true || v === 'true';
 const day = (t) => (t ? new Date(Number(t)).toISOString().slice(0, 10) : '');
@@ -114,6 +114,7 @@ export default function PersonSheet({ person: u, requests = [], config, onClose,
     ['Level', u.level],
     ['Country', u.residency],
     ['Last seen', u.date],
+    ['App', u.apk ? `${u.app || ''} (APK ${u.apk})` : u.app || (Number(u.ver) >= 6 ? 'New app' : `Old app${u.ver ? ` v${u.ver}` : ''}`)],
     ['Score', num(u.over_all)],
     ['Quizzes played', num(u.total_play)],
     ['Correct', num(u.total_correct)],
@@ -133,6 +134,7 @@ export default function PersonSheet({ person: u, requests = [], config, onClose,
               <p className="truncate text-sm text-slate-500">{emailOf(u) || 'No email on record'}</p>
               <div className="mt-1 flex items-center gap-2">
                 <AccessPill state={state} />
+                <AppPill user={u} long />
                 {isTrue(u.blocked) && <span className="rounded-full bg-red-50 px-2 py-0.5 text-[11px] font-semibold text-red-600">Blocked</span>}
               </div>
             </div>

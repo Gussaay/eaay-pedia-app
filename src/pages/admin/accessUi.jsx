@@ -4,6 +4,7 @@ import { Check, X } from 'lucide-react';
 import { ROLE_INFO, SCOPE_LABELS, readConfig } from '../../lib/access';
 import { approveRequest, denyRequest } from '../../lib/accessAdmin';
 import { PRO_SCOPE, TRIAL_SCOPE } from '../../lib/unlockRequests';
+import { appOf } from '../../lib/appVersion';
 import { Avatar, Button, useToast } from '../../components/ui';
 
 export const emailOf = (u) => u.mail || u.email || '';
@@ -30,6 +31,23 @@ export function RolePill({ role }) {
   return (
     <span className={`shrink-0 rounded-md px-1.5 text-[11px] font-semibold leading-5 ${ROLE_TONES[role] || ROLE_TONES.user}`}>
       {ROLE_INFO[role]?.label || role}
+    </span>
+  );
+}
+
+const APP_TONES = {
+  old: 'bg-red-50 text-red-700',
+  new: 'bg-slate-100 text-slate-600',
+  android: 'bg-emerald-50 text-emerald-700',
+  web: 'bg-sky-50 text-sky-700',
+};
+
+/** Which app this person last opened: old app, or the new one and its build. */
+export function AppPill({ user, long = false }) {
+  const a = appOf(user);
+  return (
+    <span className={`inline-block rounded-md px-1.5 text-[11px] font-semibold leading-5 ${APP_TONES[a.kind]}`} title={a.label}>
+      {long ? a.label : a.short}
     </span>
   );
 }
