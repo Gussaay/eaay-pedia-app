@@ -1,8 +1,9 @@
 // "Remember it" under a quiz explanation: the topic tags, the mnemonic, the
 // flashcards and the linked questions (quizqq/<id>/tags, mnem_links,
-// card_links, and same + similar), opened over the quiz so the session is not
-// lost. Linked questions are the copies of this question asked in other
-// sittings and the similar questions, all answerable in one list.
+// card_links, and same + similar + related), opened over the quiz so the
+// session is not lost. Linked questions are the copies of this question asked
+// in other sittings, the similar questions (the same fact) and the linked ones
+// (the same condition, a connected point), all answerable in one list.
 import { useState } from 'react';
 import { createPortal } from 'react-dom';
 import { ChevronRight, Layers, Lightbulb, Repeat2, Tag, X } from 'lucide-react';
@@ -10,7 +11,7 @@ import { useAsync } from '../hooks/useData';
 import { useBackHandler } from '../lib/back';
 import { loadByRefs } from '../lib/mnemonicData';
 import { questionLinks } from '../lib/mnemonicLinks';
-import { sameOf, similarOf } from '../lib/questionHints';
+import { relatedOf, sameOf, similarOf } from '../lib/questionHints';
 import { visibleOptions } from '../lib/quiz';
 import { getOne } from '../lib/rtdb';
 import { tagsOf } from '../lib/topicTags';
@@ -22,16 +23,17 @@ export default function StudyLinks({ question }) {
   const [mnemonic, setMnemonic] = useState(null);
   const similar = similarOf(question);
   const same = sameOf(question);
+  const related = relatedOf(question);
   const tags = tagsOf(question);
   const [cardsOpen, setCardsOpen] = useState(false);
   const [linkedOpen, setLinkedOpen] = useState(false);
-  const linked = same.length + similar.length;
+  const linked = same.length + similar.length + related.length;
   // Only the mnemonic titles are read up front; the flashcards wait for a tap.
   const titles = useAsync(
     () => (mnemonics.length ? loadByRefs(mnemonics) : Promise.resolve([])),
     [mnemonics.join(',')],
   );
-  if (!mnemonics.length && !flashcards.length && !similar.length && !same.length && !tags.length) return null;
+  if (!mnemonics.length && !flashcards.length && !linked && !tags.length) return null;
 
   return (
     <div className="mt-5 border-t border-slate-100 pt-4">
@@ -93,6 +95,7 @@ export default function StudyLinks({ question }) {
                 {[
                   same.length ? `Asked in ${same.length + 1} sittings` : '',
                   similar.length ? `${similar.length} similar` : '',
+                  related.length ? `${related.length} linked` : '',
                 ]
                   .filter(Boolean)
                   .join(' · ')}
@@ -104,7 +107,7 @@ export default function StudyLinks({ question }) {
       </div>
       {mnemonic && <MnemonicPeek mnemonicRef={mnemonic} onClose={() => setMnemonic(null)} />}
       {cardsOpen && <FlashcardsPeek refs={flashcards} onClose={() => setCardsOpen(false)} />}
-      {linkedOpen && <LinkedPeek same={same} similar={similar} onClose={() => setLinkedOpen(false)} />}
+      {linkedOpen && <LinkedPeek same={same} similar={similar} related={related} onClose={() => setLinkedOpen(false)} />}
     </div>
   );
 }
@@ -136,11 +139,12 @@ function Sheet({ icon, title, tone, onClose, children }) {
 }
 
 // The linked questions, each answerable in place: the copies of this same
-// question from other sittings first, then the similar questions. Pick an
-// option to see the answer and its explanation.
-function LinkedPeek({ same, similar, onClose }) {
-  const ids = [...same, ...similar];
+// question from other sittings first, then the similar questions, then the
+// linked ones. Pick an option to see the answer and its explanation.
+function LinkedPeek({ same, similar, related = [], onClose }) {
+  const ids = [...same, ...similar, ...related];
   const isSame = new Set(same);
+  const isRelated = new Set(related);
   const data = useAsync(
     () =>
       Promise.all(ids.map((id) => getOne(`quizqq/${id}`).then((q) => q && { ...q, _key: id }))).then((l) =>
@@ -164,7 +168,8 @@ function LinkedPeek({ same, similar, onClose }) {
         <>
           <p className="text-xs text-slate-500 mb-3">
             {same.length ? `This question came up in ${same.length + 1} sittings. ` : ''}
-            The same question from other sittings and questions on the same point from other papers. Pick an answer to check it.
+            Same question: asked again in another sitting. Similar: another question on the same fact. Linked: the same
+            condition, a different connected point. Pick an answer to check it.
           </p>
           <ul className="space-y-3">
             {list.map((q, n) => {
@@ -177,6 +182,8 @@ function LinkedPeek({ same, similar, onClose }) {
                     Question {n + 1}
                     {isSame.has(q._key) ? (
                       <span className="rounded-full bg-violet-100 px-2 py-0.5 text-violet-800">Same question</span>
+                    ) : isRelated.has(q._key) ? (
+                      <span className="rounded-full bg-sky-100 px-2 py-0.5 text-sky-800">Linked</span>
                     ) : (
                       <span className="rounded-full bg-amber-100 px-2 py-0.5 text-amber-800">Similar</span>
                     )}

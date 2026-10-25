@@ -33,3 +33,10 @@ test('copies of the same question are listed apart from similar ones', async () 
   assert.deepEqual(similarOf(q), ['c3']);
   assert.deepEqual(sameOf({}), []);
 });
+
+test('linked (related) questions leave out copies and similar ones', async () => {
+  const { relatedOf } = await import('./questionHints.js');
+  const q = { same: { a1: true }, similar: { c3: true }, related: { a1: true, c3: true, d4: true, e5: false } };
+  assert.deepEqual(relatedOf(q), ['d4']);
+  assert.deepEqual(relatedOf({}), []);
+});

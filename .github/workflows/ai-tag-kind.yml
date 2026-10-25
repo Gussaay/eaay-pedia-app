@@ -1,0 +1,75 @@
+name: AI similar or linked
+
+# Sorts every pair the app shows as "Similar" into similar (the same fact),
+# linked (the same condition, a connected point) or not related
+# (scripts/ai-tag.mjs --phase kind), in ~5 h rounds that start themselves
+# again until every pair is sorted. Nothing reaches the questions here: the
+# kind-write phase does that once Qusay has seen the result.
+on:
+  push:
+    branches:
+      - claude/project-thread-cop9he
+    paths:
+      - '.github/workflows/ai-tag-kind.yml'
+  workflow_dispatch:
+
+concurrency:
+  group: ai-tag-kind
+  cancel-in-progress: false
+
+permissions:
+  contents: read
+  actions: write
+
+jobs:
+  tag:
+    runs-on: ubuntu-latest
+    timeout-minutes: 350
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+      - name: Install Firebase CLI and Claude Code
+        run: npm i -g firebase-tools@14 @anthropic-ai/claude-code
+      - name: Sort pairs into similar or linked
+        env:
+          FIREBASE_SERVICE_ACCOUNT: ${{ secrets.FIREBASE_SERVICE_ACCOUNT_EASY_PEDIA }}
+          GEMINI_API_KEY: ${{ secrets.GEMINI_API_KEY }}
+          GROQ_API_KEY: ${{ secrets.GROQ_API_KEY }}
+          # Claude subscription token: the link phase asks Claude first, lightly
+          CLAUDE_CODE_OAUTH_TOKEN: ${{ secrets.CLAUDE_CODE_OAUTH_TOKEN }}
+          CLAUDE_ON: '1'
+          # Claude Pro plan: per 5-hour round and per week, leaving Qusay room for his own use
+          # Qusay (2026-10-24): let this use the plan up to ~90% of the week, leaving him 10%.
+          # Measured on his usage page: 57% (18:05) to 59% (19:56) over 97 calls, so ~0.02% of
+          # the week a call, and ~0.15% of the 5-hour session. 1200 calls a week ends near 80%.
+          # The week starts at his plan's reset. Per round: the plan's own 5-hour limit also
+          # stops it (then it rests and rejoins).
+          CLAUDE_MAX_CALLS: '400'
+          CLAUDE_WEEK_CALLS: '1500'
+          CLAUDE_WORKERS: '2'
+          CLAUDE_WEEK_RESET: '2T19:59'
+          CLAUDE_MODEL: haiku # Qusay's choice: uses far less of the Pro limits than sonnet
+          GH_TOKEN: ${{ github.token }}
+          WRITE: dry
+        run: |
+          set +e
+          printf '%s' "$FIREBASE_SERVICE_ACCOUNT" > "$RUNNER_TEMP/sa.json"
+          export GOOGLE_APPLICATION_CREDENTIALS="$RUNNER_TEMP/sa.json"
+          run() { node --max-old-space-size=6000 scripts/ai-tag.mjs "$@" 2>&1 | tee "$RUNNER_TEMP/out.txt"; return ${PIPESTATUS[0]}; }
+          finished=no
+          end=$((SECONDS + 18500))
+          while [ $SECONDS -lt $end ]; do
+            run --phase kind --max-calls 250 | grep -v '^  [0-9]*/[0-9]* ('
+            code=${PIPESTATUS[0]}
+            if grep -q 'NOTHING TO DO' "$RUNNER_TEMP/out.txt"; then finished=yes; break; fi
+            if [ "$code" = 3 ]; then echo "Quota used up; waiting 30 minutes."; sleep 1800; fi
+          done
+          run --phase report --sample 80
+          run --phase kind-write
+          rm -f "$RUNNER_TEMP/sa.json"
+          if [ $finished = no ]; then
+            echo "Not finished: starting the next round."
+            gh workflow run ai-tag-kind.yml --ref "$GITHUB_REF_NAME" -R "$GITHUB_REPOSITORY"
+          fi

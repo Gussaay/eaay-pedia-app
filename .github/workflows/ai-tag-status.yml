@@ -51,5 +51,5 @@ jobs:
             console.log(`Pairs judged: ${pair.length}; linked: ${pair.filter((v) => Number(v) === 1).length}; unsure, to recheck with full text: ${pair.filter((v) => Number(v) === 2).length}`);
             const c = r("claude.json");
             if (c.week) console.log(`Claude week from ${c.week}: ${c.calls} calls, ${c.tokens} tokens${c.until > Date.now() ? `, resting until ${new Date(c.until).toISOString()}` : ""}`);
-            if (p.phase) console.log(`${p.phase === "link" ? "Link phase" : "Second look (full text, looser rule)"}: ${p.candidates - p.left} of ${p.candidates} pairs judged, ${p.left} left (updated ${p.updated})`);
+            if (p.phase) console.log(`${p.phase === "link" ? "Link phase" : p.phase === "second look" ? "Second look (full text, looser rule)" : "Sorting into similar or linked"}: ${p.candidates - p.left} of ${p.candidates} pairs judged, ${p.left} left (updated ${p.updated})`);
           '

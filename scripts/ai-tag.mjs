@@ -16,12 +16,22 @@
 //       (HAAD) links checked by hand (recall and the extra links found).
 //   node scripts/ai-tag.mjs --phase write [--commit]
 //       Writes tags/topic (tags_auto "1"), the qtags index and similar links.
+//   node scripts/ai-tag.mjs --phase kind [--max-calls 400]
+//       Every pair shown as "Similar" in the app is sorted: S similar (knowing
+//       one answer gives the other), L linked (same condition, a different
+//       connected point), N not related.
+//   node scripts/ai-tag.mjs --phase kind-write [--commit]
+//       Linked pairs move from similar to related (shown as "Linked"); AI
+//       links judged not related are taken out (hand links become Linked).
 //
 // Work in progress is kept in the database under aitag/, so every run goes on
 // where the last stopped (free API tiers allow a few hundred requests a day):
 //   aitag/q/<id>        { m: main, t: [tags], f: fact, h: text hash }
 //   aitag/canon/<slug>  standard label for a raw name
 //   aitag/pair/<a>__<b> 1 linked, 0 not linked (a < b)
+//   aitag/kind/<a>__<b> S similar (same fact), L linked (same condition, a
+//                       connected point), N not related: every pair shown
+//                       together in the app (quizqq/<id>/similar), phase kind
 //   aitag/re/<a>__<b>   1 when a "not linked" pair was judged again from the
 //                       full text with the looser rule (link phase, second stage)
 // Keys: GEMINI_API_KEY and/or GROQ_API_KEY in the environment. Hand tags
@@ -100,7 +110,7 @@ const saveClaude = (st) => {
   fs.mkdirSync('.tmp', { recursive: true });
   fs.writeFileSync(claudeUse, JSON.stringify(st));
 };
-const claudeOn = process.env.CLAUDE_ON === '1' && ['tag', 'link'].includes(phase);
+const claudeOn = process.env.CLAUDE_ON === '1' && ['tag', 'link', 'kind'].includes(phase);
 let claudeWeek = { week: weekStart, calls: 0, tokens: 0, until: 0 };
 if (claudeOn) {
   const w = read('aitag/claude');
@@ -298,6 +308,7 @@ state.q ||= {};
 state.canon ||= {};
 state.pair ||= {};
 state.re ||= {};
+state.kind ||= {};
 const list = Object.entries(all).filter(([, q]) => q && q.question !== undefined);
 // Pair keys are "a__b", and push ids can themselves contain "_", so split
 // where both halves are real question ids.
@@ -480,6 +491,52 @@ function candidates() {
   return ok.filter(([k]) => keep.has(k));
 }
 
+/**
+ * Gemini/Groq and Claude work side by side on one queue of pairs: each worker
+ * takes the next batch, and puts it back when its models are spent for now.
+ * prompt(batch) → text; apply(batch, reply, updates) records the answers;
+ * aitag/progress gets a summary after every batch (ai-tag-status.yml).
+ */
+async function runQueue({ todo, prompt, apply, phase: name, total, freeBatch, claudeBatch }) {
+  const queue = [...todo];
+  let busy = 0;
+  const worker = async (pick, size) => {
+    while (queue.length) {
+      const batch = queue.splice(0, size);
+      busy += batch.length;
+      const reply = await ask(prompt(batch), 500 + 15 * batch.length, pick);
+      busy -= batch.length;
+      if (!reply) {
+        queue.unshift(...batch);
+        if (tooBigFor[pick] && size > 1) {
+          size = Math.ceil(size / 2);
+          console.log(`  ${pick}: smaller batches: ${size}`);
+          continue;
+        }
+        // Claude resting after a usage-limit reply, with budget left: wait, then go on
+        const rest = claudeWeek.until - Date.now();
+        if (pick === 'claude' && rest > 0 && calls < maxCalls && claudeState().calls < claudeMax && claudeWeek.calls < claudeWeekMax) {
+          console.log(`  claude: resting until ${new Date(claudeWeek.until).toISOString()}`);
+          await sleep(Math.min(rest + 5000, 2 * 3600000));
+          continue;
+        }
+        return;
+      }
+      const updates = {};
+      apply(batch, reply, updates);
+      updates['aitag/progress'] = { phase: name, candidates: total, left: queue.length + busy, updated: new Date().toISOString() };
+      write(updates, 'aitag-pair');
+      console.log(`  ${todo.length - queue.length - busy}/${todo.length} (${calls} requests, ${pick})`);
+    }
+  };
+  await Promise.all([
+    worker('free', Number(value('batch', freeBatch))),
+    ...(models.some((m) => m.provider === 'claude')
+      ? Array.from({ length: Number(process.env.CLAUDE_WORKERS || 1) }, () => worker('claude', Number(value('claude-batch', claudeBatch))))
+      : []),
+  ]);
+}
+
 // ------------------------------------------------------------------ link
 if (phase === 'link') {
   const untagged = list.filter(([id, q]) => state.q[id]?.h !== hashOf(q)).length;
@@ -525,16 +582,9 @@ if (phase === 'link') {
     if (full || !fact) return `${clean(q.question).slice(0, 350)} | Answer: ${answerOf(q).slice(0, 100)} | Tests: ${fact}`;
     return `${fact} | Answer: ${answerOf(q).slice(0, 80)}`;
   };
-  // Gemini/Groq and Claude work side by side on one queue: each worker takes
-  // the next batch, and puts it back when its models are spent for now.
-  const queue = [...todo];
-  let busy = 0;
-  const worker = async (pick, size) => {
-    while (queue.length) {
-      const batch = queue.splice(0, size);
-      busy += batch.length;
-      const reply = await ask(
-        recheck ? [
+  const linkPrompt = (batch) =>
+    (recheck
+      ? [
           'Decide for each pair of paediatric exam questions whether they are LINKED for a student revising: they ask about the same condition (or drug, test, sign) AND the same or a directly connected point, so studying one directly helps answer the other.',
           'LINKED examples: the same question asked in other words; two steps of one algorithm (e.g. vagal manoeuvres first, then adenosine for SVT); a diagnosis and its defining feature or main complication; the same investigation or treatment of one condition.',
           'NOT linked: only the same broad area or body system; the same condition but unrelated points (e.g. its epidemiology vs. a drug dose); a shared word only.',
@@ -544,7 +594,8 @@ if (phase === 'link') {
             const [a, b] = pairIds(k);
             return `Pair ${n + 1}\nA: ${show(a, true)}\nB: ${show(b, true)}`;
           }),
-        ].join('\n') : [
+        ]
+      : [
           'Decide for each pair of paediatric exam questions whether they are LINKED: both test the same specific fact or concept, so a student who learns the answer to one is directly helped with the other (same condition AND same aspect, e.g. both on the first-line treatment of Kawasaki disease, or one asks the diagnosis and the other a key feature that defines it).',
           'NOT linked: same condition but unrelated aspects (e.g. epidemiology vs. drug dose), or only a shared broad area.',
           'Most pairs show only the point each question tests and its answer. If that is not enough to decide, answer 2 (unsure) for that pair; pairs marked "full" show the whole question and need 1 or 0.',
@@ -555,50 +606,78 @@ if (phase === 'link') {
             const full = state.pair[k] === 2;
             return `Pair ${n + 1}${full ? ' (full)' : ''}\nA: ${show(a, full)}\nB: ${show(b, full)}`;
           }),
-        ].join('\n'),
-        500 + 15 * batch.length,
-        pick,
-      );
-      busy -= batch.length;
-      if (!reply) {
-        queue.unshift(...batch);
-        if (tooBigFor[pick] && size > 1) {
-          size = Math.ceil(size / 2);
-          console.log(`  ${pick}: smaller batches: ${size}`);
-          continue;
-        }
-        // Claude resting after a usage-limit reply, with budget left: wait, then go on
-        const rest = claudeWeek.until - Date.now();
-        if (pick === 'claude' && rest > 0 && calls < maxCalls && claudeState().calls < claudeMax && claudeWeek.calls < claudeWeekMax) {
-          console.log(`  claude: resting until ${new Date(claudeWeek.until).toISOString()}`);
-          await sleep(Math.min(rest + 5000, 2 * 3600000));
-          continue;
-        }
-        return;
-      }
-      const updates = {};
-      batch.forEach(([k], n) => {
-        const v = Number(reply.r?.[String(n + 1)] ?? NaN);
-        if (recheck) {
-          if (v !== 0 && v !== 1) return;
-          updates[`aitag/pair/${k}`] = state.pair[k] = v;
-          updates[`aitag/re/${k}`] = state.re[k] = 1;
-        } else if (v === 0 || v === 1 || (v === 2 && state.pair[k] !== 2)) updates[`aitag/pair/${k}`] = state.pair[k] = v;
-      });
-      // a small summary the status workflow (ai-tag-status.yml) can read while this runs
-      updates['aitag/progress'] = { phase: recheck ? 'second look' : 'link', candidates: recheck ? todo.length : cand.length, left: queue.length + busy, updated: new Date().toISOString() };
-      write(updates, 'aitag-pair');
-      console.log(`  ${todo.length - queue.length - busy}/${todo.length} (${calls} requests, ${pick})`);
-    }
-  };
+        ]
+    ).join('\n');
+  const linkApply = (batch, reply, updates) =>
+    batch.forEach(([k], n) => {
+      const v = Number(reply.r?.[String(n + 1)] ?? NaN);
+      if (recheck) {
+        if (v !== 0 && v !== 1) return;
+        updates[`aitag/pair/${k}`] = state.pair[k] = v;
+        updates[`aitag/re/${k}`] = state.re[k] = 1;
+      } else if (v === 0 || v === 1 || (v === 2 && state.pair[k] !== 2)) updates[`aitag/pair/${k}`] = state.pair[k] = v;
+    });
   // short pair text: bigger batches; the second look shows the full text
-  const batchSize = Number(value('batch', recheck ? 15 : 40));
-  await Promise.all([
-    worker('free', batchSize),
-    ...(models.some((m) => m.provider === 'claude')
-      ? Array.from({ length: Number(process.env.CLAUDE_WORKERS || 1) }, () => worker('claude', Number(value('claude-batch', recheck ? 40 : 100))))
-      : []),
-  ]);
+  await runQueue({
+    todo,
+    prompt: linkPrompt,
+    apply: linkApply,
+    phase: recheck ? 'second look' : 'link',
+    total: recheck ? todo.length : cand.length,
+    freeBatch: recheck ? 15 : 40,
+    claudeBatch: recheck ? 40 : 100,
+  });
+}
+
+
+// ------------------------------------------------------------------ kind
+// The pairs the app shows as "Similar" (hand links and AI links), each once.
+const shownPairs = () => {
+  const out = new Map();
+  for (const [id, q] of list) {
+    const same = new Set(Object.keys(q.same || {}));
+    for (const o of Object.keys(q.similar || {})) {
+      if (!q.similar[o] || same.has(o) || !all[o]) continue;
+      const k = id < o ? `${id}__${o}` : `${o}__${id}`;
+      if (pairIds(k)[0]) out.set(k, true);
+    }
+  }
+  return [...out.keys()];
+};
+if (phase === 'kind') {
+  const pairs = shownPairs();
+  const todo = pairs.filter((k) => !state.kind[k]).map((k) => [k]);
+  console.log(`${pairs.length} pairs shown as similar, ${todo.length} still to sort.`);
+  if (!todo.length) console.log('NOTHING TO DO');
+  const show = (id) => {
+    const q = all[id];
+    return `${clean(q.question).slice(0, 160)} | Answer: ${answerOf(q).slice(0, 60)}${state.q[id]?.f ? ` | Tests: ${state.q[id].f}` : ''}`;
+  };
+  await runQueue({
+    todo,
+    prompt: (batch) =>
+      [
+        'These pairs of paediatric exam questions are shown together in a study app. Sort each pair:',
+        'S = SIMILAR: both test the same fact, so a student who knows the answer to A knows the answer to B (including the same question in other words).',
+        'L = LINKED: the same condition (or drug, test, sign) but a different, connected point, e.g. its diagnosis and its embryology, its diagnosis and its main complication, step 1 and step 2 of one algorithm. Knowing A helps to study B but does not give its answer.',
+        'N = NOT RELATED: only the same broad area or body system, or a shared word.',
+        'Reply only with JSON: {"r":{"<pair number>":"S", "L" or "N", …}} for every pair.',
+        '',
+        ...batch.map(([k], n) => {
+          const [a, b] = pairIds(k);
+          return `Pair ${n + 1}\nA: ${show(a)}\nB: ${show(b)}`;
+        }),
+      ].join('\n'),
+    apply: (batch, reply, updates) =>
+      batch.forEach(([k], n) => {
+        const v = String(reply.r?.[String(n + 1)] ?? '').trim().toUpperCase();
+        if (['S', 'L', 'N'].includes(v)) updates[`aitag/kind/${k}`] = state.kind[k] = v;
+      }),
+    phase: 'similar or linked',
+    total: todo.length,
+    freeBatch: 30,
+    claudeBatch: 100,
+  });
 }
 
 // ------------------------------------------------------------------ report
@@ -615,6 +694,18 @@ if (phase === 'report' || phase === 'write') {
   console.log('Most common main topics:', [...mains].sort((a, b) => b[1] - a[1]).slice(0, 40).map(([l, n]) => `${l} ${n}`).join(', '));
   const judged = Object.values(state.pair);
   console.log(`Pairs judged ${judged.length}: linked ${judged.filter((v) => v === 1).length}.`);
+  const kinds = Object.entries(state.kind);
+  if (kinds.length) {
+    const written = read('aitag/written/links') || {};
+    const count = (f) => ['S', 'L', 'N'].map((v) => `${v} ${kinds.filter(([k, x]) => x === v && f(k)).length}`).join(', ');
+    console.log(`Similar or linked, ${kinds.length} sorted: all ${count(() => true)}; hand links ${count((k) => !written[k])}; AI links ${count((k) => written[k])}.`);
+    const step = Math.max(1, Math.floor(kinds.length / 60));
+    console.log('Sample (S similar, L linked, N not related):');
+    kinds.filter((_, i) => i % step === 0).forEach(([k, v]) => {
+      const [a, b] = pairIds(k);
+      if (a) console.log(`  ${v} ${written[k] ? 'AI' : 'hand'} | ${clean(all[a].question).slice(0, 80)} → ${answerOf(all[a]).slice(0, 25)} || ${clean(all[b].question).slice(0, 80)} → ${answerOf(all[b]).slice(0, 25)}`);
+    });
+  }
 
   // Books whose links were checked by hand (DOH/HAAD, Saudi Prometric): how many the AI pipeline finds.
   for (const [book, name] of [['doh_haad', 'DOH'], ['saudi_prometric', 'Saudi Prometric']]) {
@@ -704,6 +795,40 @@ if (phase === 'write') {
       console.log(`  written part ${i + 1}`);
     });
     console.log(`Written. Undo record: aitag/written (${Object.keys(undo).length} entries).`);
+  }
+}
+// ------------------------------------------------------------------ kind-write
+if (phase === 'kind-write') {
+  const written = read('aitag/written/links') || {};
+  const updates = {};
+  const undo = {};
+  let toLinked = 0;
+  let removed = 0;
+  for (const [k, v] of Object.entries(state.kind)) {
+    const [a, b] = pairIds(k);
+    if (!a || v === 'S' || !all[a].similar?.[b]) continue;
+    undo[`aitag/written/kind/${k}`] = v;
+    updates[`quizqq/${a}/similar/${b}`] = null;
+    updates[`quizqq/${b}/similar/${a}`] = null;
+    if (v === 'N' && written[k]) {
+      removed += 1;
+      continue;
+    }
+    // linked, or a hand link judged not related: shown as Linked, never dropped
+    updates[`quizqq/${a}/related/${b}`] = true;
+    updates[`quizqq/${b}/related/${a}`] = true;
+    toLinked += 1;
+  }
+  console.log(`\n${toLinked} pairs move from Similar to Linked; ${removed} AI links taken out.`);
+  if (!args.includes('--commit')) console.log('DRY RUN — add --commit to write.');
+  else {
+    const parts = (o, n = 20000) => {
+      const e = Object.entries(o);
+      return Array.from({ length: Math.ceil(e.length / n) }, (_, i) => Object.fromEntries(e.slice(i * n, (i + 1) * n)));
+    };
+    parts(undo).forEach((u, i) => write(u, `aitag-kind-undo-${i}`));
+    parts(updates).forEach((u, i) => write(u, `aitag-kind-${i}`));
+    console.log(`Written. Undo record: aitag/written/kind (${Object.keys(undo).length} entries).`);
   }
 }
 console.log(`\n${calls} AI requests this run.`);
