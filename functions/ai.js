@@ -411,256 +411,319 @@ async function quotaFor(uid, staff) {
 const OUT_OF_QUOTA = 'You have used your AI requests for today. They renew at midnight US Pacific time.';
 const POOL_EMPTY = "Today's free AI allowance is used up for everyone. It renews at midnight US Pacific time.";
 
+async function handle(request, response, use) {
+  if (!request.auth) throw new HttpsError('unauthenticated', 'Sign in first.');
+  const { uid } = request.auth;
+  const staff = await isStaff(request.auth);
+  const quota = await quotaFor(uid, staff);
+  if (request.data?.task === 'quota') return { quota };
+  use.log = true;
+  use.quota = quota;
+  if (!quota.left) {
+    use.status = 'limit';
+    throw new HttpsError('resource-exhausted', quota.pool.left ? OUT_OF_QUOTA : POOL_EMPTY, { quota });
+  }
+  await recordUsage((root) => root.child(`active/${uid}`).set(quota.day));
+  // Every request below is counted on this person.
+  const count = (model, tokens) => {
+    use.requests++;
+    use.model = model;
+    return countRequest(model, tokens, uid);
+  };
+  const withQuota = async (out) => ({ ...out, quota: await quotaFor(uid, staff) });
+  // A key pasted into the masked secrets prompt can carry spaces, a line
+  // break or quotes, which Google then reports as a bad OAuth token.
+  const cleanKey = (secret) => String(secret.value() || '').replace(/[\s"']/g, '');
+  const groqKey = cleanKey(GROQ_API_KEY);
+  const key = cleanKey(GEMINI_API_KEY);
+  if (!groqKey && !key) throw new HttpsError('failed-precondition', 'GROQ_API_KEY is not set on the server.');
+
+  const provider = request.data?.provider;
+  const useGroq = groqKey && provider !== 'gemini';
+  const useGemini = key && provider !== 'groq';
+  if (provider === 'gemini' && !key) throw new HttpsError('failed-precondition', 'GEMINI_API_KEY is not set on the server.');
+  if (provider === 'groq' && !groqKey) throw new HttpsError('failed-precondition', 'GROQ_API_KEY is not set on the server.');
+
+  if (request.data?.task === 'agent') {
+    return withQuota(await runAgent(request.data, uid, {
+      SYSTEM,
+      groqKey: useGroq ? groqKey : '',
+      geminiKey: key,
+      useGemini: !!useGemini,
+      groqModels: GROQ_MODELS,
+      geminiModels: MODELS,
+      GROQ_URL,
+      thinkingFor,
+      countRequest: count,
+      recordLimit,
+      findPassages,
+    }));
+  }
+
+  let { contents, schema } = buildRequest(request.data);
+  let sources;
+  if (request.data?.books && ['explain', 'chat'].includes(request.data.task)) {
+    if (!key) throw new HttpsError('failed-precondition', 'Textbook search needs GEMINI_API_KEY (for embeddings).');
+    try {
+      sources = await findPassages(bookQuery(request.data), key);
+    } catch (e) {
+      logger.warn(`Book search failed: ${e.message}`);
+      throw new HttpsError('unavailable', 'Could not search your textbooks right now, try again or turn it off.');
+    }
+    if (sources.length) contents = withPassages(contents, sources);
+  }
+  // Replies the app shows as they are written (explanations, chat) stream;
+  // JSON sets are only useful whole.
+  const stream = !schema && request.acceptsStreaming && response;
+  let streamed = false; // once text has gone out, no other model may take over
+  const send = (t) => {
+    streamed = true;
+    response.sendChunk(t);
+  };
+
+  // `counted` is the model asked for, which the daily pool knows by name;
+  // the reply shows the version that answered.
+  const finish = async (text, model, tokens, counted = model) => {
+    await count(counted, tokens);
+    if (!schema) return withQuota({ text, model, ...(sources ? { sources: sources.map(({ n, title, page, text: t }) => ({ n, title, page, text: t })) } : {}) });
+    try {
+      const parsed = JSON.parse(text);
+      return withQuota({ items: Array.isArray(parsed) ? parsed : parsed.items, model });
+    } catch {
+      throw new HttpsError('internal', 'The AI returned malformed JSON, try again.');
+    }
+  };
+
+  // ---------------------------------------------------------------- Groq
+  // Any failure here (quota, outage, a bad key) hands over to Gemini, unless
+  // part of the answer has already been streamed to the app.
+  let groqError = '';
+  if (useGroq) {
+    // Groq structured outputs need an object at the root.
+    const format = schema && {
+      type: 'json_schema',
+      json_schema: {
+        name: 'items',
+        schema: {
+          type: 'object',
+          properties: { items: toJsonSchema(schema) },
+          required: ['items'],
+          additionalProperties: false,
+        },
+      },
+    };
+    const body = (model) => ({
+      model,
+      messages: toMessages(contents),
+      temperature: schema ? 0.6 : 0.4,
+      // The free tier allows 8K tokens a minute, prompt included.
+      max_completion_tokens: schema ? 6144 : 3072,
+      // GPT-OSS reasons before answering; a little is enough for tutoring
+      // and keeps replies quick. The reasoning itself is not sent back.
+      reasoning_effort: 'low',
+      include_reasoning: false,
+      ...(stream ? { stream: true } : {}),
+      ...(format ? { response_format: format } : {}),
+    });
+
+    groq: for (const model of GROQ_MODELS) {
+      for (let attempt = 0; ; attempt++) {
+        const r = await fetch(GROQ_URL, {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json', Authorization: `Bearer ${groqKey}` },
+          body: JSON.stringify(body(model)),
+        });
+        await recordLimit(model, Number(r.headers.get('x-ratelimit-limit-requests')));
+        if (r.ok) {
+          let text;
+          let tokens;
+          if (stream) ({ text, tokens } = await readChatSse(r, send));
+          else {
+            const j = await r.json().catch(() => ({}));
+            text = j?.choices?.[0]?.message?.content || '';
+            tokens = Number(j?.usage?.total_tokens) || 0;
+          }
+          if (text.trim()) return finish(text.trim(), model, tokens);
+          if (streamed) throw new HttpsError('internal', 'The AI stopped mid-answer, try again.');
+          groqError = `${model} returned an empty reply`;
+          break;
+        }
+        const j = await r.json().catch(() => ({}));
+        const wait = parseFloat(r.headers.get('retry-after')) || 0;
+        // Per-minute limits and brief outages clear within seconds.
+        if (attempt < 1 && ((r.status === 429 && wait <= 10) || [500, 502, 503].includes(r.status))) {
+          await new Promise((ok) => setTimeout(ok, Math.min(Math.max(wait * 1000, 1500), 10_000)));
+          continue;
+        }
+        groqError = `${model} ${r.status}: ${j?.error?.message || ''}`;
+        logger.warn(`Groq ${groqError}`);
+        if (r.status === 429 && wait > 60) await recordReset(model, wait); // daily allowance used up
+        if (r.status === 401 || r.status === 403) break groq; // the key itself is wrong
+        break;
+      }
+    }
+    if (!useGemini) {
+      if (/ 429:/.test(groqError)) {
+        throw new HttpsError('resource-exhausted', "Today's free AI allowance is used up, try again later.");
+      }
+      if (/ 40[13]:/.test(groqError)) {
+        throw new HttpsError(
+          'failed-precondition',
+          'Groq rejected the key. Copy it again from console.groq.com/keys and re-run ' +
+            'firebase functions:secrets:set GROQ_API_KEY.',
+        );
+      }
+      throw new HttpsError('internal', `AI error: ${clip(groqError, 300)}`);
+    }
+  }
+
+  // -------------------------------------------------------------- Gemini
+  let thinking = true;
+  const bodyFor = (model) => ({
+    systemInstruction: { parts: [{ text: SYSTEM }] },
+    contents,
+    generationConfig: {
+      temperature: schema ? 0.6 : 0.4,
+      maxOutputTokens: schema ? 8192 : 3072,
+      ...(thinking ? { thinkingConfig: thinkingFor(model) } : {}),
+      ...(schema ? { responseMimeType: 'application/json', responseSchema: schema } : {}),
+    },
+  });
+
+  const call = async (model) => {
+    const method = stream ? 'streamGenerateContent?alt=sse' : 'generateContent';
+    const r = await fetch(`https://generativelanguage.googleapis.com/v1beta/models/${model}:${method}`, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json', 'x-goog-api-key': key },
+      body: JSON.stringify(bodyFor(model)),
+    });
+    if (!r.ok || !stream) return [r, await r.json().catch(() => ({}))];
+    return [r, await readSse(r, send)];
+  };
+  // Seconds Google asks us to wait on a 429 ("retryDelay": "37s").
+  const retryAfter = (j) =>
+    parseFloat((j?.error?.details || []).find((d) => d.retryDelay)?.retryDelay) || 0;
+
+  let res;
+  let json;
+  let model;
+  let quotaWait = 0;
+  const started = Date.now();
+  for (model of MODELS) {
+    // "High demand" (503) and per-minute rate limits usually clear within
+    // seconds, so try the same model once more before moving on.
+    for (let attempt = 0; ; attempt++) {
+      [res, json] = await call(model);
+      if (res.status === 400 && thinking && /thinking/i.test(json?.error?.message || '')) {
+        thinking = false; // this model takes no thinking setting: ask again without it
+        continue;
+      }
+      const wait = res.status === 429 ? retryAfter(json) : 0;
+      if (res.status === 429 && wait > 30) break; // daily quota: no point retrying this model
+      if (res.ok || ![429, 500, 503].includes(res.status) || attempt >= 1) break;
+      await new Promise((r) => setTimeout(r, Math.min(Math.max(wait * 1000, 1500), 5000)));
+    }
+    if (res.ok || streamed) break;
+    if (Date.now() - started > 60_000) break; // the app gives up at 120 s; leave time to say why
+    logger.warn(`Gemini ${model} ${res.status}: ${json?.error?.message || ''} (key length ${key.length})`);
+    // Out of quota, overloaded, or not open to the key: try the next one.
+    if (res.status === 429) {
+      quotaWait = Math.max(quotaWait, retryAfter(json));
+      if (retryAfter(json) > 30) await recordQuotaHit(json?.error?.message, retryAfter(json), model);
+    }
+    else if (res.status === 404) await recordOff(model);
+    else if (![403, 500, 503].includes(res.status)) break;
+  }
+  if (!res.ok) {
+    const msg = json?.error?.message || `HTTP ${res.status}`;
+    if (quotaWait > 30) {
+      const h = Math.floor(quotaWait / 3600);
+      const m = Math.ceil((quotaWait % 3600) / 60);
+      throw new HttpsError(
+        'resource-exhausted',
+        `Today's free Gemini quota is used up. It resets in about ${h ? `${h} h ` : ''}${m} min, ` +
+          'or turn on billing for the key in AI Studio.',
+      );
+    }
+    if (res.status === 401) {
+      throw new HttpsError(
+        'failed-precondition',
+        'Google rejected the Gemini key. Copy it again from aistudio.google.com/apikey and re-run ' +
+          'firebase functions:secrets:set GEMINI_API_KEY.',
+      );
+    }
+    if (res.status === 402) throw new HttpsError('failed-precondition', 'The Gemini key has no credit left (AI Studio > billing).');
+    if (res.status === 429) throw new HttpsError('resource-exhausted', 'Gemini rate limit reached, try again in a minute.');
+    if (res.status === 503) throw new HttpsError('unavailable', 'Gemini is busy right now, try again in a minute.');
+    throw new HttpsError('internal', `Gemini error: ${clip(msg, 300)}`);
+  }
+
+  const cand = json?.candidates?.[0];
+  const text = (cand?.content?.parts || []).filter((p) => !p.thought).map((p) => p.text || '').join('').trim();
+  if (!text) {
+    const why = cand?.finishReason || json?.promptFeedback?.blockReason || 'empty reply';
+    throw new HttpsError('internal', `Gemini returned no answer (${why}).`);
+  }
+
+  // "-latest" is an alias; Google reports the concrete version it ran.
+  return finish(text, json.modelVersion || model, Number(json.usageMetadata?.totalTokenCount) || 0, model);
+}
+
+// ------------------------------------------------------------------ log
+// One line per use for the admins' AI activity page: aiUsage/log/<day>/<id>
+// { uid, name, email, task, what, books, provider, model, requests, status,
+//   error, ms, at, staff, limit, pool }. `what` is the topic, or the start of the question asked.
+function whatWasAsked(data = {}) {
+  const lastAsk = () => [...(data.messages || [])].reverse().find((m) => m.role !== 'model')?.text;
+  const text =
+    data.task === 'explain'
+      ? data.question?.question
+      : ['chat', 'agent'].includes(data.task)
+        ? lastAsk()
+        : data.topic;
+  const about = data.task === 'chat' && data.context?.kind === 'question' ? ' (about an MCQ)' : '';
+  return clip(String(text || '').replace(/\s+/g, ' ').trim(), 300) + about;
+}
+
+async function logUse(request, use, started) {
+  const data = request.data || {};
+  const token = request.auth?.token || {};
+  const line = {
+    uid: request.auth.uid,
+    name: clip(token.name || '', 80),
+    email: clip(token.email || '', 120),
+    task: clip(data.task, 20),
+    what: whatWasAsked(data),
+    requests: use.requests,
+    status: use.status,
+    ms: Date.now() - started,
+    at: Date.now(),
+    ...(data.task === 'quiz' || data.task === 'cards' ? { count: Number(data.count) || null } : {}),
+    ...(data.books ? { books: true } : {}),
+    ...(data.provider ? { provider: clip(data.provider, 10) } : {}),
+    ...(use.model ? { model: clip(use.model, 60) } : {}),
+    ...(use.error ? { error: clip(use.error, 200) } : {}),
+    // The allowance at the time, for "% of own limit" and "% of the pool".
+    ...(use.quota ? { staff: !!use.quota.unlimited, limit: use.quota.limit || 0, pool: use.quota.pool.total } : {}),
+  };
+  await recordUsage((root) => root.child(`log/${usageDay()}`).push(line));
+}
+
 export const aiStudy = onCall(
   { secrets: [GROQ_API_KEY, GEMINI_API_KEY], timeoutSeconds: 120, memory: '1GiB', maxInstances: 3 },
   async (request, response) => {
-    if (!request.auth) throw new HttpsError('unauthenticated', 'Sign in first.');
-    const { uid } = request.auth;
-    const staff = await isStaff(request.auth);
-    const quota = await quotaFor(uid, staff);
-    if (request.data?.task === 'quota') return { quota };
-    if (!quota.left) {
-      throw new HttpsError('resource-exhausted', quota.pool.left ? OUT_OF_QUOTA : POOL_EMPTY, { quota });
-    }
-    await recordUsage((root) => root.child(`active/${uid}`).set(quota.day));
-    // Every request below is counted on this person.
-    const count = (model, tokens) => countRequest(model, tokens, uid);
-    const withQuota = async (out) => ({ ...out, quota: await quotaFor(uid, staff) });
-    // A key pasted into the masked secrets prompt can carry spaces, a line
-    // break or quotes, which Google then reports as a bad OAuth token.
-    const cleanKey = (secret) => String(secret.value() || '').replace(/[\s"']/g, '');
-    const groqKey = cleanKey(GROQ_API_KEY);
-    const key = cleanKey(GEMINI_API_KEY);
-    if (!groqKey && !key) throw new HttpsError('failed-precondition', 'GROQ_API_KEY is not set on the server.');
-
-    const provider = request.data?.provider;
-    const useGroq = groqKey && provider !== 'gemini';
-    const useGemini = key && provider !== 'groq';
-    if (provider === 'gemini' && !key) throw new HttpsError('failed-precondition', 'GEMINI_API_KEY is not set on the server.');
-    if (provider === 'groq' && !groqKey) throw new HttpsError('failed-precondition', 'GROQ_API_KEY is not set on the server.');
-
-    if (request.data?.task === 'agent') {
-      return withQuota(await runAgent(request.data, uid, {
-        SYSTEM,
-        groqKey: useGroq ? groqKey : '',
-        geminiKey: key,
-        useGemini: !!useGemini,
-        groqModels: GROQ_MODELS,
-        geminiModels: MODELS,
-        GROQ_URL,
-        thinkingFor,
-        countRequest: count,
-        recordLimit,
-        findPassages,
-      }));
-    }
-
-    let { contents, schema } = buildRequest(request.data);
-    let sources;
-    if (request.data?.books && ['explain', 'chat'].includes(request.data.task)) {
-      if (!key) throw new HttpsError('failed-precondition', 'Textbook search needs GEMINI_API_KEY (for embeddings).');
-      try {
-        sources = await findPassages(bookQuery(request.data), key);
-      } catch (e) {
-        logger.warn(`Book search failed: ${e.message}`);
-        throw new HttpsError('unavailable', 'Could not search your textbooks right now, try again or turn it off.');
-      }
-      if (sources.length) contents = withPassages(contents, sources);
-    }
-    // Replies the app shows as they are written (explanations, chat) stream;
-    // JSON sets are only useful whole.
-    const stream = !schema && request.acceptsStreaming && response;
-    let streamed = false; // once text has gone out, no other model may take over
-    const send = (t) => {
-      streamed = true;
-      response.sendChunk(t);
-    };
-
-    // `counted` is the model asked for, which the daily pool knows by name;
-    // the reply shows the version that answered.
-    const finish = async (text, model, tokens, counted = model) => {
-      await count(counted, tokens);
-      if (!schema) return withQuota({ text, model, ...(sources ? { sources: sources.map(({ n, title, page, text: t }) => ({ n, title, page, text: t })) } : {}) });
-      try {
-        const parsed = JSON.parse(text);
-        return withQuota({ items: Array.isArray(parsed) ? parsed : parsed.items, model });
-      } catch {
-        throw new HttpsError('internal', 'The AI returned malformed JSON, try again.');
-      }
-    };
-
-    // ---------------------------------------------------------------- Groq
-    // Any failure here (quota, outage, a bad key) hands over to Gemini, unless
-    // part of the answer has already been streamed to the app.
-    let groqError = '';
-    if (useGroq) {
-      // Groq structured outputs need an object at the root.
-      const format = schema && {
-        type: 'json_schema',
-        json_schema: {
-          name: 'items',
-          schema: {
-            type: 'object',
-            properties: { items: toJsonSchema(schema) },
-            required: ['items'],
-            additionalProperties: false,
-          },
-        },
-      };
-      const body = (model) => ({
-        model,
-        messages: toMessages(contents),
-        temperature: schema ? 0.6 : 0.4,
-        // The free tier allows 8K tokens a minute, prompt included.
-        max_completion_tokens: schema ? 6144 : 3072,
-        // GPT-OSS reasons before answering; a little is enough for tutoring
-        // and keeps replies quick. The reasoning itself is not sent back.
-        reasoning_effort: 'low',
-        include_reasoning: false,
-        ...(stream ? { stream: true } : {}),
-        ...(format ? { response_format: format } : {}),
-      });
-
-      groq: for (const model of GROQ_MODELS) {
-        for (let attempt = 0; ; attempt++) {
-          const r = await fetch(GROQ_URL, {
-            method: 'POST',
-            headers: { 'Content-Type': 'application/json', Authorization: `Bearer ${groqKey}` },
-            body: JSON.stringify(body(model)),
-          });
-          await recordLimit(model, Number(r.headers.get('x-ratelimit-limit-requests')));
-          if (r.ok) {
-            let text;
-            let tokens;
-            if (stream) ({ text, tokens } = await readChatSse(r, send));
-            else {
-              const j = await r.json().catch(() => ({}));
-              text = j?.choices?.[0]?.message?.content || '';
-              tokens = Number(j?.usage?.total_tokens) || 0;
-            }
-            if (text.trim()) return finish(text.trim(), model, tokens);
-            if (streamed) throw new HttpsError('internal', 'The AI stopped mid-answer, try again.');
-            groqError = `${model} returned an empty reply`;
-            break;
-          }
-          const j = await r.json().catch(() => ({}));
-          const wait = parseFloat(r.headers.get('retry-after')) || 0;
-          // Per-minute limits and brief outages clear within seconds.
-          if (attempt < 1 && ((r.status === 429 && wait <= 10) || [500, 502, 503].includes(r.status))) {
-            await new Promise((ok) => setTimeout(ok, Math.min(Math.max(wait * 1000, 1500), 10_000)));
-            continue;
-          }
-          groqError = `${model} ${r.status}: ${j?.error?.message || ''}`;
-          logger.warn(`Groq ${groqError}`);
-          if (r.status === 429 && wait > 60) await recordReset(model, wait); // daily allowance used up
-          if (r.status === 401 || r.status === 403) break groq; // the key itself is wrong
-          break;
-        }
-      }
-      if (!useGemini) {
-        if (/ 429:/.test(groqError)) {
-          throw new HttpsError('resource-exhausted', "Today's free AI allowance is used up, try again later.");
-        }
-        if (/ 40[13]:/.test(groqError)) {
-          throw new HttpsError(
-            'failed-precondition',
-            'Groq rejected the key. Copy it again from console.groq.com/keys and re-run ' +
-              'firebase functions:secrets:set GROQ_API_KEY.',
-          );
-        }
-        throw new HttpsError('internal', `AI error: ${clip(groqError, 300)}`);
-      }
-    }
-
-    // -------------------------------------------------------------- Gemini
-    let thinking = true;
-    const bodyFor = (model) => ({
-      systemInstruction: { parts: [{ text: SYSTEM }] },
-      contents,
-      generationConfig: {
-        temperature: schema ? 0.6 : 0.4,
-        maxOutputTokens: schema ? 8192 : 3072,
-        ...(thinking ? { thinkingConfig: thinkingFor(model) } : {}),
-        ...(schema ? { responseMimeType: 'application/json', responseSchema: schema } : {}),
-      },
-    });
-
-    const call = async (model) => {
-      const method = stream ? 'streamGenerateContent?alt=sse' : 'generateContent';
-      const r = await fetch(`https://generativelanguage.googleapis.com/v1beta/models/${model}:${method}`, {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json', 'x-goog-api-key': key },
-        body: JSON.stringify(bodyFor(model)),
-      });
-      if (!r.ok || !stream) return [r, await r.json().catch(() => ({}))];
-      return [r, await readSse(r, send)];
-    };
-    // Seconds Google asks us to wait on a 429 ("retryDelay": "37s").
-    const retryAfter = (j) =>
-      parseFloat((j?.error?.details || []).find((d) => d.retryDelay)?.retryDelay) || 0;
-
-    let res;
-    let json;
-    let model;
-    let quotaWait = 0;
+    const use = { log: false, requests: 0, model: '', status: 'ok' };
     const started = Date.now();
-    for (model of MODELS) {
-      // "High demand" (503) and per-minute rate limits usually clear within
-      // seconds, so try the same model once more before moving on.
-      for (let attempt = 0; ; attempt++) {
-        [res, json] = await call(model);
-        if (res.status === 400 && thinking && /thinking/i.test(json?.error?.message || '')) {
-          thinking = false; // this model takes no thinking setting: ask again without it
-          continue;
-        }
-        const wait = res.status === 429 ? retryAfter(json) : 0;
-        if (res.status === 429 && wait > 30) break; // daily quota: no point retrying this model
-        if (res.ok || ![429, 500, 503].includes(res.status) || attempt >= 1) break;
-        await new Promise((r) => setTimeout(r, Math.min(Math.max(wait * 1000, 1500), 5000)));
-      }
-      if (res.ok || streamed) break;
-      if (Date.now() - started > 60_000) break; // the app gives up at 120 s; leave time to say why
-      logger.warn(`Gemini ${model} ${res.status}: ${json?.error?.message || ''} (key length ${key.length})`);
-      // Out of quota, overloaded, or not open to the key: try the next one.
-      if (res.status === 429) {
-        quotaWait = Math.max(quotaWait, retryAfter(json));
-        if (retryAfter(json) > 30) await recordQuotaHit(json?.error?.message, retryAfter(json), model);
-      }
-      else if (res.status === 404) await recordOff(model);
-      else if (![403, 500, 503].includes(res.status)) break;
+    try {
+      const out = await handle(request, response, use);
+      if (out?.model) use.model = out.model; // the version that answered
+      return out;
+    } catch (e) {
+      if (use.status === 'ok') use.status = 'error';
+      use.error = e.message;
+      throw e;
+    } finally {
+      if (use.log) await logUse(request, use, started);
     }
-    if (!res.ok) {
-      const msg = json?.error?.message || `HTTP ${res.status}`;
-      if (quotaWait > 30) {
-        const h = Math.floor(quotaWait / 3600);
-        const m = Math.ceil((quotaWait % 3600) / 60);
-        throw new HttpsError(
-          'resource-exhausted',
-          `Today's free Gemini quota is used up. It resets in about ${h ? `${h} h ` : ''}${m} min, ` +
-            'or turn on billing for the key in AI Studio.',
-        );
-      }
-      if (res.status === 401) {
-        throw new HttpsError(
-          'failed-precondition',
-          'Google rejected the Gemini key. Copy it again from aistudio.google.com/apikey and re-run ' +
-            'firebase functions:secrets:set GEMINI_API_KEY.',
-        );
-      }
-      if (res.status === 402) throw new HttpsError('failed-precondition', 'The Gemini key has no credit left (AI Studio > billing).');
-      if (res.status === 429) throw new HttpsError('resource-exhausted', 'Gemini rate limit reached, try again in a minute.');
-      if (res.status === 503) throw new HttpsError('unavailable', 'Gemini is busy right now, try again in a minute.');
-      throw new HttpsError('internal', `Gemini error: ${clip(msg, 300)}`);
-    }
-
-    const cand = json?.candidates?.[0];
-    const text = (cand?.content?.parts || []).filter((p) => !p.thought).map((p) => p.text || '').join('').trim();
-    if (!text) {
-      const why = cand?.finishReason || json?.promptFeedback?.blockReason || 'empty reply';
-      throw new HttpsError('internal', `Gemini returned no answer (${why}).`);
-    }
-
-    // "-latest" is an alias; Google reports the concrete version it ran.
-    return finish(text, json.modelVersion || model, Number(json.usageMetadata?.totalTokenCount) || 0, model);
   },
 );

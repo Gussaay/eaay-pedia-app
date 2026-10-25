@@ -85,7 +85,7 @@
     // Daily Gemini request counts, written only by the aiStudy function (the
     // Admin SDK skips rules) and shown to admins on the AI Study page.
     "aiUsage": {
-      ".read": "auth.token.email === 'gussaay@gmail.com' || auth.token.email === 'malazmuzamil55@gmail.com' || root.child('quizusers').child(auth.uid).child('admin').val() === 'true'",
+      ".read": "auth.token.email === 'gussaay@gmail.com' || auth.token.email === 'malazmuzamil55@gmail.com' || root.child('quizusers').child(auth.uid).child('admin').val() === 'true' || root.child('access').child(auth.uid).child('role').val() === 'manager'",
       ".write": false
     },
 

@@ -1,5 +1,5 @@
 import { Navigate, Route, Routes, useNavigate } from 'react-router-dom';
-import { ArrowUpCircle, BellRing, BookPlus, Eye, FolderTree, Layers, Lightbulb, PencilLine, Users } from 'lucide-react';
+import { ArrowUpCircle, BellRing, BookPlus, Eye, FolderTree, Layers, Lightbulb, PencilLine, Sparkles, Users } from 'lucide-react';
 import { useAuth } from '../../hooks/useAuth';
 import { AppBar, Page } from '../../components/ui';
 import { Categories, CategoryBooks, BookQuizzes } from './AdminCatalog';
@@ -15,6 +15,7 @@ import { MnemonicAdminEdit, MnemonicAdminHome, MnemonicAdminPaper } from './Admi
 import AdminUpdates from './AdminUpdates';
 import AdminUsers from './AdminUsers';
 import AdminNotify from './AdminNotify';
+import AdminAiActivity from './AdminAiActivity';
 
 /** Users, roles, access, updates and pushes: managers only, not editors. */
 function ManagerOnly({ children }) {
@@ -35,6 +36,7 @@ function AdminHome() {
     { icon: ArrowUpCircle, title: 'Update manager', desc: 'Roll out, pause or roll back app updates', to: '/admin/updates', manager: true },
     { icon: Users, title: 'Users & access', desc: 'Unlock requests, roles, trials, Pro, locking settings and accounts', to: '/admin/users', manager: true },
     { icon: BellRing, title: 'Notification manager', desc: 'Announcements and push notifications', to: '/admin/notifications', manager: true },
+    { icon: Sparkles, title: 'AI activity', desc: 'Who used the AI, for what, and how much of their limit and the pool', to: '/admin/ai', manager: true },
   ].filter((i) => isManager || !i.manager);
   return (
     <div className="min-h-screen">
@@ -79,6 +81,7 @@ export default function AdminRoutes() {
       <Route path="users" element={<ManagerOnly><AdminUsers /></ManagerOnly>} />
       <Route path="access" element={<Navigate to="/admin/users?tab=requests" replace />} />
       <Route path="notifications" element={<ManagerOnly><AdminNotify /></ManagerOnly>} />
+      <Route path="ai" element={<ManagerOnly><AdminAiActivity /></ManagerOnly>} />
     </Routes>
   );
 }
