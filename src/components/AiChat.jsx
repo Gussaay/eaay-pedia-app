@@ -3,7 +3,7 @@
 import { useEffect, useRef, useState } from 'react';
 import { Link } from 'react-router-dom';
 import { BookOpen, Check, ChevronRight, Cpu, GitCompare, ListChecks, Play, RotateCcw, Send, Sparkles } from 'lucide-react';
-import { askAi } from '../lib/ai';
+import { askAi, useAiQuota } from '../lib/ai';
 import { subscribe } from '../lib/rtdb';
 import { getTutorChat, saveTutorChat } from '../lib/aiCache';
 import { parseReply } from '../lib/aiFormat';
@@ -87,6 +87,24 @@ export function ModelTag({ model, className = '' }) {
     <span className={`inline-flex items-center gap-1 text-[11px] text-slate-400 ${className}`}>
       <Cpu size={12} /> {model}
     </span>
+  );
+}
+
+/** "8 of 20 AI requests left today": the person's daily allowance. */
+export function AiQuotaLine({ className = '' }) {
+  const q = useAiQuota();
+  if (!q) return null;
+  const out = !q.left;
+  return (
+    <p className={`text-[11px] ${out ? 'text-red-600 font-medium' : 'text-slate-400'} ${className}`}>
+      {q.unlimited
+        ? `Staff: no daily limit · ${q.left} requests left in today's shared allowance`
+        : out
+          ? q.pool.left
+            ? `You have used all ${q.limit} AI requests for today. They renew at midnight US Pacific time.`
+            : "Today's free AI allowance is used up for everyone. It renews at midnight US Pacific time."
+          : `${q.left} of ${q.limit} AI requests left today`}
+    </p>
   );
 }
 
@@ -482,6 +500,7 @@ export default function AiChat({ context, seed = [], seedRequest, ask, agent = f
           {!busy && <Send size={18} />}
         </Button>
       </div>
+      <AiQuotaLine className="mt-1.5" />
     </div>
   );
 }
@@ -606,6 +625,7 @@ export function AiExplain({ question }) {
           <Send size={16} />
         </Button>
       </form>
+      <AiQuotaLine className="mt-1.5" />
 
       <Modal
         open={open}

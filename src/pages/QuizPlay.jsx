@@ -1070,7 +1070,7 @@ function ResultBox({ boxRef, question, selected, answer, onOpen }) {
 
 // -------------------------------------------------------------------------
 function ExplanationModal({ question, quizTitle, selected, answer, onClose, onNext, isLast }) {
-  const { user, profile, isAdmin, access } = useAuth();
+  const { user, profile, access } = useAuth();
   // Read once when the quiz loads: a refreshed access record must not restart
   // a session that is under way.
   const accessRef = useRef(access);
@@ -1131,11 +1131,9 @@ function ExplanationModal({ question, quizTitle, selected, answer, onClose, onNe
       </p>
       <ZoomImage src={question.exp_img} className="mt-3" />
       <StudyLinks question={question} />
-      {isAdmin && (
-        <Suspense fallback={null}>
-          <AiExplain question={question} />
-        </Suspense>
-      )}
+      <Suspense fallback={null}>
+        <AiExplain question={question} />
+      </Suspense>
 
       <div className="mt-5 border-t border-slate-100 pt-4">
         <p className="text-sm font-semibold text-slate-700 mb-2">Comments</p>

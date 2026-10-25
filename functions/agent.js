@@ -233,8 +233,8 @@ async function step(messages, state, ctx, final) {
   while (state.at < state.chain.length) {
     const { provider, model } = state.chain[state.at];
     try {
-      const msg = provider === 'groq' ? await groqStep(messages, model, ctx, final) : await geminiStep(messages, model, ctx, final);
-      await ctx.countRequest(model);
+      const { tokens, ...msg } = provider === 'groq' ? await groqStep(messages, model, ctx, final) : await geminiStep(messages, model, ctx, final);
+      await ctx.countRequest(model, tokens);
       return { msg, model };
     } catch (e) {
       logger.warn(`agent ${provider} ${model}: ${e.message}`);
@@ -268,7 +268,12 @@ async function groqStep(messages, model, ctx, final) {
     const j = await r.json().catch(() => ({}));
     if (r.ok) {
       const m = j?.choices?.[0]?.message || {};
-      return { role: 'assistant', content: m.content || '', ...(m.tool_calls?.length ? { tool_calls: m.tool_calls } : {}) };
+      return {
+        role: 'assistant',
+        content: m.content || '',
+        tokens: Number(j?.usage?.total_tokens) || 0,
+        ...(m.tool_calls?.length ? { tool_calls: m.tool_calls } : {}),
+      };
     }
     const wait = parseFloat(r.headers.get('retry-after')) || 0;
     if (attempt < 1 && ((r.status === 429 && wait <= 10) || [500, 502, 503].includes(r.status))) {
@@ -319,7 +324,12 @@ async function geminiStep(messages, model, ctx, final) {
         type: 'function',
         function: { name: p.functionCall.name, arguments: JSON.stringify(p.functionCall.args || {}) },
       }));
-    return { role: 'assistant', content: text, ...(calls.length ? { tool_calls: calls, gparts: parts } : {}) };
+    return {
+      role: 'assistant',
+      content: text,
+      tokens: Number(j?.usageMetadata?.totalTokenCount) || 0,
+      ...(calls.length ? { tool_calls: calls, gparts: parts } : {}),
+    };
   }
 }
 

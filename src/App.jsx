@@ -195,7 +195,7 @@ export default function App() {
           <Route path="/app-updates" element={guard(<AppUpdates />)} />
           <Route path="/contact" element={guard(<Contact />)} />
           <Route path="/about" element={guard(<About />)} />
-          <Route path="/ai" element={guard(<RequireAdmin><AiStudy /></RequireAdmin>)} />
+          <Route path="/ai" element={guard(<AiStudy />)} />
           <Route path="/admin/*" element={guard(<RequireAdmin><Admin /></RequireAdmin>)} />
           <Route path="*" element={<Navigate to="/" replace />} />
         </Routes>

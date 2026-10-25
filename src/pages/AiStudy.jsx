@@ -1,20 +1,21 @@
 // AI Study: an AI agent (tutor with tools), tutor, practice quiz, flashcard and mnemonic generator
-// (GPT-OSS on Groq, Gemini as backup). Admin-only — the API keys belong to the
-// app owner and live in the `aiStudy` Cloud Function (functions/ai.js), never in the app.
+// (GPT-OSS on Groq, Gemini as backup). Open to everyone signed in, each with a
+// daily allowance cut from the free tiers (functions/aiQuota.js). The API keys
+// live in the `aiStudy` Cloud Function (functions/ai.js), never in the app.
 //
 // Nothing generated here is saved to the question bank. An admin who wants to
 // keep a set downloads it as CSV and puts it through the normal Import, where
 // the preview and duplicate checks still apply.
 import { useEffect, useState } from 'react';
-import { ArrowLeft, ArrowRight, BookOpen, Bot, Brain, Download, Layers, Lightbulb, ListChecks, MessageCircle, RotateCcw, Sparkles, Gauge } from 'lucide-react';
-import { askAi } from '../lib/ai';
+import { ArrowLeft, ArrowRight, BookOpen, Bot, Download, Layers, Lightbulb, ListChecks, MessageCircle, RotateCcw, Sparkles, Gauge } from 'lucide-react';
+import { askAi, useAiQuota } from '../lib/ai';
 import { cardsToCsv, mcqsToCsv, normalizeCards, normalizeMcqs } from '../lib/aiFormat';
 import { OPTION_KEYS } from '../lib/quiz';
 import { LEVELS } from '../config';
 import { useAuth } from '../hooks/useAuth';
 import { subscribe } from '../lib/rtdb';
-import AiChat, { AiReply, ModelTag, useBooks } from '../components/AiChat';
-import { AppBar, Button, Card, Empty, Input, Page, Select } from '../components/ui';
+import AiChat, { AiQuotaLine, AiReply, ModelTag, useBooks } from '../components/AiChat';
+import { AppBar, Button, Card, Input, Page, Select } from '../components/ui';
 
 const TABS = [
   { key: 'agent', label: 'Agent', icon: Bot },
@@ -52,6 +53,7 @@ function TopicForm({ placeholder, busy, onSubmit, children }) {
       <Button type="submit" className="w-full" loading={busy} disabled={!topic.trim()}>
         {!busy && <Sparkles size={18} />} {busy ? 'Generating…' : 'Generate'}
       </Button>
+      <AiQuotaLine className="mt-1.5 text-center" />
     </form>
   );
 }
@@ -339,6 +341,42 @@ function AiUsage() {
   );
 }
 
+/** The person's own allowance today, and how it was worked out. */
+function MyAllowance() {
+  const q = useAiQuota();
+  if (!q) {
+    return (
+      <Card className="p-4 mb-4">
+        <p className="text-sm text-slate-400">Checking your AI allowance…</p>
+      </Card>
+    );
+  }
+  const limit = q.unlimited ? q.pool.total : q.limit;
+  const pct = limit ? Math.min(100, ((limit - q.left) / limit) * 100) : 100;
+  return (
+    <Card className="p-4 mb-4">
+      <div className="flex items-baseline justify-between gap-2">
+        <p className="text-sm font-semibold text-slate-800 flex items-center gap-1.5">
+          <Sparkles size={16} className="text-violet-600" /> Your AI today
+        </p>
+        <p className={`text-sm font-semibold ${q.left ? 'text-slate-700' : 'text-red-600'}`}>
+          {q.unlimited ? `${q.left} left in the shared pool` : `${q.left} of ${q.limit} left`}
+        </p>
+      </div>
+      <div className="h-2 rounded-full bg-slate-100 mt-2 overflow-hidden">
+        <div className={`h-full rounded-full ${pct >= 90 ? 'bg-red-500' : pct >= 60 ? 'bg-amber-400' : 'bg-emerald-500'}`} style={{ width: `${pct}%` }} />
+      </div>
+      <p className="text-[11px] text-slate-500 mt-2 leading-relaxed">
+        {q.unlimited ? 'Staff have no daily limit of their own. ' : ''}
+        The free Groq and Gemini allowance is about <b>{q.pool.total}</b> requests today ({q.pool.left} still unused), shared
+        by <b>{q.active}</b> {q.active === 1 ? 'person' : 'people'} who used the AI in the last week
+        {q.unlimited ? '' : `, so each gets ${q.limit} a day`}. An answer, explanation or generated set is one request; an
+        agent message can take a few. Renews in {hoursToPacificMidnight()} (midnight US Pacific time).
+      </p>
+    </Card>
+  );
+}
+
 // -------------------------------------------------------------- textbooks
 /** The books the tutor can answer from (indexed with tools/books/index-books.mjs). */
 function BooksCard() {
@@ -387,49 +425,46 @@ export default function AiStudy() {
     <>
       <AppBar title="AI Study" subtitle="Agent, tutor, quizzes, flashcards and mnemonics" />
       <Page>
-        {!isAdmin ? (
-          <Empty icon={<Brain size={40} />} title="Admins only">
-            The AI study helper is currently available to admin accounts only.
-          </Empty>
-        ) : (
+        <MyAllowance />
+        {isAdmin && (
           <>
             <AiUsage />
             <BooksCard />
-            <div className="grid grid-cols-5 gap-1 bg-slate-100 rounded-2xl p-1 mb-4">
-              {TABS.map(({ key, label, icon: Icon }) => (
-                <button
-                  key={key}
-                  onClick={() => setTab(key)}
-                  className={`flex flex-col items-center gap-0.5 rounded-xl py-2 text-xs font-semibold transition ${
-                    tab === key ? 'bg-white text-brand-700 shadow-sm' : 'text-slate-500'
-                  }`}
-                >
-                  <Icon size={18} /> {label}
-                </button>
-              ))}
-            </div>
-
-            {/* Kept mounted so switching tabs does not throw away a chat or a set. */}
-            <div className={tab === 'agent' ? '' : 'hidden'}>
-              <Card className="p-4">
-                <AgentIntro />
-                <AiChat agent placeholder="e.g. Quiz me on my weak topics, or 10 questions on Kawasaki" />
-              </Card>
-            </div>
-            <div className={tab === 'tutor' ? '' : 'hidden'}>
-              <Card className="p-4">
-                <AiChat placeholder="Ask anything — e.g. approach to a child with stridor" />
-              </Card>
-            </div>
-            <div className={tab === 'quiz' ? '' : 'hidden'}><QuizTab /></div>
-            <div className={tab === 'cards' ? '' : 'hidden'}><CardsTab /></div>
-            <div className={tab === 'mnemonic' ? '' : 'hidden'}><MnemonicTab /></div>
-
-            <p className="text-[11px] text-slate-400 text-center mt-6">
-              Generated by GPT-OSS on Groq, or Google Gemini as a backup. AI can be wrong — check important facts against your references.
-            </p>
           </>
         )}
+        <div className="grid grid-cols-5 gap-1 bg-slate-100 rounded-2xl p-1 mb-4">
+          {TABS.map(({ key, label, icon: Icon }) => (
+            <button
+              key={key}
+              onClick={() => setTab(key)}
+              className={`flex flex-col items-center gap-0.5 rounded-xl py-2 text-xs font-semibold transition ${
+                tab === key ? 'bg-white text-brand-700 shadow-sm' : 'text-slate-500'
+              }`}
+            >
+              <Icon size={18} /> {label}
+            </button>
+          ))}
+        </div>
+
+        {/* Kept mounted so switching tabs does not throw away a chat or a set. */}
+        <div className={tab === 'agent' ? '' : 'hidden'}>
+          <Card className="p-4">
+            <AgentIntro />
+            <AiChat agent placeholder="e.g. Quiz me on my weak topics, or 10 questions on Kawasaki" />
+          </Card>
+        </div>
+        <div className={tab === 'tutor' ? '' : 'hidden'}>
+          <Card className="p-4">
+            <AiChat placeholder="Ask anything — e.g. approach to a child with stridor" />
+          </Card>
+        </div>
+        <div className={tab === 'quiz' ? '' : 'hidden'}><QuizTab /></div>
+        <div className={tab === 'cards' ? '' : 'hidden'}><CardsTab /></div>
+        <div className={tab === 'mnemonic' ? '' : 'hidden'}><MnemonicTab /></div>
+
+        <p className="text-[11px] text-slate-400 text-center mt-6">
+          Generated by GPT-OSS on Groq, or Google Gemini as a backup. AI can be wrong — check important facts against your references.
+        </p>
       </Page>
     </>
   );

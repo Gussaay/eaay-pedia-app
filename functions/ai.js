@@ -5,9 +5,11 @@
 // Firebase secrets that only this function can read, and the app reaches the
 // AI only through this callable.
 //
-// It is admin-only on purpose: the account paying for the key decides who uses
-// it. Admin = the same hard-coded emails as src/config.js, or the `admin`
-// flag the User manager sets on quizusers/<uid>.
+// Everyone signed in may use it, up to a daily allowance worked out from the
+// free tiers' limits and how many people use the AI (aiQuota.js). Staff (the
+// hard-coded emails of src/config.js, the `admin` flag the User manager sets on
+// quizusers/<uid>, or a superuser/manager/editor role in access/<uid>) have no
+// allowance of their own, only the shared pool.
 //
 // One-time setup (from the project folder):
 //   1. Get a key at https://console.groq.com/keys (the free tier is fine)
@@ -24,6 +26,8 @@
 //   mnemonic  topic                a memory aid
 //   agent     messages             the tutor with tools (agent.js): searches the
 //                                  bank and textbooks, builds quizzes, asks back
+//   quota     -                    the caller's allowance today, without asking the AI
+// Every reply carries `quota` too, so the app shows what is left.
 // `explain` and `chat` may add `books: true` to answer from the indexed
 // textbooks (books.js); the reply then carries `sources`.
 // Any task may add `provider: 'groq' | 'gemini'` to ask that one only (the
@@ -34,6 +38,7 @@ import { logger } from 'firebase-functions';
 import { getDatabase } from 'firebase-admin/database';
 import { findPassages } from './books.js';
 import { runAgent } from './agent.js';
+import { activeUsers, dailyPool, modelKey, quotaConfig, userQuota } from './aiQuota.js';
 
 const GROQ_API_KEY = defineSecret('GROQ_API_KEY');
 const GEMINI_API_KEY = defineSecret('GEMINI_API_KEY');
@@ -115,6 +120,7 @@ async function readChatSse(res, onText) {
   const decoder = new TextDecoder();
   let buf = '';
   let text = '';
+  let tokens = 0;
   const take = (line) => {
     if (!line.startsWith('data:') || line.includes('[DONE]')) return;
     let j;
@@ -123,6 +129,8 @@ async function readChatSse(res, onText) {
     } catch {
       return;
     }
+    // Groq puts the token count on the last chunk.
+    tokens = Number((j?.x_groq?.usage || j?.usage)?.total_tokens) || tokens;
     const piece = j?.choices?.[0]?.delta?.content || '';
     if (piece) {
       text += piece;
@@ -136,7 +144,7 @@ async function readChatSse(res, onText) {
     lines.forEach(take);
   }
   take(buf);
-  return text;
+  return { text, tokens };
 }
 
 /** Gemini `contents` as chat-completions `messages`. */
@@ -314,11 +322,12 @@ function buildRequest(data) {
 
 // ------------------------------------------------------------------ usage
 // Google never tells a caller how much quota is left, so the app keeps its own
-// count: aiUsage/days/<date>/<model>/used per successful request, and the
-// daily limit a 429 reports ("limit: 20, model: gemini-3.8-flash") under
-// aiUsage/limits/<model>. Free-tier days end at midnight Pacific time.
+// count: aiUsage/days/<date>/<model>/{used, tokens} per successful request, and
+// the daily limit a 429 reports ("limit: 20, model: gemini-3.8-flash") under
+// aiUsage/limits/<model>. Each person's requests are counted under
+// aiUsage/users/<date>/<uid>, and the last day they used the AI under
+// aiUsage/active/<uid>. Free-tier days end at midnight Pacific time.
 const usageDay = () => new Date().toLocaleDateString('en-CA', { timeZone: 'America/Los_Angeles' });
-const modelKey = (m) => String(m).replace(/[.#$/[\]]/g, '_'); // RTDB keys cannot hold "."
 
 async function recordUsage(fn) {
   try {
@@ -328,10 +337,21 @@ async function recordUsage(fn) {
   }
 }
 
-const countRequest = (model) =>
-  recordUsage((root) =>
-    root.child(`days/${usageDay()}/${modelKey(model)}/used`).transaction((n) => (Number(n) || 0) + 1),
-  );
+/** One request that `model` answered, with its tokens, on `uid`'s account. */
+const countRequest = (model, tokens = 0, uid = '') =>
+  recordUsage((root) => {
+    const day = usageDay();
+    const key = modelKey(model);
+    return Promise.all([
+      root.child(`days/${day}/${key}/used`).transaction((n) => (Number(n) || 0) + 1),
+      tokens > 0 && root.child(`days/${day}/${key}/tokens`).transaction((n) => (Number(n) || 0) + tokens),
+      uid && root.child(`users/${day}/${uid}`).transaction((n) => (Number(n) || 0) + 1),
+    ]);
+  });
+
+// A Gemini model that is not open to the key (404) adds nothing to
+// today's pool.
+const recordOff = (model) => recordUsage((root) => root.child(`off/${modelKey(model)}`).set(usageDay()));
 
 // Groq says its limit on every reply, so the meter knows it from the start.
 // The token cap (200K a day) can still run out before the request count.
@@ -341,32 +361,71 @@ const recordLimit = (model, limit) =>
 const recordReset = (model, waitSeconds) =>
   recordUsage((root) => root.child(`days/${usageDay()}/${modelKey(model)}/resetAt`).set(Date.now() + waitSeconds * 1000));
 
-const recordQuotaHit = (message, waitSeconds) => {
+// Recorded under the model Google names and under the name asked for (a
+// "-latest" alias), which is the one the daily pool counts.
+const recordQuotaHit = (message, waitSeconds, asked) => {
   const m = /limit:\s*(\d+),\s*model:\s*([\w.-]+)/.exec(message || '');
   if (!m) return null;
-  const key = modelKey(m[2]);
-  return recordUsage((root) =>
-    root.update({
-      [`limits/${key}`]: Number(m[1]),
-      [`days/${usageDay()}/${key}/resetAt`]: Date.now() + waitSeconds * 1000,
-    }),
-  );
+  const resetAt = Date.now() + waitSeconds * 1000;
+  const update = {};
+  for (const key of new Set([modelKey(m[2]), modelKey(asked || m[2])])) {
+    update[`limits/${key}`] = Number(m[1]);
+    update[`days/${usageDay()}/${key}/resetAt`] = resetAt;
+  }
+  return recordUsage((root) => root.update(update));
 };
 
-async function isAdmin(auth) {
+/** Staff: the admin emails, the old `admin` flag, or a superuser/manager/editor role. */
+async function isStaff(auth) {
   const email = String(auth?.token?.email || '').toLowerCase();
   if (ADMIN_EMAILS.includes(email)) return true;
-  const snap = await getDatabase().ref(`quizusers/${auth.uid}/admin`).get();
-  return snap.val() === 'true' || snap.val() === true;
+  const db = getDatabase();
+  const [flag, role] = await Promise.all([
+    db.ref(`quizusers/${auth.uid}/admin`).get().then((s) => s.val()),
+    db.ref(`access/${auth.uid}/role`).get().then((s) => s.val()),
+  ]);
+  return flag === 'true' || flag === true || ['superuser', 'manager', 'editor'].includes(role);
 }
+
+/** The caller's allowance today (aiQuota.js). */
+async function quotaFor(uid, staff) {
+  const day = usageDay();
+  const read = (path) => getDatabase().ref(`aiUsage/${path}`).get().then((s) => s.val() || {});
+  const [today, limits, offAll, active, used, saved] = await Promise.all([
+    read(`days/${day}`),
+    read('limits'),
+    read('off'),
+    read('active'),
+    read(`users/${day}/${uid}`),
+    getDatabase().ref('aiConfig').get().then((s) => s.val() || {}),
+  ]);
+  const cfg = quotaConfig(saved);
+  const off = Object.fromEntries(Object.entries(offAll).filter(([, d]) => d === day));
+  const pool = dailyPool({ groqModels: GROQ_MODELS, geminiModels: MODELS, today, limits, off, cfg });
+  return {
+    ...userQuota({ pool, active: activeUsers(active, day, cfg, uid), used: Number(used) || 0, staff, cfg }),
+    day,
+  };
+}
+
+const OUT_OF_QUOTA = 'You have used your AI requests for today. They renew at midnight US Pacific time.';
+const POOL_EMPTY = "Today's free AI allowance is used up for everyone. It renews at midnight US Pacific time.";
 
 export const aiStudy = onCall(
   { secrets: [GROQ_API_KEY, GEMINI_API_KEY], timeoutSeconds: 120, memory: '1GiB', maxInstances: 3 },
   async (request, response) => {
     if (!request.auth) throw new HttpsError('unauthenticated', 'Sign in first.');
-    if (!(await isAdmin(request.auth))) {
-      throw new HttpsError('permission-denied', 'The AI study helper is only available to admins.');
+    const { uid } = request.auth;
+    const staff = await isStaff(request.auth);
+    const quota = await quotaFor(uid, staff);
+    if (request.data?.task === 'quota') return { quota };
+    if (!quota.left) {
+      throw new HttpsError('resource-exhausted', quota.pool.left ? OUT_OF_QUOTA : POOL_EMPTY, { quota });
     }
+    await recordUsage((root) => root.child(`active/${uid}`).set(quota.day));
+    // Every request below is counted on this person.
+    const count = (model, tokens) => countRequest(model, tokens, uid);
+    const withQuota = async (out) => ({ ...out, quota: await quotaFor(uid, staff) });
     // A key pasted into the masked secrets prompt can carry spaces, a line
     // break or quotes, which Google then reports as a bad OAuth token.
     const cleanKey = (secret) => String(secret.value() || '').replace(/[\s"']/g, '');
@@ -381,7 +440,7 @@ export const aiStudy = onCall(
     if (provider === 'groq' && !groqKey) throw new HttpsError('failed-precondition', 'GROQ_API_KEY is not set on the server.');
 
     if (request.data?.task === 'agent') {
-      return runAgent(request.data, request.auth.uid, {
+      return withQuota(await runAgent(request.data, uid, {
         SYSTEM,
         groqKey: useGroq ? groqKey : '',
         geminiKey: key,
@@ -390,10 +449,10 @@ export const aiStudy = onCall(
         geminiModels: MODELS,
         GROQ_URL,
         thinkingFor,
-        countRequest,
+        countRequest: count,
         recordLimit,
         findPassages,
-      });
+      }));
     }
 
     let { contents, schema } = buildRequest(request.data);
@@ -417,12 +476,14 @@ export const aiStudy = onCall(
       response.sendChunk(t);
     };
 
-    const finish = async (text, model) => {
-      await countRequest(model);
-      if (!schema) return { text, model, ...(sources ? { sources: sources.map(({ n, title, page, text: t }) => ({ n, title, page, text: t })) } : {}) };
+    // `counted` is the model asked for, which the daily pool knows by name;
+    // the reply shows the version that answered.
+    const finish = async (text, model, tokens, counted = model) => {
+      await count(counted, tokens);
+      if (!schema) return withQuota({ text, model, ...(sources ? { sources: sources.map(({ n, title, page, text: t }) => ({ n, title, page, text: t })) } : {}) });
       try {
         const parsed = JSON.parse(text);
-        return { items: Array.isArray(parsed) ? parsed : parsed.items, model };
+        return withQuota({ items: Array.isArray(parsed) ? parsed : parsed.items, model });
       } catch {
         throw new HttpsError('internal', 'The AI returned malformed JSON, try again.');
       }
@@ -469,10 +530,15 @@ export const aiStudy = onCall(
           });
           await recordLimit(model, Number(r.headers.get('x-ratelimit-limit-requests')));
           if (r.ok) {
-            const text = stream
-              ? await readChatSse(r, send)
-              : (await r.json().catch(() => ({})))?.choices?.[0]?.message?.content || '';
-            if (text.trim()) return finish(text.trim(), model);
+            let text;
+            let tokens;
+            if (stream) ({ text, tokens } = await readChatSse(r, send));
+            else {
+              const j = await r.json().catch(() => ({}));
+              text = j?.choices?.[0]?.message?.content || '';
+              tokens = Number(j?.usage?.total_tokens) || 0;
+            }
+            if (text.trim()) return finish(text.trim(), model, tokens);
             if (streamed) throw new HttpsError('internal', 'The AI stopped mid-answer, try again.');
             groqError = `${model} returned an empty reply`;
             break;
@@ -558,9 +624,10 @@ export const aiStudy = onCall(
       // Out of quota, overloaded, or not open to the key: try the next one.
       if (res.status === 429) {
         quotaWait = Math.max(quotaWait, retryAfter(json));
-        if (retryAfter(json) > 30) await recordQuotaHit(json?.error?.message, retryAfter(json));
+        if (retryAfter(json) > 30) await recordQuotaHit(json?.error?.message, retryAfter(json), model);
       }
-      else if (![403, 404, 500, 503].includes(res.status)) break;
+      else if (res.status === 404) await recordOff(model);
+      else if (![403, 500, 503].includes(res.status)) break;
     }
     if (!res.ok) {
       const msg = json?.error?.message || `HTTP ${res.status}`;
@@ -594,6 +661,6 @@ export const aiStudy = onCall(
     }
 
     // "-latest" is an alias; Google reports the concrete version it ran.
-    return finish(text, json.modelVersion || model);
+    return finish(text, json.modelVersion || model, Number(json.usageMetadata?.totalTokenCount) || 0, model);
   },
 );

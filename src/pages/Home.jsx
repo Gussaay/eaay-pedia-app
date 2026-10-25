@@ -205,11 +205,9 @@ export default function Home() {
           </Button>
         )}
 
-        {isAdmin && (
-          <Button variant="secondary" className="w-full !bg-violet-50 !text-violet-800" onClick={() => navigate('/ai')}>
-            <Sparkles size={18} /> AI Study
-          </Button>
-        )}
+        <Button variant="secondary" className="w-full !bg-violet-50 !text-violet-800" onClick={() => navigate('/ai')}>
+          <Sparkles size={18} /> AI Study
+        </Button>
 
         {!isNative && (
           <Link
