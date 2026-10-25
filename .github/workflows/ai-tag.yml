@@ -11,7 +11,6 @@ on:
     branches:
       - claude/project-thread-cop9he
     paths:
-      - 'scripts/ai-tag.mjs'
       - '.github/workflows/ai-tag.yml'
   workflow_dispatch:
 
