@@ -14,6 +14,7 @@ import {
 } from '../lib/questionImport';
 import { pickSheet } from '../lib/sheetPick';
 import { browseFields } from '../lib/questionBrowse';
+import { indexEntries } from '../lib/accessIndex';
 import { bankOfSource } from '../lib/banks';
 import { Button, Modal, Toggle, useToast } from './ui';
 
@@ -92,7 +93,10 @@ export default function ImportQuestionsModal({ quiz, childKey, existingQuestions
       toImport.forEach((item) => {
         const record = buildRecord(item, quiz);
         // Chapter and basic-science tags for the browse screens.
-        updates[`quizqq/${newKey('quizqq')}`] = { ...record, ...browseFields(record, bank) };
+        const browse = browseFields(record, bank);
+        updates[`quizqq/${newKey('quizqq')}`] = { ...record, ...browse };
+        // The lookups the database's quiz lock uses (lib/accessIndex.js).
+        Object.assign(updates, indexEntries({ quizKey: quiz.key, source: quiz.source, ...browse }));
       });
       // Keep the quiz's question counter in step with the new total.
       updates[`allquiz/${childKey}/number`] = str(existingQuestions.length + toImport.length);

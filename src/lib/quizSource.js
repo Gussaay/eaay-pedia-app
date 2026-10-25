@@ -169,17 +169,29 @@ export async function loadBookQuestions(book) {
   return list;
 }
 
+/**
+ * One question by id, or null when it is gone or locked: a linked question
+ * from a book this person has not unlocked is refused by the database rules.
+ */
+export const getQuestion = (id) =>
+  getOne(`quizqq/${id}`)
+    .then((q) => q && { ...q, _key: id })
+    .catch(() => null);
+
 // Stored by the function as an array, which the database may hand back as an object.
 const toKeys = (keys) => (Array.isArray(keys) ? keys : Object.values(keys || {})).map(String).filter(Boolean);
 
 async function fetchQuestions(meta) {
   let list;
   if (meta.ai) {
-    const rows = await Promise.all(meta.keys.map((id) => getOne(`quizqq/${id}`).then((q) => q && { ...q, _key: id })));
+    const rows = await Promise.all(meta.keys.map(getQuestion));
     return rows.filter((q) => q && q.question !== undefined);
   }
   if (meta.set) {
-    list = meta.filter
+    // A set inside one book reads the book (a "source" query), which the
+    // database's quiz lock lets through for anyone who unlocked that book,
+    // its group or its bank; a chapter or section query needs the bank.
+    list = meta.filter || meta.book
       ? await loadBookQuestions(meta.book)
       : meta.filterChapter
       ? await getWhere('quizqq', 'bchap', `${meta.bank}|${meta.filterChapter}`)
@@ -218,7 +230,7 @@ async function fetchQuestions(meta) {
       const linked = await Promise.all(
         Object.keys(order)
           .filter((id) => !have.has(id))
-          .map((id) => getOne(`quizqq/${id}`).then((q) => q && { ...q, _key: id })),
+          .map(getQuestion),
       );
       list = [...list, ...linked.filter(Boolean)];
       const at = (q) => (order[q._key] === undefined ? Infinity : num(order[q._key]));

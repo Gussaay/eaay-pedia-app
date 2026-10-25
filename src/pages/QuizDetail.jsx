@@ -43,9 +43,10 @@ export default function QuizDetail() {
     if (!meta.data || !qa.ready) return;
     setCount(null);
     setCountError(null);
-    // A locked quiz shows its stored count; its questions are not fetched.
-    if (locked && meta.data.number) {
-      setCount(meta.data.number);
+    // A locked quiz shows its stored count; its questions are not fetched
+    // (the database refuses them anyway).
+    if (locked) {
+      setCount(meta.data.number || 0);
       return;
     }
     loadQuestions(meta.data)

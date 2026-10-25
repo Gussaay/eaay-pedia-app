@@ -10,7 +10,8 @@ import { useNavigate, useParams, useSearchParams } from 'react-router-dom';
 import { Pencil, Plus, Trash2 } from 'lucide-react';
 import { useAuth } from '../../hooks/useAuth';
 import { useList } from '../../hooks/useData';
-import { newKey, num, pushTo, removeAt, updateAt } from '../../lib/rtdb';
+import { newKey, num, pushTo, removeAt, updateAt, updatePaths } from '../../lib/rtdb';
+import { indexEntries } from '../../lib/accessIndex';
 import { SUPER_ADMIN_EMAIL } from '../../config';
 import ImageField from '../../components/ImageField';
 import DangerConfirm from '../../components/DangerConfirm';
@@ -204,6 +205,8 @@ export function CategoryBooks() {
       };
       if (form._key) await updateAt(`mcqs/${form._key}`, record);
       else await pushTo('mcqs', record);
+      // Keeps the database's quiz lock in step with the book's bank and group.
+      await updatePaths(indexEntries({ source: record.source, bank: source, group: record.group })).catch(() => {});
       toast(form._key ? 'Book saved' : 'Book added', 'success');
       setForm(null);
       list.reload();
@@ -346,6 +349,8 @@ export function BookQuizzes() {
       };
       if (source === 'smsb') Object.assign(record, { month: form.month.trim(), year: form.year.trim() });
       await pushTo('allquiz', record);
+      // Lets people who unlocked this book read the new quiz's questions.
+      await updatePaths(indexEntries({ quizKey: key, source })).catch(() => {});
       toast('Uploaded', 'success');
       setForm(null);
       list.reload();

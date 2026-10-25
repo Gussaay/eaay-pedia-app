@@ -12,7 +12,7 @@ import { loadByRefs } from '../lib/mnemonicData';
 import { questionLinks } from '../lib/mnemonicLinks';
 import { sameOf, similarOf } from '../lib/questionHints';
 import { visibleOptions } from '../lib/quiz';
-import { getOne } from '../lib/rtdb';
+import { getQuestion } from '../lib/quizSource';
 import { tagsOf } from '../lib/topicTags';
 import MnemonicPeek from './MnemonicPeek';
 import { Spinner, ZoomImage } from './ui';
@@ -143,7 +143,7 @@ function LinkedPeek({ same, similar, onClose }) {
   const isSame = new Set(same);
   const data = useAsync(
     () =>
-      Promise.all(ids.map((id) => getOne(`quizqq/${id}`).then((q) => q && { ...q, _key: id }))).then((l) =>
+      Promise.all(ids.map(getQuestion)).then((l) =>
         l.filter(Boolean),
       ),
     [ids.join(',')],

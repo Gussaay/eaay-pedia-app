@@ -1,0 +1,46 @@
+name: Access index
+
+# Rebuilds qkey, qbook and qset, the lookups the database rules use to keep
+# locked quizzes closed on every app (scripts/access-index.mjs). Runs daily as
+# a safety net; the admin screens keep the index current between runs.
+on:
+  push:
+    branches:
+      - main
+      - claude/project-thread-e1fbvo
+    paths:
+      - 'scripts/access-index.mjs'
+      - 'src/lib/accessIndex.js'
+      - 'database.rules.json'
+      - '.github/workflows/access-index.yml'
+  schedule:
+    - cron: '30 2 * * *'
+  workflow_dispatch:
+
+concurrency:
+  group: access-index
+  cancel-in-progress: false
+
+jobs:
+  index:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+      - name: Install Firebase CLI
+        run: npm i -g firebase-tools@14
+      - name: Rebuild the index
+        env:
+          FIREBASE_SERVICE_ACCOUNT: ${{ secrets.FIREBASE_SERVICE_ACCOUNT_EASY_PEDIA }}
+        run: |
+          printf '%s' "$FIREBASE_SERVICE_ACCOUNT" > "$RUNNER_TEMP/sa.json"
+          export GOOGLE_APPLICATION_CREDENTIALS="$RUNNER_TEMP/sa.json"
+          # A branch push only counts what it would write; main writes it.
+          if [ "$GITHUB_REF_NAME" = "claude/project-thread-e1fbvo" ]; then
+            node scripts/access-index.mjs
+          else
+            node scripts/access-index.mjs --commit
+          fi
+          rm -f "$RUNNER_TEMP/sa.json"

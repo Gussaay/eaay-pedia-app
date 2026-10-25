@@ -4,28 +4,81 @@
 // missing here is gone from the live database — which is why the top-level
 // defaults and every .indexOn are repeated below rather than assumed.
 //
-// The shape is: a permissive default that matches how the old Sketchware app
-// has always worked, with tighter rules on the specific nodes that can hurt
-// someone. A child rule overrides its parent, so each block below is a
-// restriction carved out of the default.
+// The shape is: a permissive default ("$other") that matches how the old
+// Sketchware app has always worked, with tighter rules on the specific nodes
+// that can hurt someone. A .read/.write granted on a parent cascades down and
+// cannot be taken back by a child, which is why the default is not on the root.
 {
   "rules": {
-    // The original rule, kept as-is. Every node without its own rule below
-    // behaves exactly as it does today, so the old Android app is unaffected.
-    ".read": "auth.uid != null",
-    ".write": "auth.uid != null",
+    // Every node without its own rule below keeps the original rule: any
+    // signed-in user reads and writes it, as the old Android app expects.
+    //
+    // This used to sit on the root itself, but a .read or .write granted on a
+    // parent can never be taken back by a child, so it made every stricter
+    // rule below (and the quiz lock) meaningless. As "$other" it covers only
+    // the nodes that are not named here, so EVERY named node below must give
+    // its own .read and .write.
+    "$other": {
+      ".read": "auth.uid != null",
+      ".write": "auth.uid != null"
+    },
 
     // ---------------------------------------------------------------- indexes
     // Without these the query still works, but Firebase downloads the whole
     // node and filters in the browser. quizqq is the big one.
-    "quizqq": {
-      ".indexOn": ["key", "category1", "category2", "bchap", "bsci", "source"]
-    },
     "resume": {
+      ".read": "auth.uid != null",
+      ".write": "auth.uid != null",
       ".indexOn": ["uid"]
     },
     "feedback": {
+      ".read": "auth.uid != null",
+      ".write": "auth.uid != null",
       ".indexOn": ["key"]
+    },
+
+    // ------------------------------------------------------------ questions
+    // The quiz lock, enforced here so it holds for every app, including the
+    // old Android app and anyone using developer tools. Someone with full
+    // access (staff, Pro, a running trial, a Full or Preview plan, or locking
+    // switched off) reads any question. Otherwise a read must be one of the
+    // queries the apps make, for a book they have unlocked (itself, its group
+    // or its bank). The lookups come from three small index nodes written by
+    // scripts/access-index.mjs and the admin screens:
+    //   qkey/<quiz key>        = book source
+    //   qbook/<book source>    = { bank, group }
+    //   qset/<bchap or bsci>   = bank
+    "quizqq": {
+      ".indexOn": ["key", "category1", "category2", "bchap", "bsci", "source"],
+      ".read": "auth.uid != null && ((root.child('access_config').child('enabled').val() === false || root.child('access_config').child('enabled').val() === 'false' || auth.token.email === 'gussaay@gmail.com' || auth.token.email === 'malazmuzamil55@gmail.com' || root.child('quizusers').child(auth.uid).child('admin').val() === 'true' || root.child('access').child(auth.uid).child('role').val() === 'manager' || root.child('access').child(auth.uid).child('role').val() === 'editor' || root.child('access').child(auth.uid).child('role').val() === 'reviewer' || (root.child('access').child(auth.uid).child('role').val() === 'pro' && (!root.child('access').child(auth.uid).child('pro_until').exists() || root.child('access').child(auth.uid).child('pro_until').val() > now)) || (root.child('access').child(auth.uid).child('trial').child('end').exists() && root.child('access').child(auth.uid).child('trial').child('end').val() > now) || ((root.child('access').child(auth.uid).child('plan').val() === 'full' || root.child('access').child(auth.uid).child('plan').val() === 'partial') && (!root.child('access').child(auth.uid).child('plan_until').exists() || root.child('access').child(auth.uid).child('plan_until').val() > now)) || (!root.child('access').child(auth.uid).child('plan').exists() && (root.child('access_config').child('default_plan').val() === 'full' || root.child('access_config').child('default_plan').val() === 'partial'))) || (query.orderByChild === 'key' && root.child('qkey').child(query.equalTo).exists() && ((root.child('access').child(auth.uid).child('unlocks').child('book~' + root.child('qkey').child(query.equalTo).val()).exists() && (!root.child('access').child(auth.uid).child('unlocks').child('book~' + root.child('qkey').child(query.equalTo).val()).child('until').exists() || root.child('access').child(auth.uid).child('unlocks').child('book~' + root.child('qkey').child(query.equalTo).val()).child('until').val() > now)) || (root.child('qbook').child(root.child('qkey').child(query.equalTo).val()).child('bank').exists() && (root.child('access').child(auth.uid).child('unlocks').child('bank~' + root.child('qbook').child(root.child('qkey').child(query.equalTo).val()).child('bank').val()).exists() && (!root.child('access').child(auth.uid).child('unlocks').child('bank~' + root.child('qbook').child(root.child('qkey').child(query.equalTo).val()).child('bank').val()).child('until').exists() || root.child('access').child(auth.uid).child('unlocks').child('bank~' + root.child('qbook').child(root.child('qkey').child(query.equalTo).val()).child('bank').val()).child('until').val() > now))) || (root.child('qbook').child(root.child('qkey').child(query.equalTo).val()).child('group').exists() && (root.child('access').child(auth.uid).child('unlocks').child('group~' + root.child('qbook').child(root.child('qkey').child(query.equalTo).val()).child('bank').val() + '|' + root.child('qbook').child(root.child('qkey').child(query.equalTo).val()).child('group').val()).exists() && (!root.child('access').child(auth.uid).child('unlocks').child('group~' + root.child('qbook').child(root.child('qkey').child(query.equalTo).val()).child('bank').val() + '|' + root.child('qbook').child(root.child('qkey').child(query.equalTo).val()).child('group').val()).child('until').exists() || root.child('access').child(auth.uid).child('unlocks').child('group~' + root.child('qbook').child(root.child('qkey').child(query.equalTo).val()).child('bank').val() + '|' + root.child('qbook').child(root.child('qkey').child(query.equalTo).val()).child('group').val()).child('until').val() > now))))) || (query.orderByChild === 'source' && ((root.child('access').child(auth.uid).child('unlocks').child('book~' + query.equalTo).exists() && (!root.child('access').child(auth.uid).child('unlocks').child('book~' + query.equalTo).child('until').exists() || root.child('access').child(auth.uid).child('unlocks').child('book~' + query.equalTo).child('until').val() > now)) || (root.child('qbook').child(query.equalTo).child('bank').exists() && (root.child('access').child(auth.uid).child('unlocks').child('bank~' + root.child('qbook').child(query.equalTo).child('bank').val()).exists() && (!root.child('access').child(auth.uid).child('unlocks').child('bank~' + root.child('qbook').child(query.equalTo).child('bank').val()).child('until').exists() || root.child('access').child(auth.uid).child('unlocks').child('bank~' + root.child('qbook').child(query.equalTo).child('bank').val()).child('until').val() > now))) || (root.child('qbook').child(query.equalTo).child('group').exists() && (root.child('access').child(auth.uid).child('unlocks').child('group~' + root.child('qbook').child(query.equalTo).child('bank').val() + '|' + root.child('qbook').child(query.equalTo).child('group').val()).exists() && (!root.child('access').child(auth.uid).child('unlocks').child('group~' + root.child('qbook').child(query.equalTo).child('bank').val() + '|' + root.child('qbook').child(query.equalTo).child('group').val()).child('until').exists() || root.child('access').child(auth.uid).child('unlocks').child('group~' + root.child('qbook').child(query.equalTo).child('bank').val() + '|' + root.child('qbook').child(query.equalTo).child('group').val()).child('until').val() > now))))) || ((query.orderByChild === 'bchap' || query.orderByChild === 'bsci') && root.child('qset').child(query.equalTo).exists() && (root.child('access').child(auth.uid).child('unlocks').child('bank~' + root.child('qset').child(query.equalTo).val()).exists() && (!root.child('access').child(auth.uid).child('unlocks').child('bank~' + root.child('qset').child(query.equalTo).val()).child('until').exists() || root.child('access').child(auth.uid).child('unlocks').child('bank~' + root.child('qset').child(query.equalTo).val()).child('until').val() > now))) || ((query.orderByChild === 'category1' || query.orderByChild === 'category2') && ((root.child('access').child(auth.uid).child('unlocks').child('book~' + 'smsb').exists() && (!root.child('access').child(auth.uid).child('unlocks').child('book~' + 'smsb').child('until').exists() || root.child('access').child(auth.uid).child('unlocks').child('book~' + 'smsb').child('until').val() > now)) || (root.child('qbook').child('smsb').child('bank').exists() && (root.child('access').child(auth.uid).child('unlocks').child('bank~' + root.child('qbook').child('smsb').child('bank').val()).exists() && (!root.child('access').child(auth.uid).child('unlocks').child('bank~' + root.child('qbook').child('smsb').child('bank').val()).child('until').exists() || root.child('access').child(auth.uid).child('unlocks').child('bank~' + root.child('qbook').child('smsb').child('bank').val()).child('until').val() > now))) || (root.child('qbook').child('smsb').child('group').exists() && (root.child('access').child(auth.uid).child('unlocks').child('group~' + root.child('qbook').child('smsb').child('bank').val() + '|' + root.child('qbook').child('smsb').child('group').val()).exists() && (!root.child('access').child(auth.uid).child('unlocks').child('group~' + root.child('qbook').child('smsb').child('bank').val() + '|' + root.child('qbook').child('smsb').child('group').val()).child('until').exists() || root.child('access').child(auth.uid).child('unlocks').child('group~' + root.child('qbook').child('smsb').child('bank').val() + '|' + root.child('qbook').child('smsb').child('group').val()).child('until').val() > now))))))",
+      ".write": "auth.uid != null",
+      "$qid": {
+        ".read": "auth.uid != null && ((root.child('access_config').child('enabled').val() === false || root.child('access_config').child('enabled').val() === 'false' || auth.token.email === 'gussaay@gmail.com' || auth.token.email === 'malazmuzamil55@gmail.com' || root.child('quizusers').child(auth.uid).child('admin').val() === 'true' || root.child('access').child(auth.uid).child('role').val() === 'manager' || root.child('access').child(auth.uid).child('role').val() === 'editor' || root.child('access').child(auth.uid).child('role').val() === 'reviewer' || (root.child('access').child(auth.uid).child('role').val() === 'pro' && (!root.child('access').child(auth.uid).child('pro_until').exists() || root.child('access').child(auth.uid).child('pro_until').val() > now)) || (root.child('access').child(auth.uid).child('trial').child('end').exists() && root.child('access').child(auth.uid).child('trial').child('end').val() > now) || ((root.child('access').child(auth.uid).child('plan').val() === 'full' || root.child('access').child(auth.uid).child('plan').val() === 'partial') && (!root.child('access').child(auth.uid).child('plan_until').exists() || root.child('access').child(auth.uid).child('plan_until').val() > now)) || (!root.child('access').child(auth.uid).child('plan').exists() && (root.child('access_config').child('default_plan').val() === 'full' || root.child('access_config').child('default_plan').val() === 'partial'))) || (data.child('source').exists() && ((root.child('access').child(auth.uid).child('unlocks').child('book~' + data.child('source').val()).exists() && (!root.child('access').child(auth.uid).child('unlocks').child('book~' + data.child('source').val()).child('until').exists() || root.child('access').child(auth.uid).child('unlocks').child('book~' + data.child('source').val()).child('until').val() > now)) || (root.child('qbook').child(data.child('source').val()).child('bank').exists() && (root.child('access').child(auth.uid).child('unlocks').child('bank~' + root.child('qbook').child(data.child('source').val()).child('bank').val()).exists() && (!root.child('access').child(auth.uid).child('unlocks').child('bank~' + root.child('qbook').child(data.child('source').val()).child('bank').val()).child('until').exists() || root.child('access').child(auth.uid).child('unlocks').child('bank~' + root.child('qbook').child(data.child('source').val()).child('bank').val()).child('until').val() > now))) || (root.child('qbook').child(data.child('source').val()).child('group').exists() && (root.child('access').child(auth.uid).child('unlocks').child('group~' + root.child('qbook').child(data.child('source').val()).child('bank').val() + '|' + root.child('qbook').child(data.child('source').val()).child('group').val()).exists() && (!root.child('access').child(auth.uid).child('unlocks').child('group~' + root.child('qbook').child(data.child('source').val()).child('bank').val() + '|' + root.child('qbook').child(data.child('source').val()).child('group').val()).child('until').exists() || root.child('access').child(auth.uid).child('unlocks').child('group~' + root.child('qbook').child(data.child('source').val()).child('bank').val() + '|' + root.child('qbook').child(data.child('source').val()).child('group').val()).child('until').val() > now))))))"
+      }
+    },
+    "qkey": {
+      ".read": "auth.uid != null",
+      ".write": "auth.token.email === 'gussaay@gmail.com' || auth.token.email === 'malazmuzamil55@gmail.com' || root.child('quizusers').child(auth.uid).child('admin').val() === 'true' || root.child('access').child(auth.uid).child('role').val() === 'manager' || root.child('access').child(auth.uid).child('role').val() === 'editor'"
+    },
+    "qbook": {
+      ".read": "auth.uid != null",
+      ".write": "auth.token.email === 'gussaay@gmail.com' || auth.token.email === 'malazmuzamil55@gmail.com' || root.child('quizusers').child(auth.uid).child('admin').val() === 'true' || root.child('access').child(auth.uid).child('role').val() === 'manager' || root.child('access').child(auth.uid).child('role').val() === 'editor'"
+    },
+    "qset": {
+      ".read": "auth.uid != null",
+      ".write": "auth.token.email === 'gussaay@gmail.com' || auth.token.email === 'malazmuzamil55@gmail.com' || root.child('quizusers').child(auth.uid).child('admin').val() === 'true' || root.child('access').child(auth.uid).child('role').val() === 'manager' || root.child('access').child(auth.uid).child('role').val() === 'editor'"
+    },
+
+    // The admin flag is what the older admin checks read, so nobody may set
+    // it on themselves.
+    "quizusers": {
+      ".read": "auth.uid != null",
+      ".write": "auth.uid != null",
+      "$uid": {
+        "admin": {
+          ".validate": "auth.token.email === 'gussaay@gmail.com' || root.child('access').child(auth.uid).child('role').val() === 'manager' || (auth.token.email === 'malazmuzamil55@gmail.com' && !root.child('access').child(auth.uid).child('role').exists()) || newData.val() === data.val()"
+        }
+      }
     },
 
     // ------------------------------------------------------------- AI usage
@@ -166,22 +219,20 @@
 
     // ------------------------------------------------------------- access
     // Roles, plans, trials, Pro and unlocks (src/lib/access.js). Only the
-    // superuser and managers may set them.
-    //
-    // Why .validate at every depth: the top-level ".write" above already lets
-    // every signed-in user write everywhere, and a granted .write cannot be
-    // taken back by a deeper rule. A .validate can, because every one on the
-    // way down has to pass; it is checked for each value written, so each
-    // depth needs its own. Deletes skip .validate, so these stop someone
-    // giving themselves access but not someone removing access. Closing that
-    // needs the top-level rule tightened, which means listing every node the
-    // old Android app writes.
+    // superuser and managers may set them; each person reads their own. The
+    // .validate rules at every depth also check the shape, and that only the
+    // superuser touches the manager role.
     "access_config": {
+      ".read": "auth.uid != null",
+      ".write": "auth.token.email === 'gussaay@gmail.com' || root.child('access').child(auth.uid).child('role').val() === 'manager' || (auth.token.email === 'malazmuzamil55@gmail.com' && !root.child('access').child(auth.uid).child('role').exists())",
       ".validate": "auth.token.email === 'gussaay@gmail.com' || root.child('access').child(auth.uid).child('role').val() === 'manager' || (auth.token.email === 'malazmuzamil55@gmail.com' && !root.child('access').child(auth.uid).child('role').exists())",
       "$field": { ".validate": "auth.token.email === 'gussaay@gmail.com' || root.child('access').child(auth.uid).child('role').val() === 'manager' || (auth.token.email === 'malazmuzamil55@gmail.com' && !root.child('access').child(auth.uid).child('role').exists())" }
     },
     "access": {
+      ".read": "auth.token.email === 'gussaay@gmail.com' || root.child('access').child(auth.uid).child('role').val() === 'manager' || (auth.token.email === 'malazmuzamil55@gmail.com' && !root.child('access').child(auth.uid).child('role').exists())",
       "$uid": {
+        ".read": "auth.uid === $uid",
+        ".write": "auth.token.email === 'gussaay@gmail.com' || root.child('access').child(auth.uid).child('role').val() === 'manager' || (auth.token.email === 'malazmuzamil55@gmail.com' && !root.child('access').child(auth.uid).child('role').exists())",
         ".validate": "auth.token.email === 'gussaay@gmail.com' || root.child('access').child(auth.uid).child('role').val() === 'manager' || (auth.token.email === 'malazmuzamil55@gmail.com' && !root.child('access').child(auth.uid).child('role').exists())",
         "$field": {
           ".validate": "auth.token.email === 'gussaay@gmail.com' || root.child('access').child(auth.uid).child('role').val() === 'manager' || (auth.token.email === 'malazmuzamil55@gmail.com' && !root.child('access').child(auth.uid).child('role').exists())",
@@ -204,9 +255,13 @@
     // "Request unlock": each person may send their own, as pending; only the
     // superuser and managers approve or decline them.
     "unlock_requests": {
+      ".read": "auth.token.email === 'gussaay@gmail.com' || root.child('access').child(auth.uid).child('role').val() === 'manager' || (auth.token.email === 'malazmuzamil55@gmail.com' && !root.child('access').child(auth.uid).child('role').exists())",
+      ".write": "auth.token.email === 'gussaay@gmail.com' || root.child('access').child(auth.uid).child('role').val() === 'manager' || (auth.token.email === 'malazmuzamil55@gmail.com' && !root.child('access').child(auth.uid).child('role').exists())",
       "$uid": {
+        ".read": "auth.uid === $uid",
         ".validate": "auth.token.email === 'gussaay@gmail.com' || root.child('access').child(auth.uid).child('role').val() === 'manager' || (auth.token.email === 'malazmuzamil55@gmail.com' && !root.child('access').child(auth.uid).child('role').exists()) || auth.uid === $uid",
         "$key": {
+          ".write": "auth.uid === $uid",
           ".validate": "auth.token.email === 'gussaay@gmail.com' || root.child('access').child(auth.uid).child('role').val() === 'manager' || (auth.token.email === 'malazmuzamil55@gmail.com' && !root.child('access').child(auth.uid).child('role').exists()) || (auth.uid === $uid && newData.child('status').val() === 'pending')",
           "$field": {
             ".validate": "auth.token.email === 'gussaay@gmail.com' || root.child('access').child(auth.uid).child('role').val() === 'manager' || (auth.token.email === 'malazmuzamil55@gmail.com' && !root.child('access').child(auth.uid).child('role').exists()) || (auth.uid === $uid && newData.parent().child('status').val() === 'pending')",

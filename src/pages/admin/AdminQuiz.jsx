@@ -3,7 +3,8 @@ import { useEffect, useState } from 'react';
 import { useNavigate, useParams } from 'react-router-dom';
 import { ChevronLeft, ChevronRight, Eraser, Plus, Trash2, Upload } from 'lucide-react';
 import { useAsync } from '../../hooks/useData';
-import { getOne, getWhere, pushTo, removeAt, removePaths, str, updateAt } from '../../lib/rtdb';
+import { getOne, getWhere, pushTo, removeAt, removePaths, str, updateAt, updatePaths } from '../../lib/rtdb';
+import { indexEntries } from '../../lib/accessIndex';
 import { invalidateQuestions } from '../../lib/quizSource';
 import { browseFields } from '../../lib/questionBrowse';
 import { bankOfSource } from '../../lib/banks';
@@ -302,6 +303,8 @@ export function QuestionEditorPage() {
       };
       // Chapter and basic-science tags for the browse screens.
       Object.assign(record, browseFields(record, await bankOfSource(quiz.source || '').catch(() => '')));
+      // The lookups the database's quiz lock uses (lib/accessIndex.js).
+      await updatePaths(indexEntries({ quizKey: quiz.key, source: quiz.source, bchap: record.bchap, bsci: record.bsci })).catch(() => {});
       if (isNew) {
         await pushTo('quizqq', { key: quiz.key, source: quiz.source || '', ...record });
         await syncCount(childKey, quiz, questions.length + 1);

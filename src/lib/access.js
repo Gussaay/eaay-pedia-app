@@ -114,10 +114,10 @@ export function accessState({ role = 'user', record = null, config = DEFAULT_CON
 }
 
 // Database keys cannot hold . # $ [ ] /, and chapter names sometimes do.
-const encode = (s) => String(s).replace(/[%.#$[\]/]/g, (c) => `%${c.charCodeAt(0).toString(16).toUpperCase()}`);
+export const encodeKey = (s) => String(s).replace(/[%.#$[\]/]/g, (c) => `%${c.charCodeAt(0).toString(16).toUpperCase()}`);
 
 /** The key an unlock or a request is stored under. */
-export const scopeKey = (type, id) => `${type}~${encode(id)}`;
+export const scopeKey = (type, id) => `${type}~${encodeKey(id)}`;
 
 export const SCOPE_LABELS = {
   quiz: 'Quiz',
