@@ -22,6 +22,8 @@
 //   aitag/q/<id>        { m: main, t: [tags], f: fact, h: text hash }
 //   aitag/canon/<slug>  standard label for a raw name
 //   aitag/pair/<a>__<b> 1 linked, 0 not linked (a < b)
+//   aitag/re/<a>__<b>   1 when a "not linked" pair was judged again from the
+//                       full text with the looser rule (link phase, second stage)
 // Keys: GEMINI_API_KEY and/or GROQ_API_KEY in the environment. Hand tags
 // (scripts/tag-exam.mjs, no tags_auto) are kept as they are.
 import fs from 'node:fs';
@@ -295,6 +297,7 @@ const state = read('aitag');
 state.q ||= {};
 state.canon ||= {};
 state.pair ||= {};
+state.re ||= {};
 const list = Object.entries(all).filter(([, q]) => q && q.question !== undefined);
 // Pair keys are "a__b", and push ids can themselves contain "_", so split
 // where both halves are real question ids.
@@ -505,6 +508,16 @@ if (phase === 'link') {
     .filter(([k]) => (state.pair[k] === undefined || state.pair[k] === 2) && pairIds(k)[0])
     .sort((a, b) => (state.pair[a[0]] === 2) - (state.pair[b[0]] === 2) || b[1].shared - a[1].shared || b[1].cos - a[1].cos);
   console.log(`${cand.length} candidate pairs, ${todo.length} still to judge (${todo.filter(([k]) => state.pair[k] === 2).length} with full text).`);
+  // Second stage, once every pair is judged: the most alike "not linked" pairs
+  // are judged again from the full text with a looser rule (the first rule
+  // missed near-duplicates; checked against the DOH links done by hand).
+  const recheck = !todo.length;
+  if (recheck) {
+    const top = Number(value('recheck', 6000));
+    const zeros = cand.filter(([k]) => state.pair[k] === 0 && pairIds(k)[0]).sort((a, b) => b[1].score - a[1].score).slice(0, top);
+    todo.push(...zeros.filter(([k]) => !state.re[k]));
+    console.log(`Second look: ${todo.length} of the ${zeros.length} most alike "not linked" pairs still to judge again from the full text.`);
+  }
   if (!todo.length) console.log('NOTHING TO DO');
   const show = (id, full) => {
     const q = all[id];
@@ -521,7 +534,17 @@ if (phase === 'link') {
       const batch = queue.splice(0, size);
       busy += batch.length;
       const reply = await ask(
-        [
+        recheck ? [
+          'Decide for each pair of paediatric exam questions whether they are LINKED for a student revising: they ask about the same condition (or drug, test, sign) AND the same or a directly connected point, so studying one directly helps answer the other.',
+          'LINKED examples: the same question asked in other words; two steps of one algorithm (e.g. vagal manoeuvres first, then adenosine for SVT); a diagnosis and its defining feature or main complication; the same investigation or treatment of one condition.',
+          'NOT linked: only the same broad area or body system; the same condition but unrelated points (e.g. its epidemiology vs. a drug dose); a shared word only.',
+          'Reply only with JSON: {"r":{"<pair number>":1 or 0, …}} for every pair.',
+          '',
+          ...batch.map(([k], n) => {
+            const [a, b] = pairIds(k);
+            return `Pair ${n + 1}\nA: ${show(a, true)}\nB: ${show(b, true)}`;
+          }),
+        ].join('\n') : [
           'Decide for each pair of paediatric exam questions whether they are LINKED: both test the same specific fact or concept, so a student who learns the answer to one is directly helped with the other (same condition AND same aspect, e.g. both on the first-line treatment of Kawasaki disease, or one asks the diagnosis and the other a key feature that defines it).',
           'NOT linked: same condition but unrelated aspects (e.g. epidemiology vs. drug dose), or only a shared broad area.',
           'Most pairs show only the point each question tests and its answer. If that is not enough to decide, answer 2 (unsure) for that pair; pairs marked "full" show the whole question and need 1 or 0.',
@@ -556,19 +579,24 @@ if (phase === 'link') {
       const updates = {};
       batch.forEach(([k], n) => {
         const v = Number(reply.r?.[String(n + 1)] ?? NaN);
-        if (v === 0 || v === 1 || (v === 2 && state.pair[k] !== 2)) updates[`aitag/pair/${k}`] = state.pair[k] = v;
+        if (recheck) {
+          if (v !== 0 && v !== 1) return;
+          updates[`aitag/pair/${k}`] = state.pair[k] = v;
+          updates[`aitag/re/${k}`] = state.re[k] = 1;
+        } else if (v === 0 || v === 1 || (v === 2 && state.pair[k] !== 2)) updates[`aitag/pair/${k}`] = state.pair[k] = v;
       });
       // a small summary the status workflow (ai-tag-status.yml) can read while this runs
-      updates['aitag/progress'] = { phase: 'link', candidates: cand.length, left: queue.length + busy, updated: new Date().toISOString() };
+      updates['aitag/progress'] = { phase: recheck ? 'second look' : 'link', candidates: recheck ? todo.length : cand.length, left: queue.length + busy, updated: new Date().toISOString() };
       write(updates, 'aitag-pair');
       console.log(`  ${todo.length - queue.length - busy}/${todo.length} (${calls} requests, ${pick})`);
     }
   };
-  const batchSize = Number(value('batch', 40)); // short pair text: bigger batches
+  // short pair text: bigger batches; the second look shows the full text
+  const batchSize = Number(value('batch', recheck ? 15 : 40));
   await Promise.all([
     worker('free', batchSize),
     ...(models.some((m) => m.provider === 'claude')
-      ? Array.from({ length: Number(process.env.CLAUDE_WORKERS || 1) }, () => worker('claude', Number(value('claude-batch', 100))))
+      ? Array.from({ length: Number(process.env.CLAUDE_WORKERS || 1) }, () => worker('claude', Number(value('claude-batch', recheck ? 40 : 100))))
       : []),
   ]);
 }
