@@ -588,18 +588,19 @@ if (phase === 'report' || phase === 'write') {
   const judged = Object.values(state.pair);
   console.log(`Pairs judged ${judged.length}: linked ${judged.filter((v) => v === 1).length}.`);
 
-  // DOH (HAAD) links checked by hand: how many the AI pipeline finds.
-  const doh = list.filter(([, q]) => q.source === 'doh_haad').map(([id]) => id);
-  const dohSet = new Set(doh);
-  const gold = new Set();
-  for (const id of doh) for (const o of Object.keys(all[id].similar || {})) if (dohSet.has(o) && all[id].key !== all[o].key) gold.add(id < o ? `${id}__${o}` : `${o}__${id}`);
-  if (gold.size && doh.every((id) => state.q[id])) {
+  // Books whose links were checked by hand (DOH/HAAD, Saudi Prometric): how many the AI pipeline finds.
+  for (const [book, name] of [['doh_haad', 'DOH'], ['saudi_prometric', 'Saudi Prometric']]) {
+    const ids = list.filter(([, q]) => q.source === book).map(([id]) => id);
+    const inBook = new Set(ids);
+    const gold = new Set();
+    for (const id of ids) for (const o of Object.keys(all[id].similar || {})) if (inBook.has(o) && all[id].key !== all[o].key) gold.add(id < o ? `${id}__${o}` : `${o}__${id}`);
+    if (!gold.size || !ids.every((id) => state.q[id])) continue;
     const cand = new Set(candidates().map(([k]) => k));
     const inCand = [...gold].filter((k) => cand.has(k)).length;
     const yes = [...gold].filter((k) => state.pair[k] === 1).length;
     const judgedGold = [...gold].filter((k) => state.pair[k] !== undefined).length;
-    const extra = Object.entries(state.pair).filter(([k, v]) => v === 1 && !gold.has(k) && pairIds(k).every((x) => x && dohSet.has(x)));
-    console.log(`DOH check: ${gold.size} links already in the app between DOH papers; ${inCand} among the candidates; ${judgedGold} judged, ${yes} confirmed by the AI; ${extra.length} new DOH links the AI adds.`);
+    const extra = Object.entries(state.pair).filter(([k, v]) => v === 1 && !gold.has(k) && pairIds(k).every((x) => x && inBook.has(x)));
+    console.log(`${name} check: ${gold.size} links already in the app between ${name} papers; ${inCand} among the candidates; ${judgedGold} judged, ${yes} confirmed by the AI; ${extra.length} new ${name} links the AI adds.`);
     extra.slice(0, 25).forEach(([k]) => {
       const [a, b] = pairIds(k);
       console.log(`  + ${clean(all[a].question).slice(0, 90)} → ${answerOf(all[a]).slice(0, 30)} || ${clean(all[b].question).slice(0, 90)} → ${answerOf(all[b]).slice(0, 30)}`);
