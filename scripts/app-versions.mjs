@@ -43,3 +43,13 @@ console.log(`\n== quizusers: ${Object.keys(users).length} accounts, by "ver" and
 console.table(table);
 console.log('\n== quizusers field names (accounts having each):');
 console.log(Object.entries(fields).sort((a, b) => b[1] - a[1]).slice(0, 60).map(([k, n]) => `${k}:${n}`).join('  '));
+
+// Can a rule find a quiz's book from the quiz key alone (allquiz/<key>)?
+const quizzes = get('allquiz');
+const rows = Object.entries(quizzes);
+const same = rows.filter(([id, q]) => q && q.key === id).length;
+console.log(`\n== allquiz: ${rows.length} quizzes, ${same} whose key equals their record id`);
+const bad = rows.filter(([id, q]) => q && q.key !== id).slice(0, 5).map(([id, q]) => `${id} key=${q?.key} source=${q?.source}`);
+if (bad.length) console.log('examples where they differ:', bad.join(' | '));
+const chapters = get('chapters', ['--shallow']);
+console.log(`chapters: ${Object.keys(chapters).length}`);
