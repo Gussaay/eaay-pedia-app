@@ -18,7 +18,7 @@ const out = path.join('.tmp', 'update-app.json');
 fb(['database:get', '/update/app', '--output', out]);
 const app = JSON.parse(fs.readFileSync(out, 'utf8') || 'null') || {};
 console.log('update/app fields:', Object.keys(app).join(', ') || '(none)');
-console.log('update/app/ver now:', JSON.stringify(app.ver));
+console.log('update/app now:', JSON.stringify({ ver: app.ver, update: app.update, url: app.url, read: app.read }));
 if (!commit) process.exit(0);
 const file = path.join('.tmp', 'ver.json');
 // Android stored every value as a string.
