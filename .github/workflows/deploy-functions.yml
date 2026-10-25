@@ -47,5 +47,13 @@ jobs:
         run: |
           printf '%s' "$FIREBASE_SERVICE_ACCOUNT" > "$RUNNER_TEMP/sa.json"
           export GOOGLE_APPLICATION_CREDENTIALS="$RUNNER_TEMP/sa.json"
-          npx --yes firebase-tools@14 deploy --only functions --project easy-pedia --non-interactive --force
+          # firebase-tools lists the project's Extensions instances whenever a
+          # codebase's build carries an `extensions` field, even an empty one,
+          # and this account may not read Extensions (403). The app uses none,
+          # so skip that step unless the build really declares one.
+          npm i -g firebase-tools@14 --silent
+          PREP="$(npm root -g)/firebase-tools/lib/deploy/functions/prepare.js"
+          sed -i 's/\.some((b) => b\.extensions)/.some((b) => b.extensions \&\& Object.keys(b.extensions).length)/' "$PREP"
+          grep -q 'Object.keys(b.extensions).length' "$PREP" || echo "::warning::Extensions check not patched"
+          firebase deploy --only functions --project easy-pedia --non-interactive --force
           rm -f "$RUNNER_TEMP/sa.json"
