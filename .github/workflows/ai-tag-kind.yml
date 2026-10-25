@@ -35,8 +35,7 @@ jobs:
       - name: Sort pairs into similar or linked
         env:
           FIREBASE_SERVICE_ACCOUNT: ${{ secrets.FIREBASE_SERVICE_ACCOUNT_EASY_PEDIA }}
-          GEMINI_API_KEY: ${{ secrets.GEMINI_API_KEY }}
-          GROQ_API_KEY: ${{ secrets.GROQ_API_KEY }}
+          # Qusay (2026-10-25): sort with Claude only, no Gemini/Groq
           # Claude subscription token: the link phase asks Claude first, lightly
           CLAUDE_CODE_OAUTH_TOKEN: ${{ secrets.CLAUDE_CODE_OAUTH_TOKEN }}
           CLAUDE_ON: '1'
@@ -47,7 +46,7 @@ jobs:
           # The week starts at his plan's reset. Per round: the plan's own 5-hour limit also
           # stops it (then it rests and rejoins).
           CLAUDE_MAX_CALLS: '400'
-          CLAUDE_WEEK_CALLS: '1500'
+          CLAUDE_WEEK_CALLS: '1580'
           CLAUDE_WORKERS: '2'
           CLAUDE_WEEK_RESET: '2T19:59'
           CLAUDE_MODEL: haiku # Qusay's choice: uses far less of the Pro limits than sonnet
