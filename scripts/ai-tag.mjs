@@ -660,6 +660,8 @@ if (phase === 'write') {
   const qtags = read('qtags');
   const updates = {};
   const index = {};
+  // what this write replaces or adds, kept under aitag/written so it can be undone
+  const undo = {};
   for (const [id, q] of list) {
     if (isHand(q)) {
       for (const t of tagsOf(q)) (index[t.slug] ||= {})[id] = true;
@@ -669,6 +671,7 @@ if (phase === 'write') {
     if (!v) continue;
     const labels = [...new Map([v.m, ...(v.t || [])].map(canon).map((l) => [tagSlug(l), l]))].filter(([s]) => s);
     if (!labels.length) continue;
+    undo[`aitag/written/tags/${id}`] = { tags: q.tags || null, topic: q.topic || null, tags_auto: q.tags_auto || null };
     updates[`quizqq/${id}/tags`] = Object.fromEntries(labels);
     updates[`quizqq/${id}/topic`] = labels[0][0];
     updates[`quizqq/${id}/tags_auto`] = '1';
@@ -682,6 +685,7 @@ if (phase === 'write') {
     if (v !== 1 || !a || !all[b] || all[a].similar?.[b]) continue;
     updates[`quizqq/${a}/similar/${b}`] = true;
     updates[`quizqq/${b}/similar/${a}`] = true;
+    undo[`aitag/written/links/${k}`] = 1;
     links += 1;
   }
   console.log(`\n${Object.keys(updates).length} paths to write; ${links} new similar links.`);
@@ -689,8 +693,17 @@ if (phase === 'write') {
     fs.writeFileSync(path.join('.tmp', 'aitag-write.json'), JSON.stringify(updates));
     console.log('DRY RUN — add --commit to write.');
   } else {
-    write(updates, 'aitag-write');
-    console.log('Written.');
+    // the undo record first, then the changes, in parts the database accepts
+    const parts = (o, n = 20000) => {
+      const e = Object.entries(o);
+      return Array.from({ length: Math.ceil(e.length / n) }, (_, i) => Object.fromEntries(e.slice(i * n, (i + 1) * n)));
+    };
+    parts(undo).forEach((u, i) => write(u, `aitag-undo-${i}`));
+    parts(updates).forEach((u, i) => {
+      write(u, `aitag-write-${i}`);
+      console.log(`  written part ${i + 1}`);
+    });
+    console.log(`Written. Undo record: aitag/written (${Object.keys(undo).length} entries).`);
   }
 }
 console.log(`\n${calls} AI requests this run.`);

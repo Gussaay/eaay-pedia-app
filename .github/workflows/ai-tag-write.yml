@@ -1,0 +1,44 @@
+name: AI tags write
+
+# Writes the AI tags and links into the questions (scripts/ai-tag.mjs
+# --phase write --commit). Qusay approved writing all of them on 2026-10-25.
+# Adds only: hand tags and hand links are kept. Before writing, the old tags
+# of every changed question and the list of added links are saved under
+# aitag/written, so the AI part can be taken out again.
+on:
+  workflow_dispatch:
+  push:
+    branches:
+      - claude/project-thread-cop9he
+    paths:
+      - '.github/workflows/ai-tag-write.yml'
+
+concurrency:
+  group: ai-tag-write
+  cancel-in-progress: false
+
+permissions:
+  contents: read
+
+jobs:
+  write:
+    runs-on: ubuntu-latest
+    timeout-minutes: 60
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+      - name: Install Firebase CLI
+        run: npm i -g firebase-tools@14
+      - name: Write tags and links
+        env:
+          FIREBASE_SERVICE_ACCOUNT: ${{ secrets.FIREBASE_SERVICE_ACCOUNT_EASY_PEDIA }}
+        run: |
+          printf '%s' "$FIREBASE_SERVICE_ACCOUNT" > "$RUNNER_TEMP/sa.json"
+          export GOOGLE_APPLICATION_CREDENTIALS="$RUNNER_TEMP/sa.json"
+          mkdir -p .tmp
+          node --max-old-space-size=6000 scripts/ai-tag.mjs --phase write --commit
+          status=$?
+          rm -f "$RUNNER_TEMP/sa.json"
+          exit $status
