@@ -5,15 +5,18 @@
 // reader needs next is where the marks are being lost — which topics are weak
 // and which quizzes are worth another attempt — so the totals are joined here
 // by a per-topic and a per-quiz breakdown, both built from what each finished
-// session recorded (src/lib/quizHistory.js).
+// session recorded (src/lib/quizHistory.js). Topics come from each question
+// (its clinical system, basic science and specific tag, lib/performance.js);
+// answers given in the "Linked questions" list count as well.
 import { useRef, useState } from 'react';
 import { Link } from 'react-router-dom';
 import { toPng } from 'html-to-image';
-import { BarChart3, ListChecks, RotateCcw, Share2, Target, TrendingUp } from 'lucide-react';
+import { BarChart3, CalendarDays, FlaskConical, ListChecks, RotateCcw, Share2, Tag, Target, TrendingUp } from 'lucide-react';
 import { useAuth } from '../hooks/useAuth';
 import { useAsync } from '../hooks/useData';
 import { num, updateAt } from '../lib/rtdb';
 import { loadDashboard, resetHistory } from '../lib/quizHistory';
+import { lastDays, rankTopics, streakOf, totalOf } from '../lib/performance';
 import { shareImage } from '../lib/native';
 import BottomNav from '../components/BottomNav';
 import { AppBar, Avatar, Button, Card, Confirm, Page, Spinner, useToast } from '../components/ui';
@@ -78,6 +81,75 @@ function TopicRow({ topic }) {
   );
 }
 
+function TopicList({ rows, limit = 6, empty }) {
+  const [all, setAll] = useState(false);
+  if (!rows.length) return <p className="text-sm text-slate-500 py-4">{empty}</p>;
+  const shown = all ? rows : rows.slice(0, limit);
+  return (
+    <>
+      <ul className="mt-3 divide-y divide-slate-100">
+        {shown.map((t) => (
+          <TopicRow key={t.key} topic={t} />
+        ))}
+      </ul>
+      {rows.length > shown.length && (
+        <Button variant="ghost" className="w-full mt-2" onClick={() => setAll(true)}>
+          Show all {rows.length}
+        </Button>
+      )}
+    </>
+  );
+}
+
+const dayLabel = (day) => new Date(`${day}T12:00:00`).toLocaleDateString(undefined, { weekday: 'narrow' });
+
+/** Answers per day for the last two weeks; each bar coloured by that day's accuracy. */
+function Activity({ days }) {
+  const list = lastDays(days, 14);
+  const max = Math.max(1, ...list.map((d) => d.played));
+  const week = totalOf(list.slice(7));
+  const before = totalOf(list.slice(0, 7));
+  const change = week.accuracy !== null && before.accuracy !== null ? week.accuracy - before.accuracy : null;
+  return (
+    <>
+      <div className="mt-4 flex items-end gap-1 h-28" role="img" aria-label="Answers per day, last 14 days">
+        {list.map((d) => {
+          const pct = d.played ? Math.round((d.correct / d.played) * 100) : 0;
+          return (
+            <div key={d.day} className="flex-1 flex flex-col items-center justify-end h-full gap-1">
+              <div
+                className={`w-full rounded-t-md ${d.played ? band(pct).bar : 'bg-slate-100'}`}
+                style={{ height: d.played ? `${Math.max((d.played / max) * 100, 6)}%` : '4px' }}
+                title={`${d.day}: ${d.played} answered${d.played ? `, ${pct}% right` : ''}`}
+              />
+              <span className="text-[10px] text-slate-400 leading-none">{dayLabel(d.day)}</span>
+            </div>
+          );
+        })}
+      </div>
+      <div className="grid grid-cols-2 gap-3 mt-4 text-sm">
+        <div className="rounded-xl bg-slate-50 p-3">
+          <p className="text-xs text-slate-500">Last 7 days</p>
+          <p className="font-semibold text-slate-800">
+            {week.played} answered{week.accuracy !== null ? ` · ${week.accuracy}%` : ''}
+          </p>
+        </div>
+        <div className="rounded-xl bg-slate-50 p-3">
+          <p className="text-xs text-slate-500">The 7 days before</p>
+          <p className="font-semibold text-slate-800">
+            {before.played} answered{before.accuracy !== null ? ` · ${before.accuracy}%` : ''}
+          </p>
+        </div>
+      </div>
+      {change !== null && change !== 0 && (
+        <p className={`text-xs mt-2 ${change > 0 ? 'text-emerald-700' : 'text-red-700'}`}>
+          Accuracy {change > 0 ? 'up' : 'down'} {Math.abs(change)} points on the week before.
+        </p>
+      )}
+    </>
+  );
+}
+
 const when = (ms) => {
   if (!ms) return '';
   const days = Math.floor((Date.now() - ms) / 86_400_000);
@@ -92,7 +164,6 @@ export default function Performance() {
   const toast = useToast();
   const cardRef = useRef(null);
   const [confirmReset, setConfirmReset] = useState(false);
-  const [showAllTopics, setShowAllTopics] = useState(false);
   const board = useAsync(() => loadDashboard(user.uid), [user.uid]);
 
   const totalPlay = num(profile?.total_play);
@@ -100,11 +171,22 @@ export default function Performance() {
   const wrong = Math.max(0, totalPlay - correct);
   const overall = profile?.over_all !== undefined ? `${profile.over_all} %` : 'N/A';
 
-  const topics = board.data?.topics || [];
-  const quizzes = board.data?.quizzes || [];
-  const weakest = [...topics].sort((a, b) => a.accuracy - b.accuracy);
-  const shownTopics = showAllTopics ? weakest : weakest.slice(0, 6);
+  const d = board.data || {};
+  const topics = d.topics || [];
+  const quizzes = d.quizzes || [];
+  const weakest = [...topics].sort((a, b) => a.accuracy - b.accuracy || b.played - a.played);
+  const sciences = [...(d.sciences || [])].sort((a, b) => a.accuracy - b.accuracy || b.played - a.played);
+  const tagRank = rankTopics(d.tags || [], 3);
   const attempts = quizzes.reduce((n, q) => n + q.attempts, 0);
+  const linked = d.linked || { played: 0, correct: 0 };
+  const week = totalOf(lastDays(d.days, 7));
+  const streak = streakOf(d.days);
+  // The weakest systems and specific topics below 75%; the weakest system even if all are above.
+  const weakSystems = weakest.filter((t) => t.accuracy < 75).slice(0, 3);
+  const focus = [
+    ...(weakSystems.length ? weakSystems : weakest.slice(0, 1)),
+    ...tagRank.weak.filter((t) => t.accuracy < 75).slice(0, 3),
+  ];
 
   const share = async () => {
     try {
@@ -151,53 +233,96 @@ export default function Performance() {
         </div>
 
         <div className="grid grid-cols-2 sm:grid-cols-4 gap-3">
-          <Stat label="Questions answered" value={totalPlay} />
-          <Stat label="Quizzes played" value={quizzes.length} hint={attempts ? `${attempts} attempt/s` : ''} />
-          <Stat label="Topics covered" value={topics.length} />
+          <Stat label="Questions answered" value={totalPlay} hint={d.distinct ? `${d.distinct} different` : ''} />
+          <Stat label="To revisit" value={d.toRevisit ?? 0} hint="last answer wrong" />
+          <Stat label="Day streak" value={streak} hint={streak === 1 ? 'day' : 'days'} />
           <Stat
-            label="Strong topics"
-            value={topics.filter((t) => t.accuracy >= 75).length}
-            hint={`of ${topics.length || 0}`}
+            label="This week"
+            value={week.played}
+            hint={week.accuracy !== null ? `${week.accuracy}% right` : 'answered'}
           />
+          <Stat label="Quizzes played" value={quizzes.length} hint={attempts ? `${attempts} attempt/s` : ''} />
+          <Stat
+            label="Linked questions"
+            value={linked.played}
+            hint={linked.played ? `${Math.round((linked.correct / linked.played) * 100)}% right` : 'answered'}
+          />
+          <Stat label="Systems covered" value={topics.length} hint={`${topics.filter((t) => t.accuracy >= 75).length} strong`} />
+          <Stat label="Specific topics" value={(d.tags || []).length} hint={`${tagRank.strong.filter((t) => t.accuracy >= 75).length} strong`} />
         </div>
+
+        {/* ---------------------------------------------------- activity */}
+        <Card className="p-5">
+          <h3 className="font-display text-lg flex items-center gap-2 text-slate-800">
+            <CalendarDays className="text-brand-600" size={20} /> Activity
+          </h3>
+          <p className="text-xs text-slate-500 mt-1">Answers per day over the last two weeks, coloured by how many were right.</p>
+          {board.loading ? <Spinner /> : <Activity days={d.days} />}
+        </Card>
 
         {/* ------------------------------------------------------ by topic */}
         <Card className="p-5">
           <h3 className="font-display text-lg flex items-center gap-2 text-slate-800">
-            <BarChart3 className="text-brand-600" size={20} /> Accuracy by topic
+            <BarChart3 className="text-brand-600" size={20} /> Accuracy by system
           </h3>
           {board.loading ? (
             <Spinner />
-          ) : topics.length === 0 ? (
-            <p className="text-sm text-slate-500 py-4">
-              Finish a quiz and this fills in with the topics of the questions you answered.
-            </p>
           ) : (
             <>
-              <p className="text-xs text-slate-500 mt-1">Weakest first — that is where revision pays.</p>
-              <ul className="mt-3 divide-y divide-slate-100">
-                {shownTopics.map((t) => (
-                  <TopicRow key={t.key} topic={t} />
-                ))}
-              </ul>
-              {weakest.length > shownTopics.length && (
-                <Button variant="ghost" className="w-full mt-2" onClick={() => setShowAllTopics(true)}>
-                  Show all {weakest.length} topics
-                </Button>
+              {topics.length > 0 && (
+                <p className="text-xs text-slate-500 mt-1">Weakest first — that is where revision pays.</p>
               )}
+              <TopicList
+                rows={weakest}
+                empty="Finish a quiz and this fills in with the systems of the questions you answered."
+              />
             </>
           )}
         </Card>
 
+        {/* ----------------------------------------------- specific topics */}
+        {!board.loading && (d.tags || []).length > 0 && (
+          <Card className="p-5">
+            <h3 className="font-display text-lg flex items-center gap-2 text-slate-800">
+              <Tag className="text-sky-600" size={20} /> Specific topics
+            </h3>
+            <p className="text-xs text-slate-500 mt-1">Topics you have answered at least 3 times.</p>
+            {tagRank.enough === 0 ? (
+              <p className="text-sm text-slate-500 py-4">Keep going: none has 3 answers yet.</p>
+            ) : (
+              <div className="grid sm:grid-cols-2 gap-x-6">
+                <div>
+                  <p className="text-sm font-semibold text-red-700 mt-3">Needs work</p>
+                  <TopicList rows={tagRank.weak.filter((t) => t.accuracy < 75)} limit={5} empty="Nothing below 75%." />
+                </div>
+                <div>
+                  <p className="text-sm font-semibold text-emerald-700 mt-3">Strong</p>
+                  <TopicList rows={tagRank.strong.filter((t) => t.accuracy >= 75)} limit={5} empty="None at 75% or more yet." />
+                </div>
+              </div>
+            )}
+          </Card>
+        )}
+
+        {/* ---------------------------------------------- basic sciences */}
+        {!board.loading && sciences.length > 0 && (
+          <Card className="p-5">
+            <h3 className="font-display text-lg flex items-center gap-2 text-slate-800">
+              <FlaskConical className="text-violet-600" size={20} /> By basic science
+            </h3>
+            <TopicList rows={sciences} limit={8} empty="" />
+          </Card>
+        )}
+
         {/* -------------------------------------------- what to do next */}
-        {!board.loading && weakest.length > 0 && (
+        {!board.loading && focus.length > 0 && (
           <Card className="p-5">
             <h3 className="font-display text-lg flex items-center gap-2 text-slate-800">
               <Target className="text-red-500" size={20} /> Where to focus
             </h3>
             <ul className="mt-3 space-y-2 text-sm text-slate-700">
-              {weakest.slice(0, 3).map((t) => (
-                <li key={t.key} className="flex items-center gap-2">
+              {focus.map((t) => (
+                <li key={`${t.key}:${t.name}`} className="flex items-center gap-2">
                   <span className={`rounded-full px-2 py-0.5 text-xs font-semibold ${band(t.accuracy).chip}`}>
                     {t.accuracy}%
                   </span>
@@ -207,6 +332,7 @@ export default function Performance() {
               ))}
             </ul>
             <p className="text-xs text-slate-500 mt-3">
+              {d.toRevisit ? `${d.toRevisit} question/s are waiting for another try. ` : ''}
               Open any quiz you have played and choose <b>Only questions I answered wrongly</b> to work through the
               ones you missed.
             </p>

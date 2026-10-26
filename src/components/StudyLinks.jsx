@@ -4,16 +4,18 @@
 // session is not lost. Linked questions are the copies of this question asked
 // in other sittings, the similar questions (the same fact) and the linked ones
 // (the same condition, a connected point), all answerable in one list.
-import { useState } from 'react';
+import { useEffect, useRef, useState } from 'react';
 import { createPortal } from 'react-dom';
 import { ChevronRight, Layers, Lightbulb, Repeat2, Tag, X } from 'lucide-react';
+import { useAuth } from '../hooks/useAuth';
 import { useAsync } from '../hooks/useData';
 import { sourcePath } from '../lib/banks';
 import { useBackHandler } from '../lib/back';
 import { loadByRefs } from '../lib/mnemonicData';
 import { questionLinks } from '../lib/mnemonicLinks';
 import { relatedOf, sameOf, similarOf } from '../lib/questionHints';
-import { visibleOptions } from '../lib/quiz';
+import { isCorrect, visibleOptions } from '../lib/quiz';
+import { recordLinkedAnswers } from '../lib/quizHistory';
 import { getQuestion } from '../lib/quizSource';
 import { tagsOf } from '../lib/topicTags';
 import MnemonicPeek from './MnemonicPeek';
@@ -139,11 +141,18 @@ function Sheet({ icon, title, tone, onClose, children }) {
   );
 }
 
+// What was picked on each linked question while the app is open, so opening
+// the list again shows the answer instead of counting the question twice.
+const linkedPicks = new Map();
+
 // The linked questions, each answerable in place: the copies of this same
 // question from other sittings first, then the similar questions, then the
 // linked ones, each kind sorted by its full source (bank, book, paper). Pick
-// an option to see the answer and its explanation.
+// an option to see the answer and its explanation. Every answer counts towards
+// your performance (lib/quizHistory.js recordLinkedAnswers), sent when the
+// list closes.
 function LinkedPeek({ same, similar, related = [], onClose }) {
+  const { user } = useAuth();
   const ids = [...same, ...similar, ...related];
   const isSame = new Set(same);
   const isRelated = new Set(related);
@@ -162,8 +171,26 @@ function LinkedPeek({ same, similar, related = [], onClose }) {
       }),
     [ids.join(',')],
   );
-  const [picked, setPicked] = useState({});
+  const [picked, setPicked] = useState(() =>
+    Object.fromEntries(ids.filter((id) => linkedPicks.has(id)).map((id) => [id, linkedPicks.get(id)])),
+  );
   const list = data.data || [];
+  const pending = useRef([]);
+  const uid = user?.uid;
+  useEffect(
+    () => () => {
+      const answers = pending.current;
+      pending.current = [];
+      if (uid && answers.length) recordLinkedAnswers(uid, answers).catch(() => {});
+    },
+    [uid],
+  );
+  const pick = (q, k) => {
+    if (linkedPicks.has(q._key)) return;
+    linkedPicks.set(q._key, k);
+    pending.current.push({ q, ok: isCorrect(q, k) });
+    setPicked((p) => ({ ...p, [q._key]: k }));
+  };
   return (
     <Sheet icon={<Repeat2 size={18} className="shrink-0 text-amber-600" />} title="Linked questions" tone="text-amber-700" onClose={onClose}>
       {data.loading ? (
@@ -209,7 +236,7 @@ function LinkedPeek({ same, similar, related = [], onClose }) {
                         <button
                           key={k}
                           disabled={!!chosen}
-                          onClick={() => setPicked((p) => ({ ...p, [q._key]: k }))}
+                          onClick={() => pick(q, k)}
                           className={`w-full flex gap-2 items-start rounded-lg border px-2.5 py-2 text-left text-sm ${
                             isAns
                               ? 'border-emerald-400 bg-emerald-50'

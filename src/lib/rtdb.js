@@ -7,6 +7,7 @@ import {
   ref,
   get,
   update,
+  set,
   push,
   remove,
   query,
@@ -112,6 +113,11 @@ export async function getOne(path) {
 export const updateAt = (path, values) => {
   forget(path);
   return update(ref(db, path), values);
+};
+/** Replaces the whole node at `path`. */
+export const setAt = (path, value) => {
+  forget(path);
+  return set(ref(db, path), value);
 };
 export const removeAt = (path) => {
   forget(path);

@@ -261,17 +261,16 @@ export default function QuizPlay() {
       // Which questions were right and wrong, so the setup screen can offer
       // "only the ones I got wrong" next time, and the dashboard can show
       // where the weak topics are.
+      // The topics come from each question (lib/performance.js), not from the
+      // quiz: exam papers and sets carry "?" as their chapter.
       const outcomes = {};
-      const categories = {};
+      const answered = [];
       Object.entries(answers).forEach(([pos, choice]) => {
         const q = questions[deck[Number(pos)]];
         if (!q || !choice) return;
         const ok = isCorrect(q, choice);
         if (q._key) outcomes[q._key] = ok ? 1 : 0;
-        const cat = String(q.category || meta.chapter || '').trim() || 'Uncategorised';
-        const c = (categories[cat] ||= { played: 0, correct: 0 });
-        c.played += 1;
-        if (ok) c.correct += 1;
+        answered.push({ q, ok });
       });
       // The paper itself, kept alongside every earlier one, so its answers can
       // be gone over from the result or any time later.
@@ -289,7 +288,7 @@ export default function QuizPlay() {
         source: meta.source,
         review: routes.review,
         outcomes,
-        categories,
+        answers: answered,
         played: final.played,
         correct: final.correct,
         percentage,
