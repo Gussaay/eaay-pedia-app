@@ -4,13 +4,14 @@ import { aiActivity, aiActivityRange, logLines, taskLabel } from './aiActivity.j
 
 const log = {
   a: { uid: 'u1', name: 'Sara', task: 'explain', what: 'A child with…', requests: 1, status: 'ok', at: 1, limit: 20, pool: 200 },
-  b: { uid: 'u1', name: 'Sara', task: 'agent', what: 'Quiz me', requests: 3, status: 'ok', at: 3, limit: 18, pool: 210 },
+  b: { uid: 'u1', name: 'Sara', task: 'agent', what: 'Quiz me', requests: 3, status: 'ok', at: 3, limit: 18, pool: 210, vote: -1 },
+  e: { uid: 'u1', name: 'Sara', task: 'explain', what: 'Shared one', requests: 0, status: 'cached', at: 0, limit: 18, pool: 210, vote: 1 },
   c: { uid: 'u2', email: 'x@y.z', task: 'quiz', what: 'Kawasaki', requests: 0, status: 'limit', at: 2, limit: 18, pool: 210 },
   d: { uid: 'boss', task: 'chat', requests: 1, status: 'error', error: 'busy', at: 4, staff: true, limit: 0, pool: 210 },
 };
 
 test('lines come newest first', () => {
-  assert.deepEqual(logLines(log).map((l) => l.id), ['d', 'b', 'c', 'a']);
+  assert.deepEqual(logLines(log).map((l) => l.id), ['d', 'b', 'c', 'a', 'e']);
 });
 
 test('each person: requests, % of own limit and % of the pool', () => {
@@ -26,11 +27,13 @@ test('each person: requests, % of own limit and % of the pool', () => {
   assert.equal(u1.limit, 18); // the newest line's limit
   assert.equal(u1.ofLimit, 22.2);
   assert.equal(u1.ofPool, 1.9);
-  assert.deepEqual(u1.tasks, { explain: 1, agent: 1 });
+  assert.deepEqual(u1.tasks, { explain: 2, agent: 1 });
+  assert.deepEqual([u1.up, u1.down, u1.shared], [1, 1, 1]);
+  assert.deepEqual([r.up, r.down, r.shared], [1, 1, 1]);
   assert.equal(boss.staff, true);
   assert.equal(boss.ofLimit, null);
   assert.equal(boss.errors, 1);
-  assert.deepEqual(r.tasks, { explain: 1, agent: 1, quiz: 1, chat: 1 });
+  assert.deepEqual(r.tasks, { explain: 2, agent: 1, quiz: 1, chat: 1 });
 });
 
 test('an empty day', () => {
@@ -51,7 +54,8 @@ test('cumulative use adds days up and compares with all their allowance and pool
   assert.equal(u1.daysUsed, 2);
   assert.equal(u1.limit, 38); // 18 + 20
   assert.equal(u1.ofLimit, 15.8);
-  assert.deepEqual(u1.tasks, { explain: 1, agent: 1, chat: 1 });
+  assert.deepEqual(u1.tasks, { explain: 2, agent: 1, chat: 1 });
+  assert.equal(r.shared, 1);
   assert.equal(r.days.length, 2);
   assert.equal(r.lines[0].day, '2026-10-25');
 });

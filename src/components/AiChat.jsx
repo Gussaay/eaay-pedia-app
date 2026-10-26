@@ -2,7 +2,7 @@
 // explanation: a safe renderer for a reply, and a small tutor chat.
 import { useEffect, useRef, useState } from 'react';
 import { Link } from 'react-router-dom';
-import { BookOpen, Check, ChevronRight, Cpu, GitCompare, ListChecks, Play, RotateCcw, Send, Sparkles } from 'lucide-react';
+import { BookOpen, Check, ChevronRight, Cpu, GitCompare, ListChecks, Play, RotateCcw, Send, Sparkles, ThumbsDown, ThumbsUp, Users } from 'lucide-react';
 import { askAi, useAiQuota } from '../lib/ai';
 import { subscribe } from '../lib/rtdb';
 import { getTutorChat, saveTutorChat } from '../lib/aiCache';
@@ -80,15 +80,75 @@ export function AiReply({ text, className = '' }) {
   );
 }
 
-/** Which model wrote a reply, e.g. "openai/gpt-oss-120b" or "gemini-2.5-flash". */
-export function ModelTag({ model, className = '' }) {
-  if (!model) return null;
+// 👍/👎 given on this device, so a reopened answer shows its rating.
+const VOTES = 'aiVotes.v1';
+const readVotes = () => {
+  try {
+    return JSON.parse(localStorage.getItem(VOTES)) || {};
+  } catch {
+    return {};
+  }
+};
+
+/** 👍 / 👎 on one answer (its log line), seen by the admins in AI activity. */
+export function AiVote({ logId, logDay }) {
+  const [vote, setVote] = useState(() => readVotes()[logId] || 0);
+  if (!logId || !logDay) return null;
+  const pick = async (v) => {
+    const next = vote === v ? 0 : v;
+    setVote(next);
+    try {
+      const all = readVotes();
+      if (next) all[logId] = next;
+      else delete all[logId];
+      localStorage.setItem(VOTES, JSON.stringify(all));
+    } catch {
+      // kept for this session only
+    }
+    askAi({ task: 'vote', logId, day: logDay, vote: next }).catch(() => {});
+  };
+  const btn = (v, Icon, label, on) => (
+    <button
+      type="button"
+      aria-label={label}
+      aria-pressed={vote === v}
+      onClick={() => pick(v)}
+      className={`p-1 rounded-md transition ${vote === v ? on : 'text-slate-300 hover:text-slate-500'}`}
+    >
+      <Icon size={13} />
+    </button>
+  );
   return (
-    <span className={`inline-flex items-center gap-1 text-[11px] text-slate-400 ${className}`}>
-      <Cpu size={12} /> {model}
+    <span className="inline-flex items-center">
+      {btn(1, ThumbsUp, 'Good answer', 'text-emerald-600 bg-emerald-50')}
+      {btn(-1, ThumbsDown, 'Wrong or unhelpful answer', 'text-red-600 bg-red-50')}
     </span>
   );
 }
+
+/**
+ * Which model wrote a reply, e.g. "openai/gpt-oss-120b", whether it is an
+ * explanation shared from someone who asked before, and 👍/👎 when `rate`
+ * carries the answer's log line ({ logId, logDay }).
+ */
+export function ModelTag({ model, className = '', rate, shared }) {
+  if (!model) return null;
+  return (
+    <span className={`inline-flex flex-wrap items-center gap-x-2 gap-y-0.5 text-[11px] text-slate-400 ${className}`}>
+      <span className="inline-flex items-center gap-1">
+        <Cpu size={12} /> {model}
+      </span>
+      {(shared || rate?.shared) && (
+        <span className="inline-flex items-center gap-1 text-violet-500" title="Explained before for someone else, so it did not use your allowance">
+          <Users size={12} /> shared, free
+        </span>
+      )}
+      {rate && <AiVote logId={rate.logId} logDay={rate.logDay} />}
+    </span>
+  );
+}
+
+const rateOf = (res) => (res?.logId ? { logId: res.logId, logDay: res.logDay, ...(res.shared ? { shared: true } : {}) } : {});
 
 /** "8 of 20 AI requests left today": the person's daily allowance. */
 export function AiQuotaLine({ className = '' }) {
@@ -268,7 +328,7 @@ function CompareReply({ model, request }) {
         </p>
         <AiReply text={reply.text} />
         <Sources sources={reply.sources} />
-        <ModelTag model={reply.model} className="mt-1.5" />
+        <ModelTag model={reply.model} rate={reply} className="mt-1.5" />
       </div>
     );
   }
@@ -392,7 +452,7 @@ export default function AiChat({ context, seed = [], seedRequest, ask, agent = f
             { signal: abort.current.signal, onText: (t) => id === request.current && setPartial((p) => p + t) },
           );
       if (id !== request.current) return;
-      const reply = { role: 'model', text: res.text || res.ask?.question || '', model: res.model };
+      const reply = { role: 'model', text: res.text || res.ask?.question || '', model: res.model, ...rateOf(res) };
       if (res.sources?.length) reply.sources = res.sources;
       if (res.steps?.length) reply.steps = res.steps;
       if (res.quizzes?.length) reply.quizzes = res.quizzes;
@@ -463,7 +523,7 @@ export default function AiChat({ context, seed = [], seedRequest, ask, agent = f
               <AgentAsk ask={m.ask} disabled={busy || i !== messages.length - 1} onPick={send} />
               <AgentQuizzes quizzes={m.quizzes} />
               <Sources sources={m.sources} />
-              <ModelTag model={m.model} className="mt-1.5" />
+              <ModelTag model={m.model} rate={m} className="mt-1.5" />
               {m.model && requestFor(i) && <CompareReply key={m.text} model={m.model} request={requestFor(i)} />}
             </div>
           ),
@@ -536,7 +596,8 @@ export function AiExplain({ question }) {
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [question._key]);
 
-  const fetchExplanation = async () => {
+  // `fresh`: a new explanation instead of the one shared for this question.
+  const fetchExplanation = async (fresh = false) => {
     const id = ++request.current;
     abort.current = new AbortController();
     setBusy(true);
@@ -545,11 +606,11 @@ export function AiExplain({ question }) {
     try {
       const { _key, ...q } = question;
       const res = await askAi(
-        { task: 'explain', question: q, books: booksOn },
+        { task: 'explain', question: q, qid: _key, books: booksOn, ...(fresh ? { fresh: true } : {}) },
         { signal: abort.current.signal, onText: (t) => id === request.current && setPartial((p) => p + t) },
       );
       if (id !== request.current) return;
-      const first = [{ role: 'model', text: res.text, model: res.model, ...(res.sources ? { sources: res.sources } : {}) }];
+      const first = [{ role: 'model', text: res.text, model: res.model, ...rateOf(res), ...(res.sources ? { sources: res.sources } : {}) }];
       setMessages(first);
       setAsk('');
       setRound((r) => r + 1);
@@ -595,7 +656,7 @@ export function AiExplain({ question }) {
   const regenerate = () => {
     saveTutorChat(question, null);
     setMessages(null);
-    fetchExplanation();
+    fetchExplanation(true);
   };
 
   const { _key, ...plain } = question;
@@ -642,7 +703,7 @@ export function AiExplain({ question }) {
         {error && (
           <div className="py-4">
             <p className="text-sm text-red-600">{error}</p>
-            <Button variant="outline" className="mt-3" onClick={fetchExplanation}>
+            <Button variant="outline" className="mt-3" onClick={() => fetchExplanation()}>
               Try again
             </Button>
           </div>

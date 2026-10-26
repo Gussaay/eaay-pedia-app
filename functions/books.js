@@ -13,6 +13,7 @@
 // The two files must agree on EMBED_MODEL and DIMS.
 import { logger } from 'firebase-functions';
 import { getDatabase } from 'firebase-admin/database';
+import { rerank } from './bookRank.js';
 
 export const EMBED_MODEL = 'gemini-embedding-001';
 export const DIMS = 512; // Gemini embeddings can be cut short; 512 keeps a cold start's download small
@@ -61,8 +62,10 @@ async function embedQuery(text, key) {
   return v.map((x) => x / norm);
 }
 
+const CANDIDATES = 40; // re-ranked with the question's words (bookRank.js)
+
 /**
- * The `k` passages closest to `query`, best first:
+ * The `k` passages that best answer `query`, best first:
  * [{ n, book, title, page, text, score }]. Empty when no book is indexed.
  */
 export async function findPassages(query, key, k = 6) {
@@ -70,17 +73,18 @@ export async function findPassages(query, key, k = 6) {
   if (!cache.size) return [];
   const q = await embedQuery(query, key);
 
-  const best = []; // [score, id, i], kept sorted and k long
+  const want = Math.max(k, CANDIDATES);
+  const best = []; // [score, id, i], kept sorted and `want` long
   for (const [id, b] of cache) {
     for (let i = 0; i < b.n; i++) {
       let s = 0;
       const off = i * DIMS;
       for (let d = 0; d < DIMS; d++) s += b.rows[off + d] * q[d];
       s *= b.scales[i];
-      if (best.length < k || s > best[best.length - 1][0]) {
+      if (best.length < want || s > best[best.length - 1][0]) {
         best.push([s, id, i]);
         best.sort((x, y) => y[0] - x[0]);
-        if (best.length > k) best.pop();
+        if (best.length > want) best.pop();
       }
     }
   }
@@ -92,7 +96,9 @@ export async function findPassages(query, key, k = 6) {
       return c && { book: id, title: cache.get(id).title, page: c.p, text: c.t, score: Math.round(score * 1000) / 1000 };
     }),
   );
-  const found = hits.filter(Boolean).map((h, i) => ({ n: i + 1, ...h }));
-  logger.info(`books: ${found.length} passages, best ${found[0]?.score ?? '-'}`);
+  const found = rerank(query, hits.filter(Boolean))
+    .slice(0, k)
+    .map(({ rank, ...h }, i) => ({ n: i + 1, ...h }));
+  logger.info(`books: ${found.length} passages, best ${found[0]?.score ?? '-'} (keywords ${found[0]?.keyword ?? '-'})`);
   return found;
 }

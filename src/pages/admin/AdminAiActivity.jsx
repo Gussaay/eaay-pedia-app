@@ -37,6 +37,7 @@ const STATUS = {
   ok: null,
   error: 'bg-red-50 text-red-700',
   limit: 'bg-amber-50 text-amber-800',
+  cached: 'bg-violet-50 text-violet-700',
 };
 
 export default function AdminAiActivity() {
@@ -126,6 +127,12 @@ export default function AdminAiActivity() {
             {Object.keys(a.tasks).length > 0 && ' · '}
             {Object.entries(a.tasks).map(([t, n]) => `${taskLabel(t)} ${n}`).join(', ')}
           </p>
+          {(a.up > 0 || a.down > 0 || a.shared > 0) && (
+            <p className="text-xs text-slate-500 mt-1">
+              👍 {a.up} · 👎 {a.down}
+              {a.shared > 0 && ` · ${a.shared} shared explanations given free`}
+            </p>
+          )}
           {range > 1 && a.days.some((d) => d.used) && (
             <div className="mt-3 space-y-1">
               {a.days.map((d) => (
@@ -175,6 +182,8 @@ export default function AdminAiActivity() {
                     {fmtPct(r.ofPool)} of the pool · {Object.entries(r.tasks).map(([t, n]) => `${taskLabel(t)} ${n}`).join(', ')}
                     {r.limited > 0 && <span className="text-amber-700"> · hit the limit {r.limited}×</span>}
                     {r.errors > 0 && <span className="text-red-600"> · {r.errors} failed</span>}
+                    {r.shared > 0 && ` · ${r.shared} shared`}
+                    {(r.up > 0 || r.down > 0) && ` · 👍 ${r.up} 👎 ${r.down}`}
                     {r.email && r.name ? ` · ${r.email}` : ''}
                   </p>
                 </button>
@@ -217,9 +226,12 @@ export default function AdminAiActivity() {
                     {l.ms ? ` · ${(l.ms / 1000).toFixed(1)} s` : ''}
                     {STATUS[l.status] && (
                       <span className={`ml-1.5 rounded px-1.5 py-0.5 font-semibold ${STATUS[l.status]}`}>
-                        {l.status === 'limit' ? 'over limit' : `failed${l.error ? `: ${l.error}` : ''}`}
+                        {l.status === 'limit' ? 'over limit' : l.status === 'cached' ? 'shared, free' : `failed${l.error ? `: ${l.error}` : ''}`}
                       </span>
                     )}
+                    {Number(l.vote) === 1 && <span className="ml-1.5">👍</span>}
+                    {Number(l.vote) === -1 && <span className="ml-1.5">👎</span>}
+                    {l.fresh && <span className="ml-1.5">· asked for a new one</span>}
                   </p>
                 </div>
               ))}

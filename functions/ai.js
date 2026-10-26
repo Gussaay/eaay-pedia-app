@@ -27,6 +27,10 @@
 //   agent     messages             the tutor with tools (agent.js): searches the
 //                                  bank and textbooks, builds quizzes, asks back
 //   quota     -                    the caller's allowance today, without asking the AI
+//   vote      logId, day, vote     👍 (1) / 👎 (-1) on one of the caller's answers
+// `explain` may add `qid` (the question's id): the answer is then shared with
+// everyone who asks about the same question (aiShared.js) and draws on the
+// bank's linked questions; `fresh: true` asks for a new one.
 // Every reply carries `quota` too, so the app shows what is left.
 // `explain` and `chat` may add `books: true` to answer from the indexed
 // textbooks (books.js); the reply then carries `sources`.
@@ -39,6 +43,7 @@ import { getDatabase } from 'firebase-admin/database';
 import { findPassages } from './books.js';
 import { runAgent } from './agent.js';
 import { activeUsers, dailyPool, modelKey, quotaConfig, userQuota } from './aiQuota.js';
+import { linkedQuestions, saveExplanation, sharedExplanation, validKey, vote } from './aiShared.js';
 
 const GROQ_API_KEY = defineSecret('GROQ_API_KEY');
 const GEMINI_API_KEY = defineSecret('GEMINI_API_KEY');
@@ -417,8 +422,19 @@ async function handle(request, response, use) {
   const staff = await isStaff(request.auth);
   const quota = await quotaFor(uid, staff);
   if (request.data?.task === 'quota') return { quota };
+  if (request.data?.task === 'vote') return vote(uid, request.data);
   use.log = true;
   use.quota = quota;
+
+  // Someone already had this question explained: the same answer, free.
+  const qid = request.data?.task === 'explain' ? validKey(request.data.qid) : '';
+  if (qid && !request.data.fresh) {
+    const hit = await sharedExplanation(qid, request.data).catch((e) => logger.warn(`shared explain: ${e.message}`));
+    if (hit) {
+      use.status = 'cached';
+      return { text: hit.text, model: hit.model, ...(hit.sources ? { sources: hit.sources } : {}), shared: true, quota };
+    }
+  }
   if (!quota.left) {
     use.status = 'limit';
     throw new HttpsError('resource-exhausted', quota.pool.left ? OUT_OF_QUOTA : POOL_EMPTY, { quota });
@@ -462,6 +478,10 @@ async function handle(request, response, use) {
 
   let { contents, schema } = buildRequest(request.data);
   let sources;
+  if (qid) {
+    const linked = await linkedQuestions(qid).catch((e) => logger.warn(`linked questions: ${e.message}`));
+    if (linked) contents[0].parts[0].text = linked + contents[0].parts[0].text;
+  }
   if (request.data?.books && ['explain', 'chat'].includes(request.data.task)) {
     if (!key) throw new HttpsError('failed-precondition', 'Textbook search needs GEMINI_API_KEY (for embeddings).');
     try {
@@ -485,7 +505,11 @@ async function handle(request, response, use) {
   // the reply shows the version that answered.
   const finish = async (text, model, tokens, counted = model) => {
     await count(counted, tokens);
-    if (!schema) return withQuota({ text, model, ...(sources ? { sources: sources.map(({ n, title, page, text: t }) => ({ n, title, page, text: t })) } : {}) });
+    if (!schema) {
+      const out = { text, model, ...(sources ? { sources: sources.map(({ n, title, page, text: t }) => ({ n, title, page, text: t })) } : {}) };
+      if (qid) await saveExplanation(qid, request.data, out, { uid, staff }).catch((e) => logger.warn(`save explain: ${e.message}`));
+      return withQuota(out);
+    }
     try {
       const parsed = JSON.parse(text);
       return withQuota({ items: Array.isArray(parsed) ? parsed : parsed.items, model });
@@ -701,23 +725,27 @@ async function logUse(request, use, started) {
     ...(data.task === 'quiz' || data.task === 'cards' ? { count: Number(data.count) || null } : {}),
     ...(data.books ? { books: true } : {}),
     ...(data.provider ? { provider: clip(data.provider, 10) } : {}),
+    ...(data.task === 'explain' && validKey(data.qid) ? { qid: data.qid, mode: data.books ? 'books' : 'bank' } : {}),
+    ...(data.fresh ? { fresh: true } : {}),
     ...(use.model ? { model: clip(use.model, 60) } : {}),
     ...(use.error ? { error: clip(use.error, 200) } : {}),
     // The allowance at the time, for "% of own limit" and "% of the pool".
     ...(use.quota ? { staff: !!use.quota.unlimited, limit: use.quota.limit || 0, pool: use.quota.pool.total } : {}),
   };
-  await recordUsage((root) => root.child(`log/${usageDay()}`).push(line));
+  await recordUsage((root) => root.child(`log/${use.day}/${use.logId}`).set(line));
 }
 
 export const aiStudy = onCall(
   { secrets: [GROQ_API_KEY, GEMINI_API_KEY], timeoutSeconds: 120, memory: '1GiB', maxInstances: 3 },
   async (request, response) => {
-    const use = { log: false, requests: 0, model: '', status: 'ok' };
+    const use = { log: false, requests: 0, model: '', status: 'ok', day: usageDay() };
+    use.logId = getDatabase().ref(`aiUsage/log/${use.day}`).push().key;
     const started = Date.now();
     try {
       const out = await handle(request, response, use);
       if (out?.model) use.model = out.model; // the version that answered
-      return out;
+      // The app rates an answer by its log line.
+      return use.log && out && typeof out === 'object' ? { ...out, logId: use.logId, logDay: use.day } : out;
     } catch (e) {
       if (use.status === 'ok') use.status = 'error';
       use.error = e.message;

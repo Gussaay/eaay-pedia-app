@@ -40,7 +40,7 @@ export function aiActivity({ log, users, days }) {
 
   const people = new Map();
   const person = (uid) => {
-    if (!people.has(uid)) people.set(uid, { uid, name: '', email: '', uses: 0, requests: 0, errors: 0, limited: 0, tasks: {}, last: 0, limit: null, staff: false });
+    if (!people.has(uid)) people.set(uid, { uid, name: '', email: '', uses: 0, requests: 0, errors: 0, limited: 0, shared: 0, up: 0, down: 0, tasks: {}, last: 0, limit: null, staff: false });
     return people.get(uid);
   };
   // Oldest first, so the newest line's limit and name win.
@@ -53,6 +53,9 @@ export function aiActivity({ log, users, days }) {
     p.tasks[l.task] = (p.tasks[l.task] || 0) + 1;
     if (l.status === 'error') p.errors++;
     if (l.status === 'limit') p.limited++;
+    if (l.status === 'cached') p.shared++;
+    if (Number(l.vote) === 1) p.up++;
+    if (Number(l.vote) === -1) p.down++;
     p.requests += Number(l.requests) || 0;
     p.last = Math.max(p.last, Number(l.at) || 0);
     if (l.staff) p.staff = true;
@@ -71,11 +74,15 @@ export function aiActivity({ log, users, days }) {
 
   const tasks = {};
   for (const l of lines) tasks[l.task] = (tasks[l.task] || 0) + 1;
+  const sum = (k) => rows.reduce((s, r) => s + r[k], 0);
 
   return {
     lines,
     rows,
     tasks,
+    up: sum('up'),
+    down: sum('down'),
+    shared: sum('shared'),
     pool,
     poolUsed,
     poolPct: pct(poolUsed, pool),
@@ -105,7 +112,7 @@ export function aiActivityRange(list) {
   const people = new Map();
   for (const d of perDay) {
     for (const r of d.rows) {
-      const p = people.get(r.uid) || { ...r, requests: 0, uses: 0, errors: 0, limited: 0, tasks: {}, daysUsed: 0 };
+      const p = people.get(r.uid) || { ...r, requests: 0, uses: 0, errors: 0, limited: 0, shared: 0, up: 0, down: 0, tasks: {}, daysUsed: 0 };
       p.name = r.name || p.name;
       p.email = r.email || p.email;
       p.staff = p.staff || r.staff;
@@ -113,6 +120,9 @@ export function aiActivityRange(list) {
       p.uses += r.uses;
       p.errors += r.errors;
       p.limited += r.limited;
+      p.shared += r.shared;
+      p.up += r.up;
+      p.down += r.down;
       p.daysUsed++;
       p.last = Math.max(p.last || 0, r.last || 0);
       for (const [t, n] of Object.entries(r.tasks)) p.tasks[t] = (p.tasks[t] || 0) + n;
@@ -132,6 +142,9 @@ export function aiActivityRange(list) {
     pool,
     poolUsed,
     poolPct: pct(poolUsed, pool),
+    up: perDay.reduce((s, d) => s + d.up, 0),
+    down: perDay.reduce((s, d) => s + d.down, 0),
+    shared: perDay.reduce((s, d) => s + d.shared, 0),
     people: rows.length,
     uses: perDay.reduce((s, d) => s + d.uses, 0),
     days: perDay.map(({ day, poolUsed: used, pool: total, poolPct, people: n, uses }) => ({ day, used, total, pct: poolPct, people: n, uses })),
