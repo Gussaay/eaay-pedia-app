@@ -22,7 +22,7 @@ npm run deploy:web       # build + firebase deploy --only hosting (easy-pedia.we
 npm run mobile:sync      # build + copy web assets into android/
 npm run mobile:open      # open android/ in Android Studio
 npm run mobile:build:apk # release APK (needs signing config, see below)
-node scripts/make-icons.mjs   # regenerate logo/PWA icons + assets/ for Capacitor
+node scripts/make-icons.mjs   # regenerate all logo/PWA/Android icons + splash from assets/brand/*.svg
 npx @capacitor/assets generate --android   # regenerate native icons/splash from assets/
 ```
 
