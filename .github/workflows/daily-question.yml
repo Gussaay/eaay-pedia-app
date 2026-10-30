@@ -1,0 +1,43 @@
+name: Daily question
+
+# Posts an automatic "Question of the day" picked from the bank when nobody
+# posted one today (scripts/daily-question.mjs). Runs just after midnight in
+# Sudan; a push to the script only prints what it would post.
+on:
+  push:
+    branches:
+      - main
+    paths:
+      - 'scripts/daily-question.mjs'
+      - 'src/lib/dailyPick.js'
+      - '.github/workflows/daily-question.yml'
+  schedule:
+    - cron: '5 22 * * *'
+  workflow_dispatch:
+
+concurrency:
+  group: daily-question
+  cancel-in-progress: false
+
+jobs:
+  daily:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+      - name: Install Firebase CLI
+        run: npm i -g firebase-tools@14
+      - name: Post today's question
+        env:
+          FIREBASE_SERVICE_ACCOUNT: ${{ secrets.FIREBASE_SERVICE_ACCOUNT_EASY_PEDIA }}
+        run: |
+          printf '%s' "$FIREBASE_SERVICE_ACCOUNT" > "$RUNNER_TEMP/sa.json"
+          export GOOGLE_APPLICATION_CREDENTIALS="$RUNNER_TEMP/sa.json"
+          if [ "$GITHUB_EVENT_NAME" = "push" ]; then
+            node scripts/daily-question.mjs
+          else
+            node scripts/daily-question.mjs --commit
+          fi
+          rm -f "$RUNNER_TEMP/sa.json"

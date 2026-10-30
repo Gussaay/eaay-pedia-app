@@ -4,8 +4,8 @@
 // past being only an MCQ app — this page's job is now to get you into the
 // right section in one tap, not to list everything.
 import { useMemo, useState } from 'react';
-import { Link, useNavigate } from 'react-router-dom';
-import { Bell, ChevronRight, CloudUpload, Mail, Menu, MessageCircle, PlayCircle, RotateCcw, Send, ShieldCheck, Smartphone, Sparkles } from 'lucide-react';
+import { useNavigate } from 'react-router-dom';
+import { Bell, ChevronRight, CloudUpload, Mail, Menu, MessageCircle, PlayCircle, RotateCcw, Send, ShieldCheck, Sparkles } from 'lucide-react';
 import { useAuth } from '../hooks/useAuth';
 import { useAsync, useList } from '../hooks/useData';
 import { getLatest, num } from '../lib/rtdb';
@@ -31,10 +31,39 @@ function Ring({ value }) {
   const c = 2 * Math.PI * r;
   const v = Math.max(0, Math.min(100, value || 0));
   return (
-    <svg viewBox="0 0 64 64" className="h-16 w-16 -rotate-90 shrink-0" aria-hidden="true">
+    <svg viewBox="0 0 64 64" className="h-14 w-14 -rotate-90 shrink-0" aria-hidden="true">
       <circle cx="32" cy="32" r={r} fill="none" stroke="rgba(255,255,255,0.25)" strokeWidth="7" />
       <circle cx="32" cy="32" r={r} fill="none" stroke="white" strokeWidth="7" strokeLinecap="round" strokeDasharray={`${(c * v) / 100} ${c}`} />
     </svg>
+  );
+}
+
+/** One line: the last paused quiz, tap to resume, ↻ to start it again. */
+function ContinueRow({ quiz, onResume, onRestart }) {
+  const { title, played, tq } = quiz;
+  return (
+    <div className="flex items-center gap-2 rounded-2xl bg-white border border-slate-100 shadow-sm pl-3 pr-1.5 py-1.5">
+      <button onClick={onResume} className="flex-1 min-w-0 flex items-center gap-3 py-1 text-left">
+        <PlayCircle size={22} className="text-brand-600 shrink-0" />
+        <span className="flex-1 min-w-0 truncate text-sm">
+          <span className="font-semibold text-slate-900">Continue</span>
+          <span className="text-slate-500"> · {title}</span>
+        </span>
+        {tq > 0 && (
+          <span className="text-xs font-semibold text-slate-500 tabular-nums shrink-0">
+            {played}/{tq}
+          </span>
+        )}
+      </button>
+      <button
+        onClick={onRestart}
+        className="h-9 w-9 shrink-0 rounded-xl flex items-center justify-center text-slate-400 hover:bg-slate-50"
+        aria-label="Start this quiz again"
+        title="Start again"
+      >
+        <RotateCcw size={17} />
+      </button>
+    </div>
   );
 }
 
@@ -43,21 +72,49 @@ function SectionTile({ section, onClick }) {
   return (
     <button
       onClick={onClick}
-      className={`group relative text-left bg-white rounded-2xl border border-slate-100 p-4 shadow-sm ring-2 ring-transparent transition hover:shadow-lg hover:-translate-y-0.5 active:scale-[0.98] ${ring}`}
+      className={`group relative text-left rounded-2xl border p-4 ring-2 ring-transparent transition active:scale-[0.98] ${
+        live ? `bg-white border-slate-100 shadow-sm hover:shadow-lg hover:-translate-y-0.5 ${ring}` : 'bg-white/60 border-slate-100'
+      }`}
     >
       {!live && (
-        <span className="absolute top-3 right-3 rounded-full bg-slate-100 px-2 py-0.5 text-[10px] font-semibold uppercase tracking-wide text-slate-500">
+        <span className="absolute top-3 right-3 rounded-full bg-white px-2 py-0.5 text-[10px] font-semibold uppercase tracking-wide text-slate-500 border border-slate-200">
           Soon
         </span>
       )}
-      <div className={`h-12 w-12 rounded-2xl flex items-center justify-center ${tint}`}>
+      <div className={`h-12 w-12 rounded-2xl flex items-center justify-center ${live ? tint : 'bg-slate-100 text-slate-400'}`}>
         <Icon size={24} />
       </div>
-      <p className="font-display text-base text-slate-900 mt-3 leading-snug">{title}</p>
+      <p className={`font-display text-base mt-3 leading-snug ${live ? 'text-slate-900' : 'text-slate-500'}`}>{title}</p>
       <p className="text-xs text-slate-500 mt-0.5 leading-snug">{tagline}</p>
     </button>
   );
 }
+
+/** A plain white row card: icon, title, one line, chevron. */
+function LinkCard({ icon: Icon, img, tint, title, text, onClick }) {
+  return (
+    <button
+      onClick={onClick}
+      className="w-full flex items-center gap-3 rounded-2xl bg-white border border-slate-100 shadow-sm p-3 text-left transition hover:shadow-md active:scale-[0.99]"
+    >
+      {img ? (
+        <img src={img} alt="" className="h-11 w-11 rounded-xl shrink-0" />
+      ) : (
+        <div className={`h-11 w-11 shrink-0 rounded-xl flex items-center justify-center ${tint}`}>
+          <Icon size={22} />
+        </div>
+      )}
+      <div className="flex-1 min-w-0">
+        <p className="font-semibold text-slate-900">{title}</p>
+        <p className="text-xs text-slate-500 truncate">{text}</p>
+      </div>
+      <ChevronRight size={20} className="text-slate-300 shrink-0" />
+    </button>
+  );
+}
+
+// Live sections first; announced ones after them.
+const ORDERED_SECTIONS = [...SECTIONS.filter((s) => s.live), ...SECTIONS.filter((s) => !s.live)];
 
 export default function Home() {
   const { user, profile, isAdmin, profileIncomplete } = useAuth();
@@ -72,6 +129,7 @@ export default function Home() {
   const daily = useDailyQuiz();
   const recentNotifications = useAsync(() => getLatest('all_notification', 10), []);
   const pausedQuizzes = useAsync(() => listPausedSessions(user.uid), [user.uid]);
+  const lastPaused = (pausedQuizzes.data || [])[0];
   const latestNotification = (recentNotifications.data || []).find((n) => n.title || n.message);
   const hasNewNotification = !!latestNotification && latestNotification[user.uid] !== 'seen';
 
@@ -111,64 +169,35 @@ export default function Home() {
           </button>
         }
       />
-      <Page className="space-y-5">
-        <section className="relative overflow-hidden rounded-3xl bg-gradient-to-br from-brand-700 via-brand-600 to-sky-500 text-white p-5 shadow-lg shadow-brand-700/20">
-          <span className="absolute -right-10 -top-10 h-40 w-40 rounded-full bg-white/10" />
-          <span className="absolute right-16 -bottom-12 h-28 w-28 rounded-full bg-white/10" />
-          <div className="relative">
-            <p className="text-white/80 text-sm">{greeting()}{firstName ? ',' : ''}</p>
-            <h2 className="font-display text-2xl leading-tight">{firstName || 'Welcome'} 👋</h2>
-            <p className="text-white/80 text-sm mt-1">Ready for today’s practice?</p>
-            <div className="mt-4 flex items-center gap-4">
-              <button onClick={() => navigate('/performance')} className="flex items-center gap-3 text-left">
-                <div className="relative">
-                  <Ring value={overall} />
-                  <span className="absolute inset-0 flex items-center justify-center text-sm font-bold">{Math.round(overall)}%</span>
-                </div>
-                <span className="text-xs text-white/80 leading-tight">
-                  Overall
-                  <br />
-                  score
-                </span>
-              </button>
-              <div className="h-10 w-px bg-white/25" />
-              <div>
-                <p className="text-xl font-bold">{answered.toLocaleString()}</p>
-                <p className="text-xs text-white/80">answered</p>
-              </div>
-              <div className="h-10 w-px bg-white/25" />
-              <div>
-                <p className="text-xl font-bold">{totalQuestions ? totalQuestions.toLocaleString() : '—'}</p>
-                <p className="text-xs text-white/80">questions</p>
-              </div>
+      <Page className="space-y-3">
+        <section className="relative overflow-hidden rounded-3xl bg-gradient-to-br from-brand-700 via-brand-600 to-sky-500 text-white p-4 shadow-lg shadow-brand-700/20">
+          <span className="absolute -right-8 -top-10 h-32 w-32 rounded-full bg-white/10" />
+          <div className="relative flex items-center gap-3">
+            <img src="/img/logo.png" alt="" className="h-12 w-12 rounded-xl shrink-0 shadow-md" />
+            <div className="flex-1 min-w-0">
+              <p className="font-display text-base leading-tight truncate">
+                {greeting()}
+                {firstName ? `, ${firstName}` : ''}
+              </p>
+              <p className="text-white/80 text-sm leading-snug">Ready for today’s practice?</p>
+              <p className="text-white/90 text-xs mt-0.5 tabular-nums">
+                <b>{answered.toLocaleString()}</b> answered · <b>{totalQuestions ? totalQuestions.toLocaleString() : '—'}</b> questions
+              </p>
             </div>
+            <button onClick={() => navigate('/performance')} className="relative shrink-0" aria-label="Overall score">
+              <Ring value={overall} />
+              <span className="absolute inset-0 flex items-center justify-center text-sm font-bold">{Math.round(overall)}%</span>
+            </button>
           </div>
         </section>
 
+        <DailyQuiz daily={daily} />
+
         {/* A quiz left half-finished is the most likely thing to be wanted
-            next, so it is offered here rather than only inside the quiz. */}
-        {(pausedQuizzes.data || []).length > 0 && (
-          <section>
-            <h2 className="font-display text-slate-800 text-xl mb-3">Carry on where you stopped</h2>
-            <div className="space-y-3">
-              {pausedQuizzes.data.slice(0, 3).map((p) => (
-                <div key={p.pkey} className="rounded-2xl border border-amber-200 bg-amber-50 p-4">
-                  <p className="font-semibold text-amber-900 truncate">{p.title}</p>
-                  <p className="text-sm text-amber-800 mt-0.5">
-                    Paused after {p.played} of {p.tq} questions
-                  </p>
-                  <div className="grid grid-cols-2 gap-3 mt-3">
-                    <Button onClick={() => navigate(p.path)}>
-                      <PlayCircle size={18} /> Restore session
-                    </Button>
-                    <Button variant="outline" onClick={() => navigate(p.newPath)}>
-                      <RotateCcw size={18} /> Start new
-                    </Button>
-                  </div>
-                </div>
-              ))}
-            </div>
-          </section>
+            next, so it is offered here rather than only inside the quiz. Only the
+            most recent one is shown; the rest stay reachable from their quiz. */}
+        {lastPaused && (
+          <ContinueRow quiz={lastPaused} onResume={() => navigate(lastPaused.path)} onRestart={() => navigate(lastPaused.newPath)} />
         )}
 
         {pendingResults > 0 && (
@@ -189,15 +218,13 @@ export default function Home() {
         )}
 
         <div>
-          <h2 className="font-display text-slate-800 text-xl mb-3">What would you like to do?</h2>
+          <h2 className="font-display text-slate-800 text-lg mb-2">What would you like to do?</h2>
           <div className="grid grid-cols-2 sm:grid-cols-3 gap-3">
-            {SECTIONS.map((section) => (
+            {ORDERED_SECTIONS.map((section) => (
               <SectionTile key={section.key} section={section} onClick={() => navigate(section.to)} />
             ))}
           </div>
         </div>
-
-        <DailyQuiz daily={daily} />
 
         {isAdmin && (
           <Button variant="secondary" className="w-full" onClick={() => navigate('/admin')}>
@@ -205,24 +232,21 @@ export default function Home() {
           </Button>
         )}
 
-        <Button variant="secondary" className="w-full !bg-violet-50 !text-violet-800" onClick={() => navigate('/ai')}>
-          <Sparkles size={18} /> AI Study
-        </Button>
+        <LinkCard
+          icon={Sparkles}
+          tint="bg-violet-50 text-violet-700"
+          title="AI Study"
+          text="Ask anything, get explanations, make a quiz"
+          onClick={() => navigate('/ai')}
+        />
 
         {!isNative && (
-          <Link
-            to="/download"
-            className="flex items-center gap-4 rounded-2xl bg-slate-900 text-white p-4 hover:bg-slate-800 transition"
-          >
-            <div className="h-11 w-11 rounded-xl bg-white/10 flex items-center justify-center shrink-0">
-              <Smartphone size={22} />
-            </div>
-            <div className="flex-1 min-w-0">
-              <p className="font-semibold">Get the Android app</p>
-              <p className="text-xs text-white/70">Same account and scores on your phone</p>
-            </div>
-            <ChevronRight size={20} className="text-white/60" />
-          </Link>
+          <LinkCard
+            img="/img/logo.png"
+            title="Get the Android app"
+            text="Same account and scores on your phone"
+            onClick={() => navigate('/download')}
+          />
         )}
       </Page>
 

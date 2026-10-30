@@ -64,10 +64,17 @@ export default function DailyQuiz({ daily }) {
     <>
       <button
         onClick={() => setOpen(true)}
-        className="w-full flex items-center gap-3 rounded-2xl bg-gradient-to-r from-amber-400 to-orange-500 text-white p-4 shadow-md animate-pop"
+        className="relative w-full overflow-hidden flex items-center gap-4 rounded-3xl bg-gradient-to-r from-brand-50 to-sky-50 border border-brand-100 p-4 text-left shadow-sm active:scale-[0.99] transition"
       >
-        <CalendarCheck size={28} />
-        <span className="font-semibold text-left">Daily Quiz available — tap to test yourself</span>
+        <span className="absolute -right-6 -bottom-12 h-28 w-28 rounded-full bg-white/70" />
+        <div className="relative h-12 w-12 shrink-0 rounded-2xl bg-brand-600 text-white shadow-md shadow-brand-600/30 flex items-center justify-center">
+          <CalendarCheck size={26} />
+        </div>
+        <div className="relative flex-1 min-w-0">
+          <p className="font-display text-lg leading-tight text-slate-900">Question of the day</p>
+          <p className="text-sm text-slate-600">Answer it and see how everyone else did</p>
+        </div>
+        <span className="relative rounded-full bg-brand-600 text-white text-sm font-bold px-3.5 py-1.5 shrink-0">Try it</span>
       </button>
 
       <Modal open={open} onClose={() => setOpen(false)} dismissable={!selected} title="Daily Quiz">
