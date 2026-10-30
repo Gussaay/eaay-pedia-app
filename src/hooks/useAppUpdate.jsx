@@ -24,6 +24,7 @@ import { downloadStore, getDownload, startDownload } from '../lib/downloads';
 import { fetchNativeVersion, isNewerBuild } from '../lib/nativeVersion';
 import { subscribe } from '../lib/rtdb';
 import { isNative } from '../lib/native';
+import { isConnectionBroken } from '../lib/connectivity';
 import { APK_URL, LIVE_UPDATE_URL } from '../config';
 
 const SKIPPED_BUILD_KEY = 'update:skipped-build';
@@ -110,8 +111,8 @@ export function useAppUpdate() {
       setNotice({ tone: 'info', text: 'The website updates itself when you reload the page.' });
       return;
     }
-    if (!navigator.onLine) {
-      setNotice({ tone: 'error', text: 'No internet connection, so updates cannot be checked.' });
+    if (isConnectionBroken()) {
+      setNotice({ tone: 'offline', text: 'No internet, so updates cannot be checked right now.' });
       return;
     }
     setNotice({ tone: 'busy', text: 'Checking for updates…' });
@@ -131,7 +132,7 @@ export function useAppUpdate() {
     else if (result.status === 'paused')
       setNotice({ tone: 'ok', text: 'You are up to date.' });
     else if (result.status === 'offline')
-      setNotice({ tone: 'error', text: 'No internet connection, so updates cannot be checked.' });
+      setNotice({ tone: 'offline', text: 'No internet, so updates cannot be checked right now.' });
     else if (result.status === 'error') setNotice({ tone: 'error', text: result.message });
     else setNotice({ tone: 'info', text: 'A check is already running.' });
   }, [lookForApk]);

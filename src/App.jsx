@@ -158,8 +158,7 @@ export default function App() {
 
   return (
     <>
-      {/* Above the routes so the bar sits at the top of the page rather than
-          below it, and never fights the sticky AppBar for the same spot. */}
+      {/* A small floating "Offline" pill; takes no space and blocks no taps. */}
       <ConnectionNotice />
       <Suspense fallback={<Spinner />}>
         <Routes>

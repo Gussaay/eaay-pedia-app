@@ -16,12 +16,13 @@ import { getOne, getWhere, toList, num } from './rtdb';
 import { listSpots, loadSpot } from './resume';
 import { matchesChapter } from './quiz';
 import { getQuiz, saveQuiz } from './offline';
+import { isConnectionBroken } from './connectivity';
 import { batchOf, filterLabel, isPersonalFilter, parseFilter, practiceFilter, setTitle, uniqueQuestions } from './questionBrowse';
 import { loadAllHistory } from './quizHistory';
 
 const questionCache = new Map();
 
-const isOffline = () => typeof navigator !== 'undefined' && navigator.onLine === false;
+const isOffline = isConnectionBroken;
 
 /** Rejects instead of hanging forever when the connection is dead. */
 function withTimeout(promise, ms = 20000) {
@@ -148,7 +149,12 @@ export async function loadQuizMeta(kind, id, params = {}) {
   }
   const saved = offlineKey ? await getQuiz(offlineKey) : await findSavedByExamId(kind, id);
   if (saved) return { ...saved.meta, ...params, offline: true };
-  throw new Error('You are offline and this quiz is not saved on your device.');
+  // Not saved here: the internet may only look down, so try once anyway.
+  try {
+    return await withTimeout(fetchMeta(kind, id, params), 8000);
+  } catch {
+    throw new Error('You are offline and this quiz is not saved on your device.');
+  }
 }
 
 async function findSavedByExamId(kind, id) {
@@ -272,12 +278,20 @@ export async function loadQuestions(meta, { fresh = false, manual = false } = {}
     questionCache.set(cacheKey, saved.questions);
     return saved.questions;
   }
-  throw new Error('You are offline and this quiz is not saved on your device.');
+  try {
+    const list = await withTimeout(fetchQuestions(meta), 8000);
+    questionCache.set(cacheKey, list);
+    saveQuiz(meta, list, { manual }).catch(() => {});
+    return list;
+  } catch {
+    throw new Error('You are offline and this quiz is not saved on your device.');
+  }
 }
 
 /** "Download for offline": fetches fresh and keeps it permanently. */
 export async function downloadQuiz(meta) {
-  const list = await fetchQuestions(meta);
+  if (isOffline()) throw new Error('no internet right now. Try again when you are back online.');
+  const list = await withTimeout(fetchQuestions(meta), 60000);
   questionCache.set(`${meta.kind}:${meta.pkey}`, list);
   return saveQuiz(meta, list, { manual: true });
 }
@@ -312,7 +326,9 @@ export async function loadLeaderboard(pkey, limit = 50) {
  */
 export async function findSavedSession(uid, pkey) {
   if (!uid || !pkey) return null;
-  const rows = (await getWhere('resume', 'uid', uid).catch(() => [])).filter((r) => r.key === pkey);
+  // Offline, the device's own bookmark is all there is; do not wait on the database.
+  const remote = isOffline() ? [] : await withTimeout(getWhere('resume', 'uid', uid), 6000).catch(() => []);
+  const rows = remote.filter((r) => r.key === pkey);
   if (rows.length) return rows[rows.length - 1];
   const local = loadSpot('quiz', pkey);
   return local ? { ...local, local: true } : null;

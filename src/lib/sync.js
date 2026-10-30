@@ -8,6 +8,7 @@ import { auth } from '../firebase';
 import { getOne, num, str, updateAt } from './rtdb';
 import { computeSessionResult } from './quiz';
 import { listQueue, removeQueued, queueResult } from './offline';
+import { connectivityStore, isConnectionBroken } from './connectivity';
 
 const listeners = new Set();
 let pendingCount = 0;
@@ -79,7 +80,7 @@ async function sendOne(item) {
 /** Sends everything that is waiting. Safe to call often. */
 export async function flushQueue() {
   if (flushing || !auth.currentUser) return;
-  if (typeof navigator !== 'undefined' && navigator.onLine === false) return;
+  if (isConnectionBroken()) return;
   flushing = true;
   try {
     const items = await listQueue();
@@ -114,7 +115,15 @@ export function useSyncPendingResults(user) {
     const onVisible = () => document.visibilityState === 'visible' && flushQueue();
     document.addEventListener('visibilitychange', onVisible);
     window.addEventListener('online', flushQueue);
+    // The internet confirmed back (not just Wi-Fi reconnecting).
+    let wasOnline = connectivityStore.getSnapshot().status === 'online';
+    const offStore = connectivityStore.subscribe(() => {
+      const online = connectivityStore.getSnapshot().status === 'online';
+      if (online && !wasOnline) flushQueue();
+      wasOnline = online;
+    });
     return () => {
+      offStore();
       handle?.remove();
       document.removeEventListener('visibilitychange', onVisible);
       window.removeEventListener('online', flushQueue);

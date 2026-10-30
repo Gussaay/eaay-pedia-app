@@ -42,12 +42,24 @@ import { findSavedSession, invalidateQuestions, loadQuestions, loadQuizMeta, pla
 import { quizAccess, scopesOf, visibleQuestions } from '../lib/access';
 import { placeOfSource } from '../lib/banks';
 import { queuePendingResult } from '../lib/sync';
+import { isConnectionBroken } from '../lib/connectivity';
 import { AppBar, Button, Card, ErrorBox, Input, Modal, Page, Spinner, Textarea, ZoomImage, useToast } from '../components/ui';
 import QuestionEditModal from '../components/QuestionEditModal';
 import StudyLinks from '../components/StudyLinks';
 
 // Admin-only, so its code (and firebase/functions) loads only when shown.
 const AiExplain = lazy(() => import('../components/AiChat').then((m) => ({ default: m.AiExplain })));
+
+/** Rejects instead of waiting forever on a connection that has gone quiet. */
+function withTimeout(promise, ms) {
+  let timer;
+  return Promise.race([
+    promise,
+    new Promise((_, reject) => {
+      timer = setTimeout(() => reject(new Error('Request timed out')), ms);
+    }),
+  ]).finally(() => clearTimeout(timer));
+}
 
 export default function QuizPlay() {
   const { kind, id } = useParams();
@@ -107,7 +119,9 @@ export default function QuizPlay() {
   const discardSaved = useCallback(
     async (pkey, savedRow) => {
       const row = savedRow || (await findSavedSession(user.uid, pkey).catch(() => null));
-      if (row?._key) await removeAt(`resume/${row._key}`).catch(() => {});
+      // Not awaited: offline, a database write only settles once the internet
+      // is back, and the quiz must not wait for that.
+      if (row?._key) removeAt(`resume/${row._key}`).catch(() => {});
       clearSpot('quiz', pkey);
     },
     [user.uid],
@@ -326,16 +340,16 @@ export default function QuizPlay() {
         goToResults(percentage, final.correct, true);
       };
 
-      if (typeof navigator !== 'undefined' && navigator.onLine === false) {
+      if (isConnectionBroken()) {
         await saveForLater();
         return;
       }
 
       try {
-        const [u, lead] = await Promise.all([
-          getOne(`quizusers/${user.uid}`),
-          getOne(`quizlead/${user.uid}/${meta.pkey}`),
-        ]);
+        const [u, lead] = await withTimeout(
+          Promise.all([getOne(`quizusers/${user.uid}`), getOne(`quizlead/${user.uid}/${meta.pkey}`)]),
+          8000,
+        );
         const r = computeSessionResult(final, {
           totalPlay: num(u?.total_play),
           totalCorrect: num(u?.total_correct),
@@ -362,7 +376,10 @@ export default function QuizPlay() {
             }),
           );
         }
-        await Promise.all(writes);
+        // The reads worked, so these writes are on their way. If the internet
+        // drops now, the database client still delivers them once it is back;
+        // the results screen should not wait for that.
+        await withTimeout(Promise.all(writes), 8000).catch(() => {});
         goToResults(r.percentage, r.points, false);
       } catch (e) {
         // The connection died mid-save: queue instead of losing the session.
@@ -487,7 +504,7 @@ export default function QuizPlay() {
   // ---------------------------------------------------------------- exit / save
   const saveForLater = async () => {
     const key = newKey('resume');
-    await updateAt(`resume/${key}`, {
+    const write = updateAt(`resume/${key}`, {
       uid: user.uid,
       key: meta.pkey,
       category: meta.chapter,
@@ -503,6 +520,15 @@ export default function QuizPlay() {
       path: routes.path,
       newPath: routes.newPath,
     });
+    if (isConnectionBroken()) {
+      // Offline: the write goes out when the internet is back, and the
+      // bookmark on this phone stays until then, so nothing waits here.
+      write.catch(() => {});
+      toast('Progress saved on this phone', 'success');
+      navigate(-1);
+      return;
+    }
+    await write;
     clearSpot('quiz', meta.pkey); // it is in the database now
     toast('Progress saved', 'success');
     navigate(-1);
@@ -1088,13 +1114,16 @@ function ExplanationModal({ question, quizTitle, selected, answer, onClose, onNe
 
   const submit = async () => {
     if (!text.trim()) return;
-    await pushTo('feedback', {
+    const sent = pushTo('feedback', {
       comment: text.trim(),
       name: profile?.name || user.displayName || '',
       key: question._key,
       title: question.title || quizTitle,
       uid: user.uid,
     });
+    // Offline it is sent once the internet is back; do not hold the screen.
+    if (isConnectionBroken()) sent.catch(() => {});
+    else await sent;
     toast('Comment submitted, thanks for your contribution.', 'success');
     setComments((c) => [...(c || []), { _key: 'new', comment: text.trim(), name: profile?.name }]);
     setText('');

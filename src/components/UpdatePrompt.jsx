@@ -1,10 +1,11 @@
 // Every update dialog the app shows. The decisions live in useAppUpdate();
 // this file is only the screen for them.
-import { useSyncExternalStore } from 'react';
+import { useEffect, useSyncExternalStore } from 'react';
 import { AlertTriangle, CheckCircle2, Download, Info, RefreshCw, RotateCw } from 'lucide-react';
 import { useAppUpdate } from '../hooks/useAppUpdate';
 import { openDownload } from '../lib/downloads';
 import { Button, Modal } from './ui';
+import { useConnectivity } from './ConnectionNotice';
 
 let applyWebUpdate = null;
 const listeners = new Set();
@@ -55,7 +56,21 @@ export default function UpdatePrompt() {
   const apkReady = apkDownload?.status === 'done';
   // The APK prompt hides the over-the-air one: installing the new APK replaces
   // the web bundle anyway, so showing both would ask for the same thing twice.
-  const showOta = ota.ready && !ota.dismissed && !apk;
+  // Offline, update popups wait for the internet: nothing should interrupt
+  // someone studying offline. A download already running stays visible.
+  const { status: net } = useConnectivity();
+  const offline = net === 'offline' || net === 'no-internet';
+  const showApk = !!apk && (!offline || apkBusy || apkReady);
+  const showOta = ota.ready && !ota.dismissed && !apk && !offline;
+  // "Check for updates" while offline: a short note that goes by itself.
+  const quietNotice = notice?.tone === 'offline';
+  useEffect(() => {
+    if (!quietNotice) return undefined;
+    const t = setTimeout(clearNotice, 3000);
+    return () => clearTimeout(t);
+    // clearNotice is a new function on every render; the timer should not restart.
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [quietNotice]);
 
   return (
     <>
@@ -71,7 +86,7 @@ export default function UpdatePrompt() {
 
       {/* Full install: the native app itself changed. */}
       <Modal
-        open={!!apk}
+        open={showApk}
         onClose={apk?.mandatory ? undefined : skipApk}
         dismissable={!apk?.mandatory && !apkBusy}
         title={apk?.mandatory ? 'Update required' : `Version ${apk?.version} is available`}
@@ -144,9 +159,17 @@ export default function UpdatePrompt() {
         </p>
       </Modal>
 
+      {quietNotice && (
+        <div role="status" className="pointer-events-none fixed inset-x-0 bottom-24 z-[80] flex justify-center px-4">
+          <p className="max-w-sm rounded-full bg-slate-800/90 px-4 py-2 text-center text-xs text-white shadow-lg">
+            {notice.text}
+          </p>
+        </div>
+      )}
+
       {/* Result of a manual "Check for updates". */}
       <Modal
-        open={!!notice}
+        open={!!notice && !quietNotice}
         onClose={clearNotice}
         dismissable={notice?.tone !== 'busy'}
         title="Updates"

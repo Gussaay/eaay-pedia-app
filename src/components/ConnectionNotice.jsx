@@ -1,23 +1,20 @@
-// Tells the user when there is no internet, instead of leaving them with a
-// blank screen and a spinner that never stops.
+// A small "Offline" pill while there is no internet.
 //
-// Two layers, on purpose:
-//   - a dialog the first time a connection problem appears, because silence
-//     was the actual complaint;
-//   - a bar that stays while the problem lasts, so dismissing the dialog does
-//     not hide the fact.
-//
-// Both offer Retry, and both make clear that saved work is not lost — the app
-// keeps showing what it already downloaded and queues results to send later.
+// It used to be a full-width bar plus a dialog, which interrupted whatever the
+// reader was doing (often the middle of a quiz that works perfectly well
+// offline). Now it is a quiet pill floating at the top of the screen:
+//   - it never takes layout space, so nothing on the page moves;
+//   - it lets taps pass through (pointer-events-none), so it never blocks a
+//     button underneath it;
+//   - it shows a word for a few seconds and then shrinks to an icon.
+// Nothing asks the reader anything. The app keeps retrying in the background
+// (lib/connectivity.js) and the pill disappears once the internet is back.
 import { useEffect, useState, useSyncExternalStore } from 'react';
-import { RefreshCw, WifiOff } from 'lucide-react';
-import {
-  checkConnectionNow,
-  connectivityStore,
-  describe,
-  getConnectionType,
-} from '../lib/connectivity';
-import { Button, Modal } from './ui';
+import { useLocation } from 'react-router-dom';
+import { WifiOff } from 'lucide-react';
+import { connectivityStore } from '../lib/connectivity';
+
+const LABEL_MS = 4000; // how long the word stays before the pill shrinks
 
 export function useConnectivity() {
   return useSyncExternalStore(
@@ -28,71 +25,39 @@ export function useConnectivity() {
 }
 
 export default function ConnectionNotice() {
-  const { status, checking } = useConnectivity();
-  const [dismissed, setDismissed] = useState(false);
-
+  const { status } = useConnectivity();
+  // The sign-in page says it in its own words; it has no AppBar to sit under.
+  const { pathname } = useLocation();
   const broken = status === 'offline' || status === 'no-internet';
-  const info = describe(status, getConnectionType());
+  const [showLabel, setShowLabel] = useState(true);
 
-  // Each new episode gets its own dialog: dismissing it should not silence the
-  // next time the connection drops.
+  // Each new episode shows the word again, then shrinks.
   useEffect(() => {
-    if (!broken) setDismissed(false);
+    if (!broken) return undefined;
+    setShowLabel(true);
+    const t = setTimeout(() => setShowLabel(false), LABEL_MS);
+    return () => clearTimeout(t);
   }, [broken]);
 
-  if (!broken) return null;
+  if (!broken || pathname === '/login') return null;
 
-  const retry = () => checkConnectionNow('user-retry', { force: true });
+  const label = status === 'offline' ? 'Offline' : 'No internet';
 
   return (
-    <>
-      <div
-        role="status"
-        aria-live="polite"
-        className={`flex items-center gap-2 px-4 py-2 text-sm ${
-          status === 'offline' ? 'bg-slate-800 text-white' : 'bg-amber-100 text-amber-900'
-        }`}
+    <div
+      role="status"
+      aria-live="polite"
+      aria-label={`${label} — showing saved data`}
+      className="pointer-events-none fixed inset-x-0 z-[90] flex justify-center"
+      style={{ top: 'calc(env(safe-area-inset-top, 0px) + 3.5rem + 6px)' }} // just under the AppBar, over the page's top padding
+    >
+      <span
+        data-testid="offline-pill"
+        className="flex items-center gap-1.5 rounded-full bg-slate-800/85 px-2 py-1 text-[11px] font-semibold text-white shadow-md backdrop-blur transition-all"
       >
-        <WifiOff size={16} className="shrink-0" />
-        <span className="flex-1 min-w-0">
-          {status === 'offline' ? 'No connection' : 'No internet'} — showing saved data.
-        </span>
-        <button
-          type="button"
-          onClick={retry}
-          disabled={checking}
-          className="shrink-0 rounded-md border border-current px-2.5 py-0.5 text-xs font-semibold disabled:opacity-50"
-        >
-          {checking ? 'Checking…' : 'Retry'}
-        </button>
-      </div>
-
-      <Modal
-        open={!dismissed}
-        onClose={() => setDismissed(true)}
-        title={info?.title}
-        footer={
-          <>
-            <Button variant="outline" onClick={() => setDismissed(true)}>
-              Continue offline
-            </Button>
-            <Button onClick={retry} loading={checking}>
-              <RefreshCw size={18} /> Try again
-            </Button>
-          </>
-        }
-      >
-        <div className="flex gap-3">
-          <WifiOff size={22} className="mt-0.5 shrink-0 text-amber-600" />
-          <div>
-            <p className="text-slate-700">{info?.text}</p>
-            <p className="mt-3 text-sm text-slate-500">
-              You can carry on with anything already downloaded. Quizzes you finish are saved on
-              this phone and sent automatically once you are back online.
-            </p>
-          </div>
-        </div>
-      </Modal>
-    </>
+        <WifiOff size={12} className="shrink-0" />
+        {showLabel && <span>{label}</span>}
+      </span>
+    </div>
   );
 }

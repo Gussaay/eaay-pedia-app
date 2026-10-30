@@ -45,6 +45,16 @@ export const connectivityStore = {
 
 export const getConnectivity = () => state;
 
+/**
+ * True when there is no working internet right now: the device has no
+ * network, or the last real request / probe failed. Screens use it to go
+ * straight to saved copies instead of waiting for a request to time out.
+ */
+export const isConnectionBroken = () =>
+  state.status === 'offline' ||
+  state.status === 'no-internet' ||
+  (typeof navigator !== 'undefined' && navigator.onLine === false);
+
 function set(patch) {
   const next = { ...state, ...patch };
   if (
