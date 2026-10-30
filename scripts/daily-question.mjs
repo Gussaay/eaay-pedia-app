@@ -1,12 +1,13 @@
-// Posts the automatic "Question of the day" (src/lib/dailyPick.js) when no
-// daily question was posted today (Sudan time). Prints ids and counts only:
-// the workflow log is public.
+// The morning "Question of the day" (src/lib/dailyPick.js). When no daily
+// question was posted today (Sudan time) it posts one picked from the bank;
+// either way today's question is pushed to every phone once (`notified`).
+// Prints ids and counts only: the workflow log is public.
 //   node scripts/daily-question.mjs [--commit]
 // Without --commit it only prints what it would post.
 import fs from 'node:fs';
 import path from 'node:path';
 import { execFileSync } from 'node:child_process';
-import { dailyRecord, pickDaily, pushKeyTime, sudanDay } from '../src/lib/dailyPick.js';
+import { dailyPush, dailyRecord, newPushKey, pickDaily, pushKeyTime, sudanDay } from '../src/lib/dailyPick.js';
 
 const commit = process.argv.includes('--commit');
 const project = 'easy-pedia';
@@ -25,10 +26,28 @@ const read = (node, extra = []) => {
 };
 
 const today = sudanDay();
+const now = Date.now();
+
+// One write for the question (when new) and its notification, so a question is
+// never posted without its push or pushed twice.
+const publish = (updates, what) => {
+  console.log(what);
+  if (!commit) return;
+  const file = path.join('.tmp', 'daily-update.json');
+  fs.writeFileSync(file, JSON.stringify(updates));
+  fb(['database:update', '/', file, '--force']);
+  console.log('written');
+};
+const notify = (dailyKey, q) => ({
+  [`dailyquizz/${dailyKey}/notified`]: '1',
+  [`push_outbox/${newPushKey(now)}`]: dailyPush(q, now),
+});
+
 const latest = read('dailyquizz', ['--order-by-key', '--limit-to-last', '1']);
 const [lastKey, last] = Object.entries(latest)[0] || [];
 if (lastKey && (last?.day === today || sudanDay(pushKeyTime(lastKey)) === today)) {
-  console.log(`${today}: a daily question is already posted (${lastKey}); nothing to do`);
+  if (last?.notified === '1') console.log(`${today}: today's question (${lastKey}) is already posted and sent`);
+  else publish(notify(lastKey, last), `${today}: today's question (${lastKey}) is posted; sending its notification`);
   process.exit(0);
 }
 
@@ -42,10 +61,8 @@ if (!pick) {
   process.exit(1);
 }
 const [id, q] = pick;
-console.log(`${today}: picked ${id} from ${entries.length} questions`);
-if (!commit) process.exit(0);
-
-const file = path.join('.tmp', 'daily-new.json');
-fs.writeFileSync(file, JSON.stringify(dailyRecord(id, q, today)));
-fb(['database:push', '/dailyquizz', file]);
-console.log('posted');
+const dailyKey = newPushKey(now);
+publish(
+  { [`dailyquizz/${dailyKey}`]: dailyRecord(id, q, today), ...notify(dailyKey, q) },
+  `${today}: picked ${id} from ${entries.length} questions; posting and sending it`,
+);

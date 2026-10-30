@@ -1,6 +1,6 @@
 import { test } from 'node:test';
 import assert from 'node:assert/strict';
-import { dailyRecord, pickDaily, pushKeyTime, seeded, sudanDay, usableQuestion } from './dailyPick.js';
+import { dailyPush, dailyRecord, newPushKey, pickDaily, pushKeyTime, seeded, sudanDay, usableQuestion } from './dailyPick.js';
 
 const q = (over = {}) => ({ question: 'Stem?', a: 'one', b: 'two', answer: 'B', exp: 'because', ...over });
 
@@ -43,4 +43,21 @@ test('pickDaily is the same for any order of the bank and prefers explained ques
 test('dailyRecord keeps only what the daily card shows', () => {
   const r = dailyRecord('k1', q({ c: 'three', key: 'quiz', similar: 'x' }), '2026-10-30');
   assert.deepEqual(r, { question: 'Stem?', answer: 'b', auto: '1', day: '2026-10-30', qid: 'k1', a: 'one', b: 'two', c: 'three', exp: 'because' });
+});
+
+test('newPushKey round-trips its time and sorts by time', () => {
+  const t = Date.UTC(2026, 9, 31, 5, 0);
+  const k = newPushKey(t, () => 0.5);
+  assert.equal(k.length, 20);
+  assert.equal(pushKeyTime(k), t);
+  assert.ok(newPushKey(t + 1000) > newPushKey(t));
+});
+
+test('dailyPush shortens long stems and opens the question', () => {
+  const p = dailyPush({ question: `A  2-year-old\nwith ${'x'.repeat(200)}` }, 5);
+  assert.equal(p.body.length, 108);
+  assert.ok(p.body.startsWith('A 2-year-old with'));
+  assert.equal(p.url, '/?daily=1');
+  assert.equal(p.target, 'all');
+  assert.equal(dailyPush({ question: 'Short?' }, 5).body, 'Short?');
 });

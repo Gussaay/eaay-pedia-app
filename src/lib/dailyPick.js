@@ -21,6 +21,19 @@ export function pushKeyTime(key) {
   return t;
 }
 
+/** A new Firebase-style push key for time `now` (sorts after older keys). */
+export function newPushKey(now = Date.now(), random = Math.random) {
+  let t = now;
+  let head = '';
+  for (let i = 0; i < 8; i += 1) {
+    head = PUSH_CHARS[t % 64] + head;
+    t = Math.floor(t / 64);
+  }
+  let tail = '';
+  for (let i = 0; i < 12; i += 1) tail += PUSH_CHARS[Math.floor(random() * 64)];
+  return head + tail;
+}
+
 /** A number from 0 to 1 that only depends on the text (FNV-1a, then mixed). */
 export function seeded(text) {
   let h = 2166136261;
@@ -49,6 +62,22 @@ export function pickDaily(entries, day) {
   const pool = (explained.length ? explained : usable).sort(([a], [b]) => (a < b ? -1 : a > b ? 1 : 0));
   if (!pool.length) return null;
   return pool[Math.floor(seeded(`daily:${day}`) * pool.length)];
+}
+
+/** The push notification for a daily question: the stem's first words as the body. */
+export function dailyPush(q, createdAt) {
+  const stem = String(q.question || '').replace(/\s+/g, ' ').trim();
+  return {
+    title: '🩺 Question of the day',
+    body: stem.length > 110 ? `${stem.slice(0, 107).trimEnd()}…` : stem,
+    // Opens the app on the home page with the question already open.
+    url: '/?daily=1',
+    target: 'all',
+    level: '',
+    uid: '',
+    status: 'pending',
+    createdAt,
+  };
 }
 
 /** The dailyquizz record the app reads (components/DailyQuiz.jsx). */

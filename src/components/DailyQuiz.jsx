@@ -1,6 +1,7 @@
 // Daily quiz card + dialog (MainPageActivity cardview1 / dailyquiz.xml).
 // Reads the latest dailyquizz child; hidden once the user marked it "seen".
 import { useEffect, useMemo, useState } from 'react';
+import { useSearchParams } from 'react-router-dom';
 import { CalendarCheck } from 'lucide-react';
 import { useAuth } from '../hooks/useAuth';
 import { limitToLast, onValue, query, ref } from 'firebase/database';
@@ -36,6 +37,15 @@ export default function DailyQuiz({ daily }) {
   const { user } = useAuth();
   const [open, setOpen] = useState(false);
   const [selected, setSelected] = useState('');
+  const [params, setParams] = useSearchParams();
+
+  // The morning notification opens /?daily=1: show the question straight away.
+  const wantsDaily = params.get('daily') === '1';
+  useEffect(() => {
+    if (!wantsDaily || !daily?.question) return;
+    if (daily[user.uid] !== 'seen') setOpen(true);
+    setParams({}, { replace: true });
+  }, [wantsDaily, daily, user.uid, setParams]);
 
   const key = daily?.key || daily?._key;
   const seen = daily && daily[user.uid] === 'seen';
