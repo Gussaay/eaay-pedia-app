@@ -14,11 +14,29 @@
     ],
     "rewrites": [
       {
-        "source": "**",
+        "regex": "^/($|[^a].*|a($|[^s].*)|as($|[^s].*)|ass($|[^e].*)|asse($|[^t].*)|asset($|[^s].*)|assets($|[^/].*))$",
         "destination": "/index.html"
       }
     ],
     "headers": [
+      {
+        "source": "**/!(*.*)",
+        "headers": [
+          {
+            "key": "Cache-Control",
+            "value": "no-cache"
+          }
+        ]
+      },
+      {
+        "source": "/",
+        "headers": [
+          {
+            "key": "Cache-Control",
+            "value": "no-cache"
+          }
+        ]
+      },
       {
         "source": "/sw.js",
         "headers": [

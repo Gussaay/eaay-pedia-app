@@ -7,7 +7,8 @@
 //   - The admin Update manager can override that manifest through the database
 //     node `update/live` (pause a rollout, pin an older version, force one).
 //   - Capgo downloads the zip, we queue it with next(), and it becomes active
-//     on the next launch — or immediately if the user taps "Restart now".
+//     on the next launch, without asking. "Restart now" is offered only when
+//     the user checks for updates, or when the update is required.
 //
 // Two rules keep this safe:
 //   1. A bundle is only offered when its minNativeBuild <= the installed APK.
@@ -27,7 +28,11 @@ const MANIFEST_TIMEOUT_MS = 15_000;
 const DOWNLOAD_TIMEOUT_MS = 10 * 60_000;
 const STARTUP_DELAY_MS = 2_500;
 const MIN_GAP_BETWEEN_CHECKS_MS = 60_000;
-const RESUME_RECHECK_MS = 30 * 60_000;
+// Besides the check at every start: once every 12 hours, whether the app is
+// left open or brought back from the background. A check is one small file;
+// the download itself only happens when there is something new.
+const RESUME_RECHECK_MS = 12 * 60 * 60_000;
+const OPEN_RECHECK_MS = 12 * 60 * 60_000;
 
 // ---------------------------------------------------------------------------
 // Store. Module level, so the engine runs once however many components render.
@@ -225,7 +230,10 @@ export async function checkForLiveUpdate(reason, { force = false } = {}) {
       version: manifest.version,
       notes: manifest.notes || null,
       mandatory: !!manifest.mandatory,
-      dismissed: false,
+      // Silent: no popup for an ordinary update. It installs by itself on the
+      // next launch; App & updates (or "Check for updates") can apply it now.
+      // Only a required update opens the dialog by itself.
+      dismissed: !manifest.mandatory,
       downloading: false,
       progress: 100,
       upToDate: false,
@@ -321,6 +329,14 @@ export function startLiveUpdates() {
   CapApp.addListener('appStateChange', ({ isActive }) => {
     if (isActive && Date.now() - lastCheckAt > RESUME_RECHECK_MS) checkForLiveUpdate('resume');
   });
+
+  // Kept open for a long time: still pick up new releases.
+  setInterval(() => checkForLiveUpdate('while-open'), OPEN_RECHECK_MS);
+
+  // A downloaded update is queued with next(). Capgo switches to it by itself
+  // when the app goes into the background (installNext on appMovedToBackground),
+  // so the next time the user looks at the app it is already updated, without
+  // a restart on screen.
 
   // Note: do NOT call set() when the app is minimised. That reloads the WebView
   // in the background, and if Android kills the app before notifyAppReady()

@@ -11,6 +11,9 @@ export const SUPER_ADMIN_EMAIL = 'gussaay@gmail.com';
 // setting update/app/ver = 6 in the database prompts old Android users to update.
 export const APP_VERSION = import.meta.env.VITE_APP_VERSION || '6.0.0';
 export const APP_VERSION_NUMBER = parseFloat(APP_VERSION);
+// What the screens show. APP_VERSION changes with every small over-the-air
+// update; this only changes for a big release (vite.config.js).
+export const SHOWN_VERSION = import.meta.env.VITE_RELEASE_VERSION || APP_VERSION;
 
 // Web app + permanent APK download (published by .github/workflows/deploy.yml).
 export const SITE_URL = 'https://easy-pedia.web.app';

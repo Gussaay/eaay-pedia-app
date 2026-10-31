@@ -7,7 +7,7 @@ import { useAppUpdate } from '../hooks/useAppUpdate';
 import { useAuth } from '../hooks/useAuth';
 import { pushPermission, registerForPush } from '../lib/push';
 import { isNative } from '../lib/native';
-import { APP_VERSION } from '../config';
+import { SHOWN_VERSION } from '../config';
 import DownloadManager from '../components/DownloadManager';
 import BottomNav from '../components/BottomNav';
 import { AppBar, Button, Card, Page } from '../components/ui';
@@ -88,7 +88,7 @@ export default function AppUpdates() {
             <div className="min-w-0 flex-1">
               <p className="font-display text-lg">Easy Pedia MCQs</p>
               <p className="text-sm text-slate-500 mt-0.5">
-                Version {ota.bundleVersion && ota.bundleVersion !== 'builtin' ? ota.bundleVersion : APP_VERSION}
+                Version {SHOWN_VERSION}
                 {isNative && ota.nativeBuild ? ` · install ${ota.nativeBuild}` : ''}
               </p>
             </div>

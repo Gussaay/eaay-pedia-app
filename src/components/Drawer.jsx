@@ -2,7 +2,7 @@ import { useNavigate } from 'react-router-dom';
 import { ArrowUpCircle, BarChart3, Info, LogOut, Megaphone, Shield, Share2, Smartphone, Sparkles, User, X } from 'lucide-react';
 import { useAuth, logout } from '../hooks/useAuth';
 import { isNative, shareApp } from '../lib/native';
-import { APP_VERSION } from '../config';
+import { SHOWN_VERSION } from '../config';
 import { Avatar } from './ui';
 
 export default function Drawer({ open, onClose }) {
@@ -65,7 +65,7 @@ export default function Drawer({ open, onClose }) {
           >
             <LogOut size={18} /> Sign out
           </button>
-          <p className="text-center text-xs text-slate-400 mt-3">App version: {APP_VERSION}</p>
+          <p className="text-center text-xs text-slate-400 mt-3">App version: {SHOWN_VERSION}</p>
         </div>
       </aside>
     </div>

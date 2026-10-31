@@ -25,7 +25,7 @@ import { fetchNativeVersion, isNewerBuild } from '../lib/nativeVersion';
 import { subscribe } from '../lib/rtdb';
 import { isNative } from '../lib/native';
 import { isConnectionBroken } from '../lib/connectivity';
-import { APK_URL, LIVE_UPDATE_URL } from '../config';
+import { APK_URL, LIVE_UPDATE_URL, SHOWN_VERSION } from '../config';
 
 const SKIPPED_BUILD_KEY = 'update:skipped-build';
 const APK_DOWNLOAD_ID = 'easy-pedia-apk';
@@ -124,9 +124,13 @@ export function useAppUpdate() {
     }
 
     const result = await checkForLiveUpdate('manual', { force: true });
-    if (result.status === 'ready') setNotice(null); // the dialog takes over
+    if (result.status === 'ready') {
+      // Downloads arrive silently; asking is what opens the restart dialog.
+      setNotice(null);
+      reopenLiveUpdate();
+    }
     else if (result.status === 'up-to-date')
-      setNotice({ tone: 'ok', text: `You are on the latest version (${result.version}).` });
+      setNotice({ tone: 'ok', text: `You are on the latest version (${SHOWN_VERSION}).` });
     else if (result.status === 'needs-apk')
       setNotice({ tone: 'info', text: 'The next update needs a full install. Try again shortly.' });
     else if (result.status === 'paused')

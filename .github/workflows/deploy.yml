@@ -252,6 +252,28 @@ jobs:
       - name: Add version file to the site
         run: cp apk/native-version.json dist/native-version.json
 
+      # KEEP THE PREVIOUS RELEASES' FILES ON THE SITE.
+      # Every release renames the code files. A phone with the app still open
+      # runs the previous release and may ask for one of its files after this
+      # deploy; keeping two weeks of them means it carries on, and starts on
+      # the new release the next time it is opened. Added after the
+      # over-the-air zip was made, so the bundle does not grow.
+      - name: Restore earlier releases' files
+        uses: actions/cache/restore@v4
+        with:
+          path: previous-assets
+          key: web-assets-${{ github.run_id }}
+          restore-keys: web-assets-
+
+      - name: Add earlier releases' files to this deploy
+        run: |
+          mkdir -p previous-assets
+          find previous-assets -type f -mtime +14 -delete
+          echo "Keeping $(find previous-assets -type f | wc -l) file(s) from earlier releases."
+          cp -rp --update=none previous-assets/. dist/assets/
+          rm -rf previous-assets
+          cp -rp dist/assets previous-assets
+
       # Secret FIREBASE_SERVICE_ACCOUNT_EASY_PEDIA was created by `firebase init hosting:github`.
       - name: Deploy to Firebase Hosting
         uses: FirebaseExtended/action-hosting-deploy@v0
@@ -260,6 +282,12 @@ jobs:
           firebaseServiceAccount: ${{ secrets.FIREBASE_SERVICE_ACCOUNT_EASY_PEDIA }}
           channelId: live
           projectId: easy-pedia
+
+      - name: Save this release's files for the next deploy
+        uses: actions/cache/save@v4
+        with:
+          path: previous-assets
+          key: web-assets-${{ github.run_id }}
 
       - name: Verify the download link is live
         run: |

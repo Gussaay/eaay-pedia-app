@@ -1,27 +1,11 @@
 // Every update dialog the app shows. The decisions live in useAppUpdate();
 // this file is only the screen for them.
-import { useEffect, useSyncExternalStore } from 'react';
+import { useEffect } from 'react';
 import { AlertTriangle, CheckCircle2, Download, Info, RefreshCw, RotateCw } from 'lucide-react';
 import { useAppUpdate } from '../hooks/useAppUpdate';
 import { openDownload } from '../lib/downloads';
 import { Button, Modal } from './ui';
 import { useConnectivity } from './ConnectionNotice';
-
-let applyWebUpdate = null;
-const listeners = new Set();
-export function setWebUpdate(fn) {
-  applyWebUpdate = fn;
-  listeners.forEach((l) => l());
-}
-const useWebUpdate = () =>
-  useSyncExternalStore(
-    (l) => {
-      listeners.add(l);
-      return () => listeners.delete(l);
-    },
-    () => applyWebUpdate,
-    () => null,
-  );
 
 function Progress({ percent, label }) {
   return (
@@ -38,7 +22,6 @@ function Progress({ percent, label }) {
 }
 
 export default function UpdatePrompt() {
-  const webUpdate = useWebUpdate();
   const {
     ota,
     apk,
@@ -74,16 +57,6 @@ export default function UpdatePrompt() {
 
   return (
     <>
-      {webUpdate && (
-        <div className="fixed bottom-24 inset-x-4 z-[60] sm:left-auto sm:w-96 bg-slate-900 text-white rounded-2xl shadow-xl p-4 flex items-center gap-3">
-          <RefreshCw size={20} className="shrink-0" />
-          <p className="flex-1 text-sm">A new version of Easy Pedia MCQs is ready.</p>
-          <Button className="!py-1.5" onClick={() => webUpdate()}>
-            Update
-          </Button>
-        </div>
-      )}
-
       {/* Full install: the native app itself changed. */}
       <Modal
         open={showApk}
@@ -134,7 +107,7 @@ export default function UpdatePrompt() {
         open={showOta}
         onClose={ota.mandatory ? undefined : postponeLiveUpdate}
         dismissable={!ota.mandatory && !ota.installing}
-        title={`Update ready${ota.version ? ` (${ota.version})` : ''}`}
+        title="Update ready"
         footer={
           <>
             {!ota.mandatory && (
@@ -153,7 +126,6 @@ export default function UpdatePrompt() {
             ? 'A required update has been downloaded. The app needs to restart to apply it.'
             : 'A new version has been downloaded already. Restart now to use it, or choose Later and it will apply itself the next time you open the app.'}
         </p>
-        {ota.notes && <p className="mt-2 text-sm text-slate-500 whitespace-pre-line">{ota.notes}</p>}
         <p className="mt-3 text-xs text-slate-400">
           Nothing else is downloaded — this update is already on your phone.
         </p>
