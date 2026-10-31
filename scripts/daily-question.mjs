@@ -62,7 +62,9 @@ if (!pick) {
 }
 const [id, q] = pick;
 const dailyKey = newPushKey(now);
+// The record carries `notified` itself: the database refuses one update that
+// writes both dailyquizz/<key> and dailyquizz/<key>/notified.
 publish(
-  { [`dailyquizz/${dailyKey}`]: dailyRecord(id, q, today), ...notify(dailyKey, q) },
+  { [`dailyquizz/${dailyKey}`]: { ...dailyRecord(id, q, today), notified: '1' }, [`push_outbox/${newPushKey(now)}`]: dailyPush(q, now) },
   `${today}: picked ${id} from ${entries.length} questions; posting and sending it`,
 );

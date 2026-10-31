@@ -9,7 +9,7 @@ name: Deploy Cloud Functions
 # these roles in Google Cloud console > IAM (project easy-pedia):
 #   Cloud Functions Admin, Cloud Run Admin, Service Account User,
 #   Artifact Registry Administrator, Cloud Build Editor, Secret Manager Viewer,
-#   Firebase Realtime Database Viewer
+#   Firebase Realtime Database Viewer, Cloud Scheduler Admin (dailyQuestion)
 # then re-run this workflow.
 on:
   push:

@@ -3,7 +3,9 @@ name: Daily question
 # The morning "Question of the day" (scripts/daily-question.mjs): at 7 am in
 # Sudan it posts one picked from the bank when nobody posted one today, and
 # sends today's question to every phone. A push to the script only prints what
-# it would do.
+# it would do. The on-time run is the dailyQuestion Cloud Function
+# (functions/daily.js, Cloud Scheduler); GitHub starts this schedule hours late,
+# so it is the backup and does nothing when the function already ran.
 on:
   push:
     branches:

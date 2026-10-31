@@ -61,3 +61,54 @@ test('dailyPush shortens long stems and opens the question', () => {
   assert.equal(p.target, 'all');
   assert.equal(dailyPush({ question: 'Short?' }, 5).body, 'Short?');
 });
+
+// The 7 am Cloud Function (functions/daily.js) carries its own copy of the pick.
+test('the Cloud Function picks and writes the same as this file', async () => {
+  const fn = await import('../../functions/dailyCore.js');
+  const entries = Array.from({ length: 50 }, (_, i) => [`k${i}`, q({ exp: i % 3 ? 'because' : '' })]);
+  for (const day of ['2026-10-31', '2026-11-01', '2027-02-14']) {
+    assert.deepEqual(fn.pickDaily(entries, day), pickDaily(entries, day));
+    assert.equal(fn.sudanDay(Date.parse(`${day}T05:00:00Z`)), sudanDay(Date.parse(`${day}T05:00:00Z`)));
+  }
+  assert.deepEqual(fn.dailyRecord('k1', q(), 'd'), dailyRecord('k1', q(), 'd'));
+  assert.deepEqual(fn.dailyPush(q(), 5), dailyPush(q(), 5));
+  assert.equal(fn.pushKeyTime(fn.newPushKey(123456789)), 123456789);
+});
+
+test('runDaily posts once, then only notifies, then does nothing', async () => {
+  const { runDaily } = await import('../../functions/dailyCore.js');
+  const data = { quizqq: { k1: q(), k2: q({ key: 'prev' }) }, allquiz: { p: { key: 'prev', preview: 'true' } }, dailyquizz: {} };
+  const get = (path) => path.split('/').reduce((o, k) => o?.[k], data);
+  const ref = (path = '') => ({
+    get: async () => ({ val: () => get(path) }),
+    orderByKey: () => ({ limitToLast: () => ({ get: async () => {
+      const keys = Object.keys(data.dailyquizz).sort();
+      const k = keys[keys.length - 1];
+      return { val: () => (k ? { [k]: data.dailyquizz[k] } : null) };
+    } }) }),
+    update: async (u) => {
+      // Like the real database: no path may sit under another in one update.
+      const paths = Object.keys(u);
+      for (const a of paths) for (const b of paths) assert.ok(!b.startsWith(`${a}/`), `${a} is an ancestor of ${b}`);
+      for (const [p, v] of Object.entries(u)) {
+        const parts = p.split('/');
+        let o = data;
+        for (const k of parts.slice(0, -1)) o = o[k] ??= {};
+        o[parts.at(-1)] = v;
+      }
+    },
+  });
+  const db = { ref };
+  const now = Date.parse('2026-10-31T05:00:00Z');
+  assert.match(await runDaily(db, now), /picked k1 from 1; posted and sent/);
+  const [key] = Object.keys(data.dailyquizz);
+  assert.equal(data.dailyquizz[key].notified, '1');
+  assert.equal(Object.keys(data.push_outbox).length, 1);
+  assert.match(await runDaily(db, now + 3600_000), /already posted and sent/);
+  assert.equal(Object.keys(data.push_outbox).length, 1);
+  // An admin's own question posted today, not yet sent: only its push goes out.
+  delete data.dailyquizz[key];
+  data.dailyquizz['-Oz'] = { question: 'Admin?', day: '2026-10-31' };
+  assert.match(await runDaily(db, now), /was posted; sent its notification/);
+  assert.equal(Object.keys(data.push_outbox).length, 2);
+});

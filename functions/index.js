@@ -237,3 +237,6 @@ export const deliverPush = onValueWritten(
 
 // AI study helper (Groq, Gemini as backup), admin-only — see ai.js.
 export { aiStudy } from './ai.js';
+
+// Question of the day at 7 am Sudan time, with a push to every phone — see daily.js.
+export { dailyQuestion } from './daily.js';
