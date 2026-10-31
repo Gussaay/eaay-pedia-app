@@ -1,0 +1,53 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 800 600" font-family="system-ui,-apple-system,'Segoe UI',Roboto,sans-serif">
+<rect width="800" height="600" fill="#fff"/>
+<text x="30.0" y="42.0" font-size="26" fill="#0D47A1" font-weight="700">Retinopathy of prematurity (ROP): zones and stages</text>
+<text x="30.0" y="70.0" font-size="16" fill="#455A64">Right eye retina, flattened. Vessels grow out from the optic disc.</text>
+<circle cx="210" cy="330" r="195" fill="#FFF8E1" stroke="#FFB300" stroke-width="1.5"/>
+<circle cx="210" cy="330" r="150" fill="#FFECB3" stroke="#FFB300" stroke-width="1.5"/>
+<circle cx="210" cy="330" r="70" fill="#FFE082" stroke="#FFB300" stroke-width="1.5"/>
+<circle cx="210" cy="330" r="14" fill="#FFCC80" stroke="#E65100" stroke-width="2"/>
+<text x="210.0" y="364.0" font-size="12.5" fill="#E65100" font-weight="600" text-anchor="middle">disc</text>
+<text x="210.0" y="290.0" font-size="14" fill="#263238" font-weight="700" text-anchor="middle">Zone I</text>
+<text x="210.0" y="230.0" font-size="14" fill="#263238" font-weight="700" text-anchor="middle">Zone II</text>
+<text x="210.0" y="165.0" font-size="14" fill="#263238" font-weight="700" text-anchor="middle">Zone III</text>
+<path d="M210 330 Q268.68885604402834 342.47470144906555 335 330" fill="none" stroke="#D32F2F" stroke-width="2" stroke-linejoin="round" stroke-linecap="round" />
+<path d="M210 330 Q246.9396885195395 377.28064521640334 306 410" fill="none" stroke="#D32F2F" stroke-width="2" stroke-linejoin="round" stroke-linecap="round" />
+<path d="M210 330 Q207.90603019784993 389.96344962114574 232 453" fill="none" stroke="#D32F2F" stroke-width="2" stroke-linejoin="round" stroke-linecap="round" />
+<path d="M210 330 Q169.85216361846852 374.58868952864367 148 438" fill="none" stroke="#D32F2F" stroke-width="2" stroke-linejoin="round" stroke-linecap="round" />
+<path d="M210 330 Q150.5839158755058 338.35038605760394 93 373" fill="none" stroke="#D32F2F" stroke-width="2" stroke-linejoin="round" stroke-linecap="round" />
+<path d="M210 330 Q159.11711423061445 298.2048441460077 93 287" fill="none" stroke="#D32F2F" stroke-width="2" stroke-linejoin="round" stroke-linecap="round" />
+<path d="M210 330 Q191.45898033750314 272.9366090222908 147 222" fill="none" stroke="#D32F2F" stroke-width="2" stroke-linejoin="round" stroke-linecap="round" />
+<path d="M210 330 Q232.47639560495472 274.3689687259928 232 207" fill="none" stroke="#D32F2F" stroke-width="2" stroke-linejoin="round" stroke-linecap="round" />
+<path d="M210 330 Q262.9768555715356 301.83170623284656 306 250" fill="none" stroke="#D32F2F" stroke-width="2" stroke-linejoin="round" stroke-linecap="round" />
+<rect x="440" y="110" width="70" height="62" rx="8" fill="#FFF8E1" stroke="#FFB300"/>
+<path d="M446 141 L470 141" fill="none" stroke="#D32F2F" stroke-width="2" stroke-linejoin="round" stroke-linecap="round" />
+<line x1="476.0" y1="118.0" x2="476.0" y2="164.0" stroke="#ECEFF1" stroke-width="4" />
+<text x="524.0" y="136.0" font-size="15" fill="#263238" font-weight="700">Stage 1: Demarcation line</text>
+<text x="524.0" y="156.0" font-size="13" fill="#455A64">flat white line at the edge of the vessels</text>
+<rect x="440" y="190" width="70" height="62" rx="8" fill="#FFF8E1" stroke="#FFB300"/>
+<path d="M446 221 L470 221" fill="none" stroke="#D32F2F" stroke-width="2" stroke-linejoin="round" stroke-linecap="round" />
+<rect x="472" y="198" width="9" height="46" rx="4" fill="#F48FB1"/>
+<text x="524.0" y="216.0" font-size="15" fill="#263238" font-weight="700">Stage 2: Ridge</text>
+<text x="524.0" y="236.0" font-size="13" fill="#455A64">the line has height and width</text>
+<rect x="440" y="270" width="70" height="62" rx="8" fill="#FFF8E1" stroke="#FFB300"/>
+<path d="M446 301 L470 301" fill="none" stroke="#D32F2F" stroke-width="2" stroke-linejoin="round" stroke-linecap="round" />
+<rect x="472" y="278" width="9" height="46" rx="4" fill="#F48FB1"/>
+<path d="M481 290 l10 -6 M481 301 l12 0 M481 312 l10 6" fill="none" stroke="#D32F2F" stroke-width="2" stroke-linejoin="round" stroke-linecap="round" />
+<text x="524.0" y="296.0" font-size="15" fill="#263238" font-weight="700">Stage 3: Extraretinal fibrovascular</text>
+<text x="524.0" y="316.0" font-size="13" fill="#455A64">new vessels grow off the ridge</text>
+<rect x="440" y="350" width="70" height="62" rx="8" fill="#FFF8E1" stroke="#FFB300"/>
+<path d="M446 381 L470 381" fill="none" stroke="#D32F2F" stroke-width="2" stroke-linejoin="round" stroke-linecap="round" />
+<path d="M478 360 Q498 381 478 402" fill="none" stroke="#6D4C41" stroke-width="3" stroke-linejoin="round" stroke-linecap="round" />
+<text x="524.0" y="376.0" font-size="15" fill="#263238" font-weight="700">Stage 4: Partial retinal detachment</text>
+<text x="524.0" y="396.0" font-size="13" fill="#455A64">4A spares the macula, 4B involves it</text>
+<rect x="440" y="430" width="70" height="62" rx="8" fill="#FFF8E1" stroke="#FFB300"/>
+<path d="M446 461 L470 461" fill="none" stroke="#D32F2F" stroke-width="2" stroke-linejoin="round" stroke-linecap="round" />
+<path d="M460 438 Q504 461 460 484" fill="none" stroke="#6D4C41" stroke-width="3" stroke-linejoin="round" stroke-linecap="round" />
+<text x="524.0" y="456.0" font-size="15" fill="#263238" font-weight="700">Stage 5: Total retinal detachment</text>
+<text x="524.0" y="476.0" font-size="13" fill="#455A64"></text>
+<text x="440.0" y="520.0" font-size="14" fill="#C62828" font-weight="700">Plus disease = dilated, twisty vessels at the disc.</text>
+<text x="440.0" y="540.0" font-size="14" fill="#C62828" font-weight="700">Treat type 1 ROP (laser or anti-VEGF).</text>
+<rect x="0" y="560" width="800" height="40" fill="#1976D2"/>
+<text x="30.0" y="586.0" font-size="16" fill="#fff" font-weight="700">Easy Pedia</text>
+<text x="770.0" y="586.0" font-size="15" fill="#E3F2FD" text-anchor="end">easy-pedia.web.app · original illustration</text>
+</svg>

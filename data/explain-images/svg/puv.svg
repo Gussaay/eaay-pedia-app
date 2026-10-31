@@ -1,0 +1,45 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 800 600" font-family="system-ui,-apple-system,'Segoe UI',Roboto,sans-serif">
+<rect width="800" height="600" fill="#fff"/>
+<text x="30.0" y="42.0" font-size="26" fill="#0D47A1" font-weight="700">Posterior urethral valves (boys)</text>
+<text x="30.0" y="70.0" font-size="16" fill="#455A64">Obstruction at the urethra backs up the whole urinary tract.</text>
+<text x="150.0" y="112.0" font-size="18" fill="#263238" font-weight="700" text-anchor="middle">Normal</text>
+<ellipse cx="75" cy="200" rx="38" ry="62" fill="#F8BBD0" stroke="#AD1457" stroke-width="2"/>
+<ellipse cx="81" cy="200" rx="11" ry="20" fill="#FFF59D" stroke="#F9A825" stroke-width="1.5"/>
+<path d="M75 256 Q75 350 120 385" fill="none" stroke="#F9A825" stroke-width="5" stroke-linejoin="round" stroke-linecap="round" />
+<ellipse cx="225" cy="200" rx="38" ry="62" fill="#F8BBD0" stroke="#AD1457" stroke-width="2"/>
+<ellipse cx="219" cy="200" rx="11" ry="20" fill="#FFF59D" stroke="#F9A825" stroke-width="1.5"/>
+<path d="M225 256 Q225 350 180 385" fill="none" stroke="#F9A825" stroke-width="5" stroke-linejoin="round" stroke-linecap="round" />
+<ellipse cx="150" cy="430" rx="58" ry="41.76" fill="#FFF59D" stroke="#F9A825" stroke-width="2"/>
+<path d="M150 471.76 L150 545" fill="none" stroke="#F9A825" stroke-width="6" stroke-linejoin="round" stroke-linecap="round" />
+<text x="420.0" y="112.0" font-size="18" fill="#C62828" font-weight="700" text-anchor="middle">PUV</text>
+<ellipse cx="345" cy="200" rx="52" ry="78" fill="#F8BBD0" stroke="#AD1457" stroke-width="2"/>
+<ellipse cx="351" cy="200" rx="28.6" ry="46.8" fill="#FFF59D" stroke="#F9A825" stroke-width="1.5"/>
+<path d="M345 272 Q345 350 390 385" fill="none" stroke="#FFF59D" stroke-width="14" stroke-linejoin="round" stroke-linecap="round" />
+<ellipse cx="495" cy="200" rx="52" ry="78" fill="#F8BBD0" stroke="#AD1457" stroke-width="2"/>
+<ellipse cx="489" cy="200" rx="28.6" ry="46.8" fill="#FFF59D" stroke="#F9A825" stroke-width="1.5"/>
+<path d="M495 272 Q495 350 450 385" fill="none" stroke="#FFF59D" stroke-width="14" stroke-linejoin="round" stroke-linecap="round" />
+<ellipse cx="420" cy="430" rx="78" ry="56.16" fill="#FFF59D" stroke="#AD1457" stroke-width="7"/>
+<path d="M420 486.15999999999997 L420 545" fill="none" stroke="#F9A825" stroke-width="6" stroke-linejoin="round" stroke-linecap="round" />
+<path d="M406 505 L420 497 L434 505" fill="none" stroke="#C62828" stroke-width="4" stroke-linejoin="round" stroke-linecap="round" />
+<line x1="440.0" y1="501.0" x2="510.0" y2="501.0" stroke="#C62828" stroke-width="1.4" />
+<text x="514.0" y="505.0" font-size="14" fill="#C62828" font-weight="700">valves</text>
+<rect x="570" y="110" width="205" height="430" rx="12" fill="#FFF5F5"/>
+<text x="586.0" y="140.0" font-size="16" fill="#C62828" font-weight="700">Findings</text>
+<text x="586.0" y="164.0" font-size="14.5" fill="#263238">• Both kidneys and</text>
+<text x="586.0" y="186.0" font-size="14.5" fill="#263238">  ureters dilated</text>
+<text x="586.0" y="208.0" font-size="14.5" fill="#263238">  (hydronephrosis)</text>
+<text x="586.0" y="230.0" font-size="14.5" fill="#263238">• Thick-walled,</text>
+<text x="586.0" y="252.0" font-size="14.5" fill="#263238">  trabeculated bladder</text>
+<text x="586.0" y="274.0" font-size="14.5" fill="#263238">• Antenatal: bilateral</text>
+<text x="586.0" y="296.0" font-size="14.5" fill="#263238">  hydronephrosis,</text>
+<text x="586.0" y="318.0" font-size="14.5" fill="#263238">  oligohydramnios</text>
+<text x="586.0" y="340.0" font-size="14.5" fill="#263238"></text>
+<text x="586.0" y="362.0" font-size="16" fill="#C62828" font-weight="700">Diagnosis</text>
+<text x="586.0" y="384.0" font-size="14.5" fill="#263238">Ultrasound, then</text>
+<text x="586.0" y="406.0" font-size="14.5" fill="#263238">MCUG (micturating</text>
+<text x="586.0" y="428.0" font-size="14.5" fill="#263238">cystourethrogram)</text>
+<text x="586.0" y="450.0" font-size="14.5" fill="#263238">confirms the valves</text>
+<rect x="0" y="560" width="800" height="40" fill="#1976D2"/>
+<text x="30.0" y="586.0" font-size="16" fill="#fff" font-weight="700">Easy Pedia</text>
+<text x="770.0" y="586.0" font-size="15" fill="#E3F2FD" text-anchor="end">easy-pedia.web.app · original illustration</text>
+</svg>

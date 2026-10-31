@@ -1,0 +1,28 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 800 600" font-family="system-ui,-apple-system,'Segoe UI',Roboto,sans-serif">
+<rect width="800" height="600" fill="#fff"/>
+<text x="30.0" y="42.0" font-size="26" fill="#0D47A1" font-weight="700">Osgood–Schlatter disease</text>
+<text x="30.0" y="70.0" font-size="16" fill="#455A64">Side view of the knee in an active adolescent.</text>
+<path d="M180 110 L270 110 L280 300 Q300 330 280 350 L170 350 Q150 330 170 300 Z" fill="#F3E5C8" stroke="#8D6E63" stroke-width="2.5"/>
+<path d="M165 365 L290 365 Q300 385 285 395 L262 395 Q248 410 252 440 L258 540 L190 540 L192 440 Q190 400 170 395 Q155 385 165 365 Z" fill="#F3E5C8" stroke="#8D6E63" stroke-width="2.5"/>
+<rect x="168" y="395" width="96" height="8" fill="#4FC3F7" opacity="0.8"/>
+<ellipse cx="120" cy="300" rx="22" ry="38" fill="#F3E5C8" stroke="#8D6E63" stroke-width="2.5"/>
+<path d="M110 338 Q120 380 160 420 L170 430" fill="none" stroke="#E57373" stroke-width="12" stroke-linecap="round"/>
+<path d="M120 140 Q100 200 112 262" fill="none" stroke="#E57373" stroke-width="14" stroke-linecap="round"/>
+<circle cx="172" cy="432" r="20" fill="none" stroke="#C62828" stroke-width="3" stroke-dasharray="5 4"/>
+<path d="M160 424 Q150 432 160 446 Q172 440 166 428 Z" fill="#C62828" opacity="0.7"/>
+<line x1="195.0" y1="432.0" x2="330.0" y2="432.0" stroke="#C62828" stroke-width="1.6" />
+<text x="336.0" y="428.0" font-size="16" fill="#C62828" font-weight="700">Tibial tuberosity (apophysis):</text>
+<text x="336.0" y="448.0" font-size="15" fill="#263238">painful, tender bony swelling</text>
+<line x1="138.0" y1="385.0" x2="330.0" y2="360.0" stroke="#263238" stroke-width="1.2" />
+<text x="336.0" y="365.0" font-size="15" fill="#263238" font-weight="600">Patellar tendon pulls repeatedly</text>
+<line x1="108.0" y1="200.0" x2="330.0" y2="200.0" stroke="#263238" stroke-width="1.2" />
+<text x="336.0" y="205.0" font-size="15" fill="#263238" font-weight="600">Quadriceps</text>
+<line x1="240.0" y1="399.0" x2="330.0" y2="300.0" stroke="#4FC3F7" stroke-width="1.2" />
+<text x="336.0" y="300.0" font-size="15" fill="#0277BD" font-weight="600">Growth plate</text>
+<rect x="336" y="470" width="434" height="80" rx="12" fill="#F1F7FE"/>
+<text x="352.0" y="500.0" font-size="14.5" fill="#263238">Traction apophysitis at ages 10–15 in sporty teens.</text>
+<text x="352.0" y="522.0" font-size="14.5" fill="#263238">Rest, ice and analgesia; settles when growth stops.</text>
+<rect x="0" y="560" width="800" height="40" fill="#1976D2"/>
+<text x="30.0" y="586.0" font-size="16" fill="#fff" font-weight="700">Easy Pedia</text>
+<text x="770.0" y="586.0" font-size="15" fill="#E3F2FD" text-anchor="end">easy-pedia.web.app · original illustration</text>
+</svg>

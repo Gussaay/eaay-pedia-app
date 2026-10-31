@@ -1,0 +1,46 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 800 600" font-family="system-ui,-apple-system,'Segoe UI',Roboto,sans-serif">
+<rect width="800" height="600" fill="#fff"/>
+<text x="30.0" y="42.0" font-size="26" fill="#0D47A1" font-weight="700">Facial palsy: LMN (Bell) vs UMN</text>
+<text x="30.0" y="70.0" font-size="16" fill="#455A64">Asked to close the eyes and smile. Weak RIGHT side (on your left) is shaded.</text>
+<text x="200.0" y="112.0" font-size="18" fill="#C62828" font-weight="700" text-anchor="middle">LMN lesion (Bell palsy)</text>
+<ellipse cx="200" cy="290" rx="120" ry="150" fill="#FBE9E7" stroke="#A1887F" stroke-width="2.5"/>
+<clipPath id="c200"><rect x="75" y="140" width="125" height="305"/></clipPath>
+<ellipse cx="200" cy="290" rx="120" ry="150" fill="#C62828" opacity="0.13" clip-path="url(#c200)"/>
+<path d="M212 185 Q250 179 285 185" fill="none" stroke="#A1887F" stroke-width="2" stroke-linejoin="round" stroke-linecap="round" />
+<path d="M212 199 Q250 193 285 199" fill="none" stroke="#A1887F" stroke-width="2" stroke-linejoin="round" stroke-linecap="round" />
+<path d="M212 213 Q250 207 285 213" fill="none" stroke="#A1887F" stroke-width="2" stroke-linejoin="round" stroke-linecap="round" />
+<ellipse cx="155" cy="255" rx="22" ry="14" fill="#fff" stroke="#263238" stroke-width="2"/>
+<circle cx="155" cy="250" r="6" fill="#263238"/>
+<path d="M223 255 Q245 247 267 255" fill="none" stroke="#263238" stroke-width="2.5" stroke-linejoin="round" stroke-linecap="round" />
+<path d="M130 236 Q155 234 180 238" fill="none" stroke="#A1887F" stroke-width="4" stroke-linejoin="round" stroke-linecap="round" />
+<path d="M220 230 Q245 220 270 230" fill="none" stroke="#A1887F" stroke-width="4" stroke-linejoin="round" stroke-linecap="round" />
+<path d="M200 270 L192 320 L208 322" fill="none" stroke="#A1887F" stroke-width="2" stroke-linejoin="round" stroke-linecap="round" />
+<path d="M222 322 Q240 350 242 370" fill="none" stroke="#A1887F" stroke-width="2" stroke-linejoin="round" stroke-linecap="round" />
+<path d="M178 322 Q170 345 166 368" fill="none" stroke="#A1887F" stroke-width="1" stroke-linejoin="round" stroke-linecap="round" opacity="0.25"/>
+<path d="M152 382 Q190 378 210 375 Q235 370 250 362" fill="none" stroke="#263238" stroke-width="3" stroke-linejoin="round" stroke-linecap="round" />
+<text x="600.0" y="112.0" font-size="18" fill="#0D47A1" font-weight="700" text-anchor="middle">UMN lesion (e.g. stroke, tumour)</text>
+<ellipse cx="600" cy="290" rx="120" ry="150" fill="#FBE9E7" stroke="#A1887F" stroke-width="2.5"/>
+<clipPath id="c600"><rect x="475" y="235" width="125" height="210"/></clipPath>
+<ellipse cx="600" cy="290" rx="120" ry="150" fill="#C62828" opacity="0.13" clip-path="url(#c600)"/>
+<path d="M515 185 Q550 179 588 185 M612 185 Q650 179 685 185" fill="none" stroke="#A1887F" stroke-width="2" stroke-linejoin="round" stroke-linecap="round" />
+<path d="M515 199 Q550 193 588 199 M612 199 Q650 193 685 199" fill="none" stroke="#A1887F" stroke-width="2" stroke-linejoin="round" stroke-linecap="round" />
+<path d="M515 213 Q550 207 588 213 M612 213 Q650 207 685 213" fill="none" stroke="#A1887F" stroke-width="2" stroke-linejoin="round" stroke-linecap="round" />
+<ellipse cx="555" cy="255" rx="22" ry="8" fill="#fff" stroke="#263238" stroke-width="2"/>
+<circle cx="555" cy="255" r="6" fill="#263238"/>
+<path d="M623 255 Q645 247 667 255" fill="none" stroke="#263238" stroke-width="2.5" stroke-linejoin="round" stroke-linecap="round" />
+<path d="M530 232 Q555 222 580 230" fill="none" stroke="#A1887F" stroke-width="4" stroke-linejoin="round" stroke-linecap="round" />
+<path d="M620 230 Q645 220 670 230" fill="none" stroke="#A1887F" stroke-width="4" stroke-linejoin="round" stroke-linecap="round" />
+<path d="M600 270 L592 320 L608 322" fill="none" stroke="#A1887F" stroke-width="2" stroke-linejoin="round" stroke-linecap="round" />
+<path d="M622 322 Q640 350 642 370" fill="none" stroke="#A1887F" stroke-width="2" stroke-linejoin="round" stroke-linecap="round" />
+<path d="M578 322 Q570 345 566 368" fill="none" stroke="#A1887F" stroke-width="1" stroke-linejoin="round" stroke-linecap="round" opacity="0.25"/>
+<path d="M552 382 Q590 378 610 375 Q635 370 650 362" fill="none" stroke="#263238" stroke-width="3" stroke-linejoin="round" stroke-linecap="round" />
+<text x="200.0" y="470.0" font-size="15" fill="#C62828" font-weight="700" text-anchor="middle">Whole half of the face is weak,</text>
+<text x="200.0" y="490.0" font-size="15" fill="#C62828" font-weight="700" text-anchor="middle">including the forehead.</text>
+<text x="200.0" y="510.0" font-size="15" fill="#C62828" font-weight="700" text-anchor="middle">Eye cannot close.</text>
+<text x="600.0" y="470.0" font-size="15" fill="#0D47A1" font-weight="700" text-anchor="middle">Lower face weak; forehead spared</text>
+<text x="600.0" y="490.0" font-size="15" fill="#0D47A1" font-weight="700" text-anchor="middle">(it gets nerve supply from</text>
+<text x="600.0" y="510.0" font-size="15" fill="#0D47A1" font-weight="700" text-anchor="middle">both sides of the brain).</text>
+<rect x="0" y="560" width="800" height="40" fill="#1976D2"/>
+<text x="30.0" y="586.0" font-size="16" fill="#fff" font-weight="700">Easy Pedia</text>
+<text x="770.0" y="586.0" font-size="15" fill="#E3F2FD" text-anchor="end">easy-pedia.web.app · original illustration</text>
+</svg>

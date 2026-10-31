@@ -1,0 +1,39 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 800 600" font-family="system-ui,-apple-system,'Segoe UI',Roboto,sans-serif">
+<rect width="800" height="600" fill="#fff"/>
+<text x="30.0" y="42.0" font-size="26" fill="#0D47A1" font-weight="700">Skull sutures, fontanelles and craniosynostosis</text>
+<text x="30.0" y="70.0" font-size="16" fill="#455A64">Infant skull seen from above (face at the top).</text>
+<ellipse cx="165" cy="320" rx="120" ry="160" fill="#F3E5C8" stroke="#8D6E63" stroke-width="2.5"/>
+<path d="M165 160 L165 225" fill="none" stroke="#8D6E63" stroke-width="3" stroke-linejoin="round" stroke-linecap="round" />
+<path d="M53 260 Q105 240 165 260 Q225 240 277 260" fill="none" stroke="#8D6E63" stroke-width="3" stroke-linejoin="round" stroke-linecap="round" />
+<path d="M165 290 L165 430" fill="none" stroke="#8D6E63" stroke-width="3" stroke-linejoin="round" stroke-linecap="round" />
+<path d="M65 420 L165 455 L265 420" fill="none" stroke="#8D6E63" stroke-width="3" stroke-linejoin="round" stroke-linecap="round" />
+<path d="M165 220 L195 258 L165 292 L135 258 Z" fill="#FFF" stroke="#0D47A1" stroke-width="2.5"/>
+<path d="M165 428 L181 450 L149 450 Z" fill="#FFF" stroke="#0D47A1" stroke-width="2.5"/>
+<text x="165.0" y="144.0" font-size="13" fill="#455A64" text-anchor="middle">face</text>
+<text x="205.0" y="200.0" font-size="14" fill="#8D6E63" font-weight="700">metopic</text>
+<text x="290.0" y="250.0" font-size="14" fill="#8D6E63" font-weight="700">coronal</text>
+<text x="177.0" y="360.0" font-size="14" fill="#8D6E63" font-weight="700">sagittal</text>
+<text x="255.0" y="455.0" font-size="14" fill="#8D6E63" font-weight="700">lambdoid</text>
+<line x1="197.0" y1="258.0" x2="300.0" y2="290.0" stroke="#0D47A1" stroke-width="1.4" />
+<text x="304.0" y="286.0" font-size="14.5" fill="#0D47A1" font-weight="700">Anterior fontanelle</text>
+<text x="304.0" y="305.0" font-size="14" fill="#263238">closes 12–18 months</text>
+<line x1="181.0" y1="444.0" x2="300.0" y2="390.0" stroke="#0D47A1" stroke-width="1.4" />
+<text x="304.0" y="386.0" font-size="14.5" fill="#0D47A1" font-weight="700">Posterior fontanelle</text>
+<text x="304.0" y="405.0" font-size="14" fill="#263238">closes by 2 months</text>
+<text x="470.0" y="112.0" font-size="17" fill="#C62828" font-weight="700">Early fusion → head shape</text>
+<path transform="translate(500 165)" d="M0 -55 Q30 -55 30 0 Q30 55 0 55 Q-30 55 -30 0 Q-30 -55 0 -55 Z" fill="#F3E5C8" stroke="#8D6E63" stroke-width="2"/>
+<text x="555.0" y="159.0" font-size="14.5" fill="#263238" font-weight="700">Sagittal → scaphocephaly</text>
+<text x="555.0" y="179.0" font-size="13.5" fill="#455A64">long narrow head; commonest</text>
+<path transform="translate(500 260)" d="M0 -45 L38 -5 Q42 45 0 45 Q-42 45 -38 -5 Z" fill="#F3E5C8" stroke="#8D6E63" stroke-width="2"/>
+<text x="555.0" y="254.0" font-size="14.5" fill="#263238" font-weight="700">Metopic → trigonocephaly</text>
+<text x="555.0" y="274.0" font-size="13.5" fill="#455A64">triangular forehead</text>
+<path transform="translate(500 355)" d="M-10 -42 Q40 -40 42 5 Q40 45 0 45 Q-40 45 -40 5 Q-38 -25 -10 -42 Z" fill="#F3E5C8" stroke="#8D6E63" stroke-width="2"/>
+<text x="555.0" y="349.0" font-size="14.5" fill="#263238" font-weight="700">One coronal → plagiocephaly</text>
+<text x="555.0" y="369.0" font-size="13.5" fill="#455A64">flat forehead on one side</text>
+<path transform="translate(500 450)" d="M0 -32 Q45 -32 45 0 Q45 32 0 32 Q-45 32 -45 0 Q-45 -32 0 -32 Z" fill="#F3E5C8" stroke="#8D6E63" stroke-width="2"/>
+<text x="555.0" y="444.0" font-size="14.5" fill="#263238" font-weight="700">Both coronal → brachycephaly</text>
+<text x="555.0" y="464.0" font-size="13.5" fill="#455A64">short, wide head</text>
+<rect x="0" y="560" width="800" height="40" fill="#1976D2"/>
+<text x="30.0" y="586.0" font-size="16" fill="#fff" font-weight="700">Easy Pedia</text>
+<text x="770.0" y="586.0" font-size="15" fill="#E3F2FD" text-anchor="end">easy-pedia.web.app · original illustration</text>
+</svg>

@@ -1,0 +1,135 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 800 600" font-family="system-ui,-apple-system,'Segoe UI',Roboto,sans-serif">
+<rect width="800" height="600" fill="#fff"/>
+<text x="30.0" y="42.0" font-size="26" fill="#0D47A1" font-weight="700">Supraventricular tachycardia (SVT)</text>
+<text x="30.0" y="70.0" font-size="16" fill="#455A64">Narrow-complex regular tachycardia. 1 small square = 40 ms.</text>
+<line x1="30.0" y1="110.0" x2="510.0" y2="110.0" stroke="#F2A9A9" stroke-width="1.2" />
+<line x1="30.0" y1="122.0" x2="510.0" y2="122.0" stroke="#FBE0E0" stroke-width="0.8" />
+<line x1="30.0" y1="134.0" x2="510.0" y2="134.0" stroke="#FBE0E0" stroke-width="0.8" />
+<line x1="30.0" y1="146.0" x2="510.0" y2="146.0" stroke="#FBE0E0" stroke-width="0.8" />
+<line x1="30.0" y1="158.0" x2="510.0" y2="158.0" stroke="#FBE0E0" stroke-width="0.8" />
+<line x1="30.0" y1="170.0" x2="510.0" y2="170.0" stroke="#F2A9A9" stroke-width="1.2" />
+<line x1="30.0" y1="182.0" x2="510.0" y2="182.0" stroke="#FBE0E0" stroke-width="0.8" />
+<line x1="30.0" y1="194.0" x2="510.0" y2="194.0" stroke="#FBE0E0" stroke-width="0.8" />
+<line x1="30.0" y1="206.0" x2="510.0" y2="206.0" stroke="#FBE0E0" stroke-width="0.8" />
+<line x1="30.0" y1="218.0" x2="510.0" y2="218.0" stroke="#FBE0E0" stroke-width="0.8" />
+<line x1="30.0" y1="230.0" x2="510.0" y2="230.0" stroke="#F2A9A9" stroke-width="1.2" />
+<line x1="30.0" y1="242.0" x2="510.0" y2="242.0" stroke="#FBE0E0" stroke-width="0.8" />
+<line x1="30.0" y1="254.0" x2="510.0" y2="254.0" stroke="#FBE0E0" stroke-width="0.8" />
+<line x1="30.0" y1="110.0" x2="30.0" y2="254.0" stroke="#F2A9A9" stroke-width="1.2" />
+<line x1="42.0" y1="110.0" x2="42.0" y2="254.0" stroke="#FBE0E0" stroke-width="0.8" />
+<line x1="54.0" y1="110.0" x2="54.0" y2="254.0" stroke="#FBE0E0" stroke-width="0.8" />
+<line x1="66.0" y1="110.0" x2="66.0" y2="254.0" stroke="#FBE0E0" stroke-width="0.8" />
+<line x1="78.0" y1="110.0" x2="78.0" y2="254.0" stroke="#FBE0E0" stroke-width="0.8" />
+<line x1="90.0" y1="110.0" x2="90.0" y2="254.0" stroke="#F2A9A9" stroke-width="1.2" />
+<line x1="102.0" y1="110.0" x2="102.0" y2="254.0" stroke="#FBE0E0" stroke-width="0.8" />
+<line x1="114.0" y1="110.0" x2="114.0" y2="254.0" stroke="#FBE0E0" stroke-width="0.8" />
+<line x1="126.0" y1="110.0" x2="126.0" y2="254.0" stroke="#FBE0E0" stroke-width="0.8" />
+<line x1="138.0" y1="110.0" x2="138.0" y2="254.0" stroke="#FBE0E0" stroke-width="0.8" />
+<line x1="150.0" y1="110.0" x2="150.0" y2="254.0" stroke="#F2A9A9" stroke-width="1.2" />
+<line x1="162.0" y1="110.0" x2="162.0" y2="254.0" stroke="#FBE0E0" stroke-width="0.8" />
+<line x1="174.0" y1="110.0" x2="174.0" y2="254.0" stroke="#FBE0E0" stroke-width="0.8" />
+<line x1="186.0" y1="110.0" x2="186.0" y2="254.0" stroke="#FBE0E0" stroke-width="0.8" />
+<line x1="198.0" y1="110.0" x2="198.0" y2="254.0" stroke="#FBE0E0" stroke-width="0.8" />
+<line x1="210.0" y1="110.0" x2="210.0" y2="254.0" stroke="#F2A9A9" stroke-width="1.2" />
+<line x1="222.0" y1="110.0" x2="222.0" y2="254.0" stroke="#FBE0E0" stroke-width="0.8" />
+<line x1="234.0" y1="110.0" x2="234.0" y2="254.0" stroke="#FBE0E0" stroke-width="0.8" />
+<line x1="246.0" y1="110.0" x2="246.0" y2="254.0" stroke="#FBE0E0" stroke-width="0.8" />
+<line x1="258.0" y1="110.0" x2="258.0" y2="254.0" stroke="#FBE0E0" stroke-width="0.8" />
+<line x1="270.0" y1="110.0" x2="270.0" y2="254.0" stroke="#F2A9A9" stroke-width="1.2" />
+<line x1="282.0" y1="110.0" x2="282.0" y2="254.0" stroke="#FBE0E0" stroke-width="0.8" />
+<line x1="294.0" y1="110.0" x2="294.0" y2="254.0" stroke="#FBE0E0" stroke-width="0.8" />
+<line x1="306.0" y1="110.0" x2="306.0" y2="254.0" stroke="#FBE0E0" stroke-width="0.8" />
+<line x1="318.0" y1="110.0" x2="318.0" y2="254.0" stroke="#FBE0E0" stroke-width="0.8" />
+<line x1="330.0" y1="110.0" x2="330.0" y2="254.0" stroke="#F2A9A9" stroke-width="1.2" />
+<line x1="342.0" y1="110.0" x2="342.0" y2="254.0" stroke="#FBE0E0" stroke-width="0.8" />
+<line x1="354.0" y1="110.0" x2="354.0" y2="254.0" stroke="#FBE0E0" stroke-width="0.8" />
+<line x1="366.0" y1="110.0" x2="366.0" y2="254.0" stroke="#FBE0E0" stroke-width="0.8" />
+<line x1="378.0" y1="110.0" x2="378.0" y2="254.0" stroke="#FBE0E0" stroke-width="0.8" />
+<line x1="390.0" y1="110.0" x2="390.0" y2="254.0" stroke="#F2A9A9" stroke-width="1.2" />
+<line x1="402.0" y1="110.0" x2="402.0" y2="254.0" stroke="#FBE0E0" stroke-width="0.8" />
+<line x1="414.0" y1="110.0" x2="414.0" y2="254.0" stroke="#FBE0E0" stroke-width="0.8" />
+<line x1="426.0" y1="110.0" x2="426.0" y2="254.0" stroke="#FBE0E0" stroke-width="0.8" />
+<line x1="438.0" y1="110.0" x2="438.0" y2="254.0" stroke="#FBE0E0" stroke-width="0.8" />
+<line x1="450.0" y1="110.0" x2="450.0" y2="254.0" stroke="#F2A9A9" stroke-width="1.2" />
+<line x1="462.0" y1="110.0" x2="462.0" y2="254.0" stroke="#FBE0E0" stroke-width="0.8" />
+<line x1="474.0" y1="110.0" x2="474.0" y2="254.0" stroke="#FBE0E0" stroke-width="0.8" />
+<line x1="486.0" y1="110.0" x2="486.0" y2="254.0" stroke="#FBE0E0" stroke-width="0.8" />
+<line x1="498.0" y1="110.0" x2="498.0" y2="254.0" stroke="#FBE0E0" stroke-width="0.8" />
+<line x1="510.0" y1="110.0" x2="510.0" y2="254.0" stroke="#F2A9A9" stroke-width="1.2" />
+<text x="30.0" y="100.0" font-size="19" fill="#263238" font-weight="700">Sinus rhythm, about 110/min</text>
+<path d="M36 207.92000000000002 Q49.5 189.9 63.0 207.9 L84.0 207.9 L87.6 213.9 L96.0 135.9 L103.2 225.9 L108.0 207.9 L135.0 207.9 Q154.5 171.9 174.0 207.9 L198.0 207.92000000000002 Q211.5 189.9 225.0 207.9 L246.0 207.9 L249.6 213.9 L258.0 135.9 L265.2 225.9 L270.0 207.9 L297.0 207.9 Q316.5 171.9 336.0 207.9 L360.0 207.92000000000002 Q373.5 189.9 387.0 207.9 L408.0 207.9 L411.6 213.9 L420.0 135.9 L427.2 225.9 L432.0 207.9 L459.0 207.9 Q478.5 171.9 498.0 207.9 L522.0 207.92000000000002" fill="none" stroke="#263238" stroke-width="2.8" stroke-linejoin="round" stroke-linecap="round" />
+<line x1="30.0" y1="330.0" x2="510.0" y2="330.0" stroke="#F2A9A9" stroke-width="1.2" />
+<line x1="30.0" y1="342.0" x2="510.0" y2="342.0" stroke="#FBE0E0" stroke-width="0.8" />
+<line x1="30.0" y1="354.0" x2="510.0" y2="354.0" stroke="#FBE0E0" stroke-width="0.8" />
+<line x1="30.0" y1="366.0" x2="510.0" y2="366.0" stroke="#FBE0E0" stroke-width="0.8" />
+<line x1="30.0" y1="378.0" x2="510.0" y2="378.0" stroke="#FBE0E0" stroke-width="0.8" />
+<line x1="30.0" y1="390.0" x2="510.0" y2="390.0" stroke="#F2A9A9" stroke-width="1.2" />
+<line x1="30.0" y1="402.0" x2="510.0" y2="402.0" stroke="#FBE0E0" stroke-width="0.8" />
+<line x1="30.0" y1="414.0" x2="510.0" y2="414.0" stroke="#FBE0E0" stroke-width="0.8" />
+<line x1="30.0" y1="426.0" x2="510.0" y2="426.0" stroke="#FBE0E0" stroke-width="0.8" />
+<line x1="30.0" y1="438.0" x2="510.0" y2="438.0" stroke="#FBE0E0" stroke-width="0.8" />
+<line x1="30.0" y1="450.0" x2="510.0" y2="450.0" stroke="#F2A9A9" stroke-width="1.2" />
+<line x1="30.0" y1="462.0" x2="510.0" y2="462.0" stroke="#FBE0E0" stroke-width="0.8" />
+<line x1="30.0" y1="474.0" x2="510.0" y2="474.0" stroke="#FBE0E0" stroke-width="0.8" />
+<line x1="30.0" y1="330.0" x2="30.0" y2="474.0" stroke="#F2A9A9" stroke-width="1.2" />
+<line x1="42.0" y1="330.0" x2="42.0" y2="474.0" stroke="#FBE0E0" stroke-width="0.8" />
+<line x1="54.0" y1="330.0" x2="54.0" y2="474.0" stroke="#FBE0E0" stroke-width="0.8" />
+<line x1="66.0" y1="330.0" x2="66.0" y2="474.0" stroke="#FBE0E0" stroke-width="0.8" />
+<line x1="78.0" y1="330.0" x2="78.0" y2="474.0" stroke="#FBE0E0" stroke-width="0.8" />
+<line x1="90.0" y1="330.0" x2="90.0" y2="474.0" stroke="#F2A9A9" stroke-width="1.2" />
+<line x1="102.0" y1="330.0" x2="102.0" y2="474.0" stroke="#FBE0E0" stroke-width="0.8" />
+<line x1="114.0" y1="330.0" x2="114.0" y2="474.0" stroke="#FBE0E0" stroke-width="0.8" />
+<line x1="126.0" y1="330.0" x2="126.0" y2="474.0" stroke="#FBE0E0" stroke-width="0.8" />
+<line x1="138.0" y1="330.0" x2="138.0" y2="474.0" stroke="#FBE0E0" stroke-width="0.8" />
+<line x1="150.0" y1="330.0" x2="150.0" y2="474.0" stroke="#F2A9A9" stroke-width="1.2" />
+<line x1="162.0" y1="330.0" x2="162.0" y2="474.0" stroke="#FBE0E0" stroke-width="0.8" />
+<line x1="174.0" y1="330.0" x2="174.0" y2="474.0" stroke="#FBE0E0" stroke-width="0.8" />
+<line x1="186.0" y1="330.0" x2="186.0" y2="474.0" stroke="#FBE0E0" stroke-width="0.8" />
+<line x1="198.0" y1="330.0" x2="198.0" y2="474.0" stroke="#FBE0E0" stroke-width="0.8" />
+<line x1="210.0" y1="330.0" x2="210.0" y2="474.0" stroke="#F2A9A9" stroke-width="1.2" />
+<line x1="222.0" y1="330.0" x2="222.0" y2="474.0" stroke="#FBE0E0" stroke-width="0.8" />
+<line x1="234.0" y1="330.0" x2="234.0" y2="474.0" stroke="#FBE0E0" stroke-width="0.8" />
+<line x1="246.0" y1="330.0" x2="246.0" y2="474.0" stroke="#FBE0E0" stroke-width="0.8" />
+<line x1="258.0" y1="330.0" x2="258.0" y2="474.0" stroke="#FBE0E0" stroke-width="0.8" />
+<line x1="270.0" y1="330.0" x2="270.0" y2="474.0" stroke="#F2A9A9" stroke-width="1.2" />
+<line x1="282.0" y1="330.0" x2="282.0" y2="474.0" stroke="#FBE0E0" stroke-width="0.8" />
+<line x1="294.0" y1="330.0" x2="294.0" y2="474.0" stroke="#FBE0E0" stroke-width="0.8" />
+<line x1="306.0" y1="330.0" x2="306.0" y2="474.0" stroke="#FBE0E0" stroke-width="0.8" />
+<line x1="318.0" y1="330.0" x2="318.0" y2="474.0" stroke="#FBE0E0" stroke-width="0.8" />
+<line x1="330.0" y1="330.0" x2="330.0" y2="474.0" stroke="#F2A9A9" stroke-width="1.2" />
+<line x1="342.0" y1="330.0" x2="342.0" y2="474.0" stroke="#FBE0E0" stroke-width="0.8" />
+<line x1="354.0" y1="330.0" x2="354.0" y2="474.0" stroke="#FBE0E0" stroke-width="0.8" />
+<line x1="366.0" y1="330.0" x2="366.0" y2="474.0" stroke="#FBE0E0" stroke-width="0.8" />
+<line x1="378.0" y1="330.0" x2="378.0" y2="474.0" stroke="#FBE0E0" stroke-width="0.8" />
+<line x1="390.0" y1="330.0" x2="390.0" y2="474.0" stroke="#F2A9A9" stroke-width="1.2" />
+<line x1="402.0" y1="330.0" x2="402.0" y2="474.0" stroke="#FBE0E0" stroke-width="0.8" />
+<line x1="414.0" y1="330.0" x2="414.0" y2="474.0" stroke="#FBE0E0" stroke-width="0.8" />
+<line x1="426.0" y1="330.0" x2="426.0" y2="474.0" stroke="#FBE0E0" stroke-width="0.8" />
+<line x1="438.0" y1="330.0" x2="438.0" y2="474.0" stroke="#FBE0E0" stroke-width="0.8" />
+<line x1="450.0" y1="330.0" x2="450.0" y2="474.0" stroke="#F2A9A9" stroke-width="1.2" />
+<line x1="462.0" y1="330.0" x2="462.0" y2="474.0" stroke="#FBE0E0" stroke-width="0.8" />
+<line x1="474.0" y1="330.0" x2="474.0" y2="474.0" stroke="#FBE0E0" stroke-width="0.8" />
+<line x1="486.0" y1="330.0" x2="486.0" y2="474.0" stroke="#FBE0E0" stroke-width="0.8" />
+<line x1="498.0" y1="330.0" x2="498.0" y2="474.0" stroke="#FBE0E0" stroke-width="0.8" />
+<line x1="510.0" y1="330.0" x2="510.0" y2="474.0" stroke="#F2A9A9" stroke-width="1.2" />
+<text x="30.0" y="320.0" font-size="19" fill="#C62828" font-weight="700">SVT, about 270/min: no visible P waves</text>
+<path d="M36 427.92 L63.0 427.9 L64.8 427.9 L68.4 433.9 L76.8 349.9 L84.0 445.9 L88.8 427.9 L91.8 427.9 Q100.8 403.9 109.8 427.9 L102.6 427.92 L129.6 427.9 L131.4 427.9 L135.0 433.9 L143.4 349.9 L150.6 445.9 L155.4 427.9 L158.4 427.9 Q167.4 403.9 176.4 427.9 L169.2 427.92 L196.2 427.9 L198.0 427.9 L201.6 433.9 L210.0 349.9 L217.2 445.9 L222.0 427.9 L225.0 427.9 Q234.0 403.9 243.0 427.9 L235.8 427.92 L262.8 427.9 L264.6 427.9 L268.2 433.9 L276.6 349.9 L283.8 445.9 L288.6 427.9 L291.6 427.9 Q300.6 403.9 309.6 427.9 L302.4 427.92 L329.4 427.9 L331.2 427.9 L334.8 433.9 L343.2 349.9 L350.4 445.9 L355.2 427.9 L358.2 427.9 Q367.2 403.9 376.2 427.9 L369.0 427.92 L396.0 427.9 L397.8 427.9 L401.4 433.9 L409.8 349.9 L417.0 445.9 L421.8 427.9 L424.8 427.9 Q433.8 403.9 442.8 427.9 L435.6 427.92 L462.6 427.9 L464.4 427.9 L468.0 433.9 L476.4 349.9 L483.6 445.9 L488.4 427.9 L491.4 427.9 Q500.4 403.9 509.4 427.9 L502.2 427.92 L504 427.92" fill="none" stroke="#C62828" stroke-width="2.8" stroke-linejoin="round" stroke-linecap="round" />
+<text x="30.0" y="497.9" font-size="15" fill="#C62828" font-weight="700">Narrow QRS, fixed R–R, rate usually 220–300/min in infants</text>
+<rect x="540" y="110" width="230" height="400" rx="12" fill="#FFF5F5"/>
+<text x="556.0" y="140.0" font-size="16" fill="#C62828" font-weight="700">Treatment</text>
+<text x="556.0" y="164.0" font-size="16" fill="#C62828" font-weight="700">Stable</text>
+<text x="556.0" y="186.0" font-size="14.5" fill="#263238">1. Vagal manoeuvres</text>
+<text x="556.0" y="208.0" font-size="14.5" fill="#263238">   (ice to face in infants,</text>
+<text x="556.0" y="230.0" font-size="14.5" fill="#263238">   Valsalva in children)</text>
+<text x="556.0" y="252.0" font-size="14.5" fill="#263238">2. IV adenosine by rapid</text>
+<text x="556.0" y="274.0" font-size="14.5" fill="#263238">   push with a flush,</text>
+<text x="556.0" y="296.0" font-size="14.5" fill="#263238">   then increase the dose</text>
+<text x="556.0" y="318.0" font-size="14.5" fill="#263238"></text>
+<text x="556.0" y="340.0" font-size="16" fill="#C62828" font-weight="700">Unstable (shock)</text>
+<text x="556.0" y="362.0" font-size="14.5" fill="#263238">Synchronised</text>
+<text x="556.0" y="384.0" font-size="14.5" fill="#263238">cardioversion 1 J/kg,</text>
+<text x="556.0" y="406.0" font-size="14.5" fill="#263238">then 2 J/kg</text>
+<rect x="0" y="560" width="800" height="40" fill="#1976D2"/>
+<text x="30.0" y="586.0" font-size="16" fill="#fff" font-weight="700">Easy Pedia</text>
+<text x="770.0" y="586.0" font-size="15" fill="#E3F2FD" text-anchor="end">easy-pedia.web.app · original illustration</text>
+</svg>

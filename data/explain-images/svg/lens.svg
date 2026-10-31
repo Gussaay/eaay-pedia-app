@@ -1,0 +1,30 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 800 600" font-family="system-ui,-apple-system,'Segoe UI',Roboto,sans-serif">
+<rect width="800" height="600" fill="#fff"/>
+<text x="30.0" y="42.0" font-size="26" fill="#0D47A1" font-weight="700">Lens dislocation: Marfan vs homocystinuria</text>
+<text x="30.0" y="70.0" font-size="16" fill="#455A64">Front view of the eye.</text>
+<text x="210.0" y="120.0" font-size="19" fill="#0D47A1" font-weight="700" text-anchor="middle">Marfan syndrome: lens UP</text>
+<ellipse cx="210" cy="250" rx="150" ry="90" fill="#fff" stroke="#263238" stroke-width="3"/>
+<circle cx="210" cy="250" r="75" fill="#90CAF9" stroke="#1565C0" stroke-width="2"/>
+<circle cx="210" cy="250" r="34" fill="#263238"/>
+<ellipse cx="210" cy="216" rx="40" ry="36" fill="#FFFDE7" fill-opacity="0.55" stroke="#F9A825" stroke-width="3" stroke-dasharray="6 4"/>
+<line x1="270.0" y1="250.0" x2="270.0" y2="195.6" stroke="#0D47A1" stroke-width="3" />
+<path d="M273.5 203.9 L270.0 195.6 L266.5 203.9 Z" fill="#0D47A1"/>
+<text x="210.0" y="380.0" font-size="15" fill="#263238" text-anchor="middle">Autosomal dominant (FBN1)</text>
+<text x="210.0" y="402.0" font-size="15" fill="#263238" text-anchor="middle">Tall, long limbs, joint laxity</text>
+<text x="210.0" y="424.0" font-size="15" fill="#263238" text-anchor="middle">Aortic root dilatation</text>
+<text x="210.0" y="446.0" font-size="15" fill="#263238" text-anchor="middle">Normal intelligence</text>
+<text x="590.0" y="120.0" font-size="19" fill="#C62828" font-weight="700" text-anchor="middle">Homocystinuria: lens DOWN</text>
+<ellipse cx="590" cy="250" rx="150" ry="90" fill="#fff" stroke="#263238" stroke-width="3"/>
+<circle cx="590" cy="250" r="75" fill="#90CAF9" stroke="#1565C0" stroke-width="2"/>
+<circle cx="590" cy="250" r="34" fill="#263238"/>
+<ellipse cx="590" cy="284" rx="40" ry="36" fill="#FFFDE7" fill-opacity="0.55" stroke="#F9A825" stroke-width="3" stroke-dasharray="6 4"/>
+<line x1="650.0" y1="250.0" x2="650.0" y2="304.4" stroke="#C62828" stroke-width="3" />
+<path d="M646.5 296.1 L650.0 304.4 L653.5 296.1 Z" fill="#C62828"/>
+<text x="590.0" y="380.0" font-size="15" fill="#263238" text-anchor="middle">Autosomal recessive (CBS)</text>
+<text x="590.0" y="402.0" font-size="15" fill="#263238" text-anchor="middle">Marfan-like body habitus</text>
+<text x="590.0" y="424.0" font-size="15" fill="#263238" text-anchor="middle">Learning difficulty, thrombosis</text>
+<text x="590.0" y="446.0" font-size="15" fill="#263238" text-anchor="middle">Test: plasma homocysteine</text>
+<rect x="0" y="560" width="800" height="40" fill="#1976D2"/>
+<text x="30.0" y="586.0" font-size="16" fill="#fff" font-weight="700">Easy Pedia</text>
+<text x="770.0" y="586.0" font-size="15" fill="#E3F2FD" text-anchor="end">easy-pedia.web.app · original illustration</text>
+</svg>

@@ -1,0 +1,41 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 800 600" font-family="system-ui,-apple-system,'Segoe UI',Roboto,sans-serif">
+<rect width="800" height="600" fill="#fff"/>
+<text x="30.0" y="42.0" font-size="26" fill="#0D47A1" font-weight="700">Hypoplastic left heart syndrome (HLHS)</text>
+<text x="30.0" y="70.0" font-size="16" fill="#455A64">Tiny left ventricle and aorta. The body depends on the duct.</text>
+<path d="M315 375 L280 170 Q275 135 330 135 Q390 135 390 190" fill="none" stroke="#E57373" stroke-width="8" stroke-opacity="0.8"/>
+<text x="404.0" y="180.0" font-size="15" fill="#B71C1C" font-weight="700">tiny aorta</text>
+<path d="M215 360 L215 180 Q215 150 170 150 L100 150" fill="none" stroke="#5C8DD6" stroke-width="26" stroke-opacity="0.75"/>
+<text x="60.0" y="122.0" font-size="15" fill="#0D47A1" font-weight="700">Pulmonary artery</text>
+<rect x="60" y="220" width="120" height="110" rx="24" fill="#5C8DD6" fill-opacity="0.3" stroke="#8D6E63" stroke-width="5"/>
+<text x="120.0" y="282.0" font-size="20" fill="#263238" font-weight="700" text-anchor="middle">RA</text>
+<rect x="60" y="345" width="185" height="150" rx="24" fill="#5C8DD6" fill-opacity="0.3" stroke="#8D6E63" stroke-width="5"/>
+<text x="152.5" y="427.0" font-size="20" fill="#263238" font-weight="700" text-anchor="middle">RV</text>
+<rect x="330" y="235" width="90" height="80" rx="24" fill="#E57373" fill-opacity="0.3" stroke="#8D6E63" stroke-width="5"/>
+<text x="375.0" y="282.0" font-size="20" fill="#263238" font-weight="700" text-anchor="middle">LA</text>
+<rect x="300" y="370" width="70" height="90" rx="24" fill="#E57373" fill-opacity="0.3" stroke="#8D6E63" stroke-width="5"/>
+<text x="335.0" y="422.0" font-size="20" fill="#263238" font-weight="700" text-anchor="middle">LV</text>
+<path d="M228 175 L270 175" fill="none" stroke="#8E24AA" stroke-width="14" stroke-linecap="round"/>
+<line x1="226.0" y1="195.0" x2="268.0" y2="195.0" stroke="#4A148C" stroke-width="2.2" />
+<path d="M259.7 198.5 L268.0 195.0 L259.7 191.5 Z" fill="#4A148C"/>
+<line x1="250.0" y1="168.0" x2="300.0" y2="92.0" stroke="#8E24AA" stroke-width="1.4" />
+<text x="304.0" y="94.0" font-size="14" fill="#8E24AA" font-weight="700">duct: right-to-left</text>
+<text x="304.0" y="111.0" font-size="14" fill="#8E24AA" font-weight="700">keeps the body supplied</text>
+<rect x="500" y="110" width="275" height="430" rx="12" fill="#FFF5F5"/>
+<text x="516.0" y="140.0" font-size="16" fill="#C62828" font-weight="700">Key facts</text>
+<text x="516.0" y="164.0" font-size="14.5" fill="#263238">• Day 2–3: as the duct</text>
+<text x="516.0" y="186.0" font-size="14.5" fill="#263238">  closes the baby collapses</text>
+<text x="516.0" y="208.0" font-size="14.5" fill="#263238">  in shock: grey, weak</text>
+<text x="516.0" y="230.0" font-size="14.5" fill="#263238">  thready pulses, acidosis</text>
+<text x="516.0" y="252.0" font-size="14.5" fill="#263238">• Big right ventricle →</text>
+<text x="516.0" y="274.0" font-size="14.5" fill="#263238">  forceful (RV) impulse</text>
+<text x="516.0" y="296.0" font-size="14.5" fill="#263238"></text>
+<text x="516.0" y="318.0" font-size="16" fill="#C62828" font-weight="700">Treatment</text>
+<text x="516.0" y="340.0" font-size="14.5" fill="#263238">• Start prostaglandin E</text>
+<text x="516.0" y="362.0" font-size="14.5" fill="#263238">  (alprostadil) at once to</text>
+<text x="516.0" y="384.0" font-size="14.5" fill="#263238">  reopen the duct</text>
+<text x="516.0" y="406.0" font-size="14.5" fill="#263238">• Staged surgery</text>
+<text x="516.0" y="428.0" font-size="14.5" fill="#263238">  (Norwood, Glenn, Fontan)</text>
+<rect x="0" y="560" width="800" height="40" fill="#1976D2"/>
+<text x="30.0" y="586.0" font-size="16" fill="#fff" font-weight="700">Easy Pedia</text>
+<text x="770.0" y="586.0" font-size="15" fill="#E3F2FD" text-anchor="end">easy-pedia.web.app · original illustration</text>
+</svg>

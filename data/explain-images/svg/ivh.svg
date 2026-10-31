@@ -1,0 +1,58 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 800 600" font-family="system-ui,-apple-system,'Segoe UI',Roboto,sans-serif">
+<rect width="800" height="600" fill="#fff"/>
+<text x="30.0" y="42.0" font-size="26" fill="#0D47A1" font-weight="700">Preterm brain injury: IVH grades and PVL</text>
+<text x="30.0" y="70.0" font-size="16" fill="#455A64">Coronal section of a preterm brain at the lateral ventricles (cranial ultrasound view).</text>
+<ellipse cx="110" cy="190" rx="80" ry="70" fill="#ECEFF1" stroke="#90A4AE" stroke-width="2"/>
+<ellipse cx="82" cy="182" rx="12" ry="22" fill="#B3E5FC" stroke="#4FC3F7" stroke-width="1.5"/>
+<ellipse cx="138" cy="182" rx="12" ry="22" fill="#B3E5FC" stroke="#4FC3F7" stroke-width="1.5"/>
+<circle cx="86" cy="202" r="7" fill="#C62828"/>
+<text x="110.0" y="288.0" font-size="16" fill="#263238" font-weight="700" text-anchor="middle">Grade I</text>
+<text x="110.0" y="308.0" font-size="13" fill="#455A64" text-anchor="middle">Germinal matrix only</text>
+<ellipse cx="300" cy="190" rx="80" ry="70" fill="#ECEFF1" stroke="#90A4AE" stroke-width="2"/>
+<ellipse cx="272" cy="182" rx="12" ry="22" fill="#B3E5FC" stroke="#4FC3F7" stroke-width="1.5"/>
+<ellipse cx="328" cy="182" rx="12" ry="22" fill="#B3E5FC" stroke="#4FC3F7" stroke-width="1.5"/>
+<circle cx="276" cy="202" r="7" fill="#C62828"/>
+<ellipse cx="272" cy="190" rx="8" ry="14" fill="#C62828" opacity="0.8"/>
+<text x="300.0" y="288.0" font-size="16" fill="#263238" font-weight="700" text-anchor="middle">Grade II</text>
+<text x="300.0" y="308.0" font-size="13" fill="#455A64" text-anchor="middle">Blood in ventricle,</text>
+<text x="300.0" y="325.0" font-size="13" fill="#455A64" text-anchor="middle">no dilatation</text>
+<ellipse cx="490" cy="190" rx="80" ry="70" fill="#ECEFF1" stroke="#90A4AE" stroke-width="2"/>
+<ellipse cx="462" cy="182" rx="24" ry="30" fill="#B3E5FC" stroke="#4FC3F7" stroke-width="1.5"/>
+<ellipse cx="518" cy="182" rx="24" ry="30" fill="#B3E5FC" stroke="#4FC3F7" stroke-width="1.5"/>
+<circle cx="466" cy="202" r="7" fill="#C62828"/>
+<ellipse cx="462" cy="190" rx="20" ry="22" fill="#C62828" opacity="0.8"/>
+<text x="490.0" y="288.0" font-size="16" fill="#263238" font-weight="700" text-anchor="middle">Grade III</text>
+<text x="490.0" y="308.0" font-size="13" fill="#455A64" text-anchor="middle">Ventricle dilated</text>
+<text x="490.0" y="325.0" font-size="13" fill="#455A64" text-anchor="middle">with blood</text>
+<ellipse cx="680" cy="190" rx="80" ry="70" fill="#ECEFF1" stroke="#90A4AE" stroke-width="2"/>
+<ellipse cx="652" cy="182" rx="24" ry="30" fill="#B3E5FC" stroke="#4FC3F7" stroke-width="1.5"/>
+<ellipse cx="708" cy="182" rx="24" ry="30" fill="#B3E5FC" stroke="#4FC3F7" stroke-width="1.5"/>
+<circle cx="656" cy="202" r="7" fill="#C62828"/>
+<ellipse cx="652" cy="190" rx="20" ry="22" fill="#C62828" opacity="0.8"/>
+<ellipse cx="618" cy="168" rx="14" ry="20" fill="#C62828" opacity="0.85"/>
+<text x="680.0" y="288.0" font-size="16" fill="#263238" font-weight="700" text-anchor="middle">Grade IV</text>
+<text x="680.0" y="308.0" font-size="13" fill="#455A64" text-anchor="middle">Bleed into brain tissue</text>
+<text x="680.0" y="325.0" font-size="13" fill="#455A64" text-anchor="middle">(venous infarct)</text>
+<ellipse cx="150" cy="400" rx="80" ry="70" fill="#ECEFF1" stroke="#90A4AE" stroke-width="2"/>
+<ellipse cx="122" cy="392" rx="12" ry="22" fill="#B3E5FC" stroke="#4FC3F7" stroke-width="1.5"/>
+<ellipse cx="178" cy="392" rx="12" ry="22" fill="#B3E5FC" stroke="#4FC3F7" stroke-width="1.5"/>
+<circle cx="95" cy="375" r="6" fill="#fff" stroke="#6D4C41" stroke-width="1.5"/>
+<circle cx="100" cy="410" r="6" fill="#fff" stroke="#6D4C41" stroke-width="1.5"/>
+<circle cx="202" cy="375" r="6" fill="#fff" stroke="#6D4C41" stroke-width="1.5"/>
+<circle cx="198" cy="412" r="6" fill="#fff" stroke="#6D4C41" stroke-width="1.5"/>
+<circle cx="110" cy="355" r="6" fill="#fff" stroke="#6D4C41" stroke-width="1.5"/>
+<circle cx="190" cy="355" r="6" fill="#fff" stroke="#6D4C41" stroke-width="1.5"/>
+<text x="150.0" y="498.0" font-size="16" fill="#C62828" font-weight="700" text-anchor="middle">Periventricular leukomalacia</text>
+<text x="150.0" y="518.0" font-size="13" fill="#455A64" text-anchor="middle">White-matter cysts next</text>
+<text x="150.0" y="535.0" font-size="13" fill="#455A64" text-anchor="middle">to the ventricles</text>
+<rect x="300" y="370" width="470" height="170" rx="12" fill="#FFF5F5"/>
+<text x="316.0" y="400.0" font-size="16" fill="#C62828" font-weight="700">Why PVL causes spastic diplegia</text>
+<text x="316.0" y="421.0" font-size="14.5" fill="#263238">Fibres to the legs run closest to the ventricles,</text>
+<text x="316.0" y="442.0" font-size="14.5" fill="#263238">so damage there weakens the legs more than the arms.</text>
+<text x="316.0" y="463.0" font-size="14.5" fill="#263238"></text>
+<text x="316.0" y="484.0" font-size="14.5" fill="#263238">IVH: most within the first 3 days, under 32 weeks;</text>
+<text x="316.0" y="505.0" font-size="14.5" fill="#263238">grade III–IV raise the risk of hydrocephalus and CP.</text>
+<rect x="0" y="560" width="800" height="40" fill="#1976D2"/>
+<text x="30.0" y="586.0" font-size="16" fill="#fff" font-weight="700">Easy Pedia</text>
+<text x="770.0" y="586.0" font-size="15" fill="#E3F2FD" text-anchor="end">easy-pedia.web.app · original illustration</text>
+</svg>

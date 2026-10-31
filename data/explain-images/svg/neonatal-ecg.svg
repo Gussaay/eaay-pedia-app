@@ -1,0 +1,106 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 800 600" font-family="system-ui,-apple-system,'Segoe UI',Roboto,sans-serif">
+<rect width="800" height="600" fill="#fff"/>
+<text x="30.0" y="42.0" font-size="26" fill="#0D47A1" font-weight="700">Normal neonatal ECG vs older child</text>
+<text x="30.0" y="70.0" font-size="16" fill="#455A64">The newborn right ventricle is dominant. Lead V1 shown.</text>
+<line x1="30.0" y1="120.0" x2="250.0" y2="120.0" stroke="#F2A9A9" stroke-width="1.2" />
+<line x1="30.0" y1="132.0" x2="250.0" y2="132.0" stroke="#FBE0E0" stroke-width="0.8" />
+<line x1="30.0" y1="144.0" x2="250.0" y2="144.0" stroke="#FBE0E0" stroke-width="0.8" />
+<line x1="30.0" y1="156.0" x2="250.0" y2="156.0" stroke="#FBE0E0" stroke-width="0.8" />
+<line x1="30.0" y1="168.0" x2="250.0" y2="168.0" stroke="#FBE0E0" stroke-width="0.8" />
+<line x1="30.0" y1="180.0" x2="250.0" y2="180.0" stroke="#F2A9A9" stroke-width="1.2" />
+<line x1="30.0" y1="192.0" x2="250.0" y2="192.0" stroke="#FBE0E0" stroke-width="0.8" />
+<line x1="30.0" y1="204.0" x2="250.0" y2="204.0" stroke="#FBE0E0" stroke-width="0.8" />
+<line x1="30.0" y1="216.0" x2="250.0" y2="216.0" stroke="#FBE0E0" stroke-width="0.8" />
+<line x1="30.0" y1="228.0" x2="250.0" y2="228.0" stroke="#FBE0E0" stroke-width="0.8" />
+<line x1="30.0" y1="240.0" x2="250.0" y2="240.0" stroke="#F2A9A9" stroke-width="1.2" />
+<line x1="30.0" y1="252.0" x2="250.0" y2="252.0" stroke="#FBE0E0" stroke-width="0.8" />
+<line x1="30.0" y1="264.0" x2="250.0" y2="264.0" stroke="#FBE0E0" stroke-width="0.8" />
+<line x1="30.0" y1="276.0" x2="250.0" y2="276.0" stroke="#FBE0E0" stroke-width="0.8" />
+<line x1="30.0" y1="288.0" x2="250.0" y2="288.0" stroke="#FBE0E0" stroke-width="0.8" />
+<line x1="30.0" y1="300.0" x2="250.0" y2="300.0" stroke="#F2A9A9" stroke-width="1.2" />
+<line x1="30.0" y1="120.0" x2="30.0" y2="300.0" stroke="#F2A9A9" stroke-width="1.2" />
+<line x1="42.0" y1="120.0" x2="42.0" y2="300.0" stroke="#FBE0E0" stroke-width="0.8" />
+<line x1="54.0" y1="120.0" x2="54.0" y2="300.0" stroke="#FBE0E0" stroke-width="0.8" />
+<line x1="66.0" y1="120.0" x2="66.0" y2="300.0" stroke="#FBE0E0" stroke-width="0.8" />
+<line x1="78.0" y1="120.0" x2="78.0" y2="300.0" stroke="#FBE0E0" stroke-width="0.8" />
+<line x1="90.0" y1="120.0" x2="90.0" y2="300.0" stroke="#F2A9A9" stroke-width="1.2" />
+<line x1="102.0" y1="120.0" x2="102.0" y2="300.0" stroke="#FBE0E0" stroke-width="0.8" />
+<line x1="114.0" y1="120.0" x2="114.0" y2="300.0" stroke="#FBE0E0" stroke-width="0.8" />
+<line x1="126.0" y1="120.0" x2="126.0" y2="300.0" stroke="#FBE0E0" stroke-width="0.8" />
+<line x1="138.0" y1="120.0" x2="138.0" y2="300.0" stroke="#FBE0E0" stroke-width="0.8" />
+<line x1="150.0" y1="120.0" x2="150.0" y2="300.0" stroke="#F2A9A9" stroke-width="1.2" />
+<line x1="162.0" y1="120.0" x2="162.0" y2="300.0" stroke="#FBE0E0" stroke-width="0.8" />
+<line x1="174.0" y1="120.0" x2="174.0" y2="300.0" stroke="#FBE0E0" stroke-width="0.8" />
+<line x1="186.0" y1="120.0" x2="186.0" y2="300.0" stroke="#FBE0E0" stroke-width="0.8" />
+<line x1="198.0" y1="120.0" x2="198.0" y2="300.0" stroke="#FBE0E0" stroke-width="0.8" />
+<line x1="210.0" y1="120.0" x2="210.0" y2="300.0" stroke="#F2A9A9" stroke-width="1.2" />
+<line x1="222.0" y1="120.0" x2="222.0" y2="300.0" stroke="#FBE0E0" stroke-width="0.8" />
+<line x1="234.0" y1="120.0" x2="234.0" y2="300.0" stroke="#FBE0E0" stroke-width="0.8" />
+<line x1="246.0" y1="120.0" x2="246.0" y2="300.0" stroke="#FBE0E0" stroke-width="0.8" />
+<text x="30.0" y="110.0" font-size="18" fill="#0D47A1" font-weight="700">Newborn (3 weeks)</text>
+<path d="M36 230 L50 230 Q62 216 74 230 L94 230 L100 150 L108 250 L114 230 L140 230 Q160 260 180 230 L244 230" fill="none" stroke="#0D47A1" stroke-width="2.8" stroke-linejoin="round" stroke-linecap="round" />
+<line x1="290.0" y1="120.0" x2="510.0" y2="120.0" stroke="#F2A9A9" stroke-width="1.2" />
+<line x1="290.0" y1="132.0" x2="510.0" y2="132.0" stroke="#FBE0E0" stroke-width="0.8" />
+<line x1="290.0" y1="144.0" x2="510.0" y2="144.0" stroke="#FBE0E0" stroke-width="0.8" />
+<line x1="290.0" y1="156.0" x2="510.0" y2="156.0" stroke="#FBE0E0" stroke-width="0.8" />
+<line x1="290.0" y1="168.0" x2="510.0" y2="168.0" stroke="#FBE0E0" stroke-width="0.8" />
+<line x1="290.0" y1="180.0" x2="510.0" y2="180.0" stroke="#F2A9A9" stroke-width="1.2" />
+<line x1="290.0" y1="192.0" x2="510.0" y2="192.0" stroke="#FBE0E0" stroke-width="0.8" />
+<line x1="290.0" y1="204.0" x2="510.0" y2="204.0" stroke="#FBE0E0" stroke-width="0.8" />
+<line x1="290.0" y1="216.0" x2="510.0" y2="216.0" stroke="#FBE0E0" stroke-width="0.8" />
+<line x1="290.0" y1="228.0" x2="510.0" y2="228.0" stroke="#FBE0E0" stroke-width="0.8" />
+<line x1="290.0" y1="240.0" x2="510.0" y2="240.0" stroke="#F2A9A9" stroke-width="1.2" />
+<line x1="290.0" y1="252.0" x2="510.0" y2="252.0" stroke="#FBE0E0" stroke-width="0.8" />
+<line x1="290.0" y1="264.0" x2="510.0" y2="264.0" stroke="#FBE0E0" stroke-width="0.8" />
+<line x1="290.0" y1="276.0" x2="510.0" y2="276.0" stroke="#FBE0E0" stroke-width="0.8" />
+<line x1="290.0" y1="288.0" x2="510.0" y2="288.0" stroke="#FBE0E0" stroke-width="0.8" />
+<line x1="290.0" y1="300.0" x2="510.0" y2="300.0" stroke="#F2A9A9" stroke-width="1.2" />
+<line x1="290.0" y1="120.0" x2="290.0" y2="300.0" stroke="#F2A9A9" stroke-width="1.2" />
+<line x1="302.0" y1="120.0" x2="302.0" y2="300.0" stroke="#FBE0E0" stroke-width="0.8" />
+<line x1="314.0" y1="120.0" x2="314.0" y2="300.0" stroke="#FBE0E0" stroke-width="0.8" />
+<line x1="326.0" y1="120.0" x2="326.0" y2="300.0" stroke="#FBE0E0" stroke-width="0.8" />
+<line x1="338.0" y1="120.0" x2="338.0" y2="300.0" stroke="#FBE0E0" stroke-width="0.8" />
+<line x1="350.0" y1="120.0" x2="350.0" y2="300.0" stroke="#F2A9A9" stroke-width="1.2" />
+<line x1="362.0" y1="120.0" x2="362.0" y2="300.0" stroke="#FBE0E0" stroke-width="0.8" />
+<line x1="374.0" y1="120.0" x2="374.0" y2="300.0" stroke="#FBE0E0" stroke-width="0.8" />
+<line x1="386.0" y1="120.0" x2="386.0" y2="300.0" stroke="#FBE0E0" stroke-width="0.8" />
+<line x1="398.0" y1="120.0" x2="398.0" y2="300.0" stroke="#FBE0E0" stroke-width="0.8" />
+<line x1="410.0" y1="120.0" x2="410.0" y2="300.0" stroke="#F2A9A9" stroke-width="1.2" />
+<line x1="422.0" y1="120.0" x2="422.0" y2="300.0" stroke="#FBE0E0" stroke-width="0.8" />
+<line x1="434.0" y1="120.0" x2="434.0" y2="300.0" stroke="#FBE0E0" stroke-width="0.8" />
+<line x1="446.0" y1="120.0" x2="446.0" y2="300.0" stroke="#FBE0E0" stroke-width="0.8" />
+<line x1="458.0" y1="120.0" x2="458.0" y2="300.0" stroke="#FBE0E0" stroke-width="0.8" />
+<line x1="470.0" y1="120.0" x2="470.0" y2="300.0" stroke="#F2A9A9" stroke-width="1.2" />
+<line x1="482.0" y1="120.0" x2="482.0" y2="300.0" stroke="#FBE0E0" stroke-width="0.8" />
+<line x1="494.0" y1="120.0" x2="494.0" y2="300.0" stroke="#FBE0E0" stroke-width="0.8" />
+<line x1="506.0" y1="120.0" x2="506.0" y2="300.0" stroke="#FBE0E0" stroke-width="0.8" />
+<text x="290.0" y="110.0" font-size="18" fill="#263238" font-weight="700">Adolescent or adult</text>
+<path d="M296 230 L310 230 Q322 216 334 230 L354 230 L360 205 L368 310 L374 230 L400 230 Q420 208 440 230 L504 230" fill="none" stroke="#263238" stroke-width="2.8" stroke-linejoin="round" stroke-linecap="round" />
+<text x="30.0" y="340.0" font-size="15" fill="#0D47A1" font-weight="700">Dominant R wave in V1</text>
+<text x="30.0" y="362.0" font-size="15" fill="#0D47A1" font-weight="700">Right axis up to +180°</text>
+<text x="30.0" y="384.0" font-size="15" fill="#0D47A1" font-weight="700">T wave in V1 inverted</text>
+<text x="30.0" y="406.0" font-size="15" fill="#0D47A1" font-weight="700">after the first week</text>
+<text x="290.0" y="340.0" font-size="15" fill="#263238" font-weight="700">Dominant S wave in V1</text>
+<text x="290.0" y="362.0" font-size="15" fill="#263238" font-weight="700">Axis about +60°</text>
+<text x="290.0" y="384.0" font-size="15" fill="#263238" font-weight="700">T in V1 often upright</text>
+<text x="290.0" y="406.0" font-size="15" fill="#263238" font-weight="700">(inverted through childhood)</text>
+<rect x="540" y="120" width="230" height="400" rx="12" fill="#F1F7FE"/>
+<text x="556.0" y="150.0" font-size="16" fill="#0D47A1" font-weight="700">Why</text>
+<text x="556.0" y="174.0" font-size="14.5" fill="#263238">Before birth the right</text>
+<text x="556.0" y="196.0" font-size="14.5" fill="#263238">ventricle pumps against</text>
+<text x="556.0" y="218.0" font-size="14.5" fill="#263238">high lung resistance, so</text>
+<text x="556.0" y="240.0" font-size="14.5" fill="#263238">it is thicker at birth.</text>
+<text x="556.0" y="262.0" font-size="14.5" fill="#263238"></text>
+<text x="556.0" y="284.0" font-size="14.5" fill="#263238">The pattern changes</text>
+<text x="556.0" y="306.0" font-size="14.5" fill="#263238">over the first months</text>
+<text x="556.0" y="328.0" font-size="14.5" fill="#263238">as the left ventricle</text>
+<text x="556.0" y="350.0" font-size="14.5" fill="#263238">takes over.</text>
+<text x="556.0" y="372.0" font-size="14.5" fill="#263238"></text>
+<text x="556.0" y="394.0" font-size="16" fill="#0D47A1" font-weight="700">Abnormal in a newborn</text>
+<text x="556.0" y="416.0" font-size="14.5" fill="#263238">• Left axis deviation</text>
+<text x="556.0" y="438.0" font-size="14.5" fill="#263238">  (think AVSD,</text>
+<text x="556.0" y="460.0" font-size="14.5" fill="#263238">  tricuspid atresia)</text>
+<rect x="0" y="560" width="800" height="40" fill="#1976D2"/>
+<text x="30.0" y="586.0" font-size="16" fill="#fff" font-weight="700">Easy Pedia</text>
+<text x="770.0" y="586.0" font-size="15" fill="#E3F2FD" text-anchor="end">easy-pedia.web.app · original illustration</text>
+</svg>
