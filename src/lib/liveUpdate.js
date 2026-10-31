@@ -336,7 +336,8 @@ export function startLiveUpdates() {
   // A downloaded update is queued with next(). Capgo switches to it by itself
   // when the app goes into the background (installNext on appMovedToBackground),
   // so the next time the user looks at the app it is already updated, without
-  // a restart on screen.
+  // a restart on screen. While a quiz or a form is open that switch is held
+  // back (lib/updateHold.js), because it reloads the page and would close it.
 
   // Note: do NOT call set() when the app is minimised. That reloads the WebView
   // in the background, and if Android kills the app before notifyAppReady()

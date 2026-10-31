@@ -16,7 +16,7 @@ import { ArrowLeft, ArrowRight, Check, Clock, Highlighter, LayoutGrid, MessageSq
 import { useAuth } from '../hooks/useAuth';
 import { useBackHandler } from '../lib/back';
 import { useSwipe } from '../hooks/useSwipe';
-import { clearSpot, saveSpot } from '../lib/resume';
+import { clearActive, clearSpot, loadSpot, markActive, saveSpot } from '../lib/resume';
 import { getOne, getWhere, num, pushTo, removeAt, str, updateAt, newKey } from '../lib/rtdb';
 import {
   buildAttempt,
@@ -84,6 +84,8 @@ export default function QuizPlay() {
       path: playPath(kind, id, 'review', { ...extra, resume: '1', fresh: '' }),
       newPath: playPath(kind, id, 'review', { ...extra, fresh: '1', resume: '' }),
       review: reviewPath(kind, id, extra),
+      // Reopens an exam that is under way, clock still running.
+      examPath: playPath(kind, id, 'exam', { ...extra, resume: '1', fresh: '' }),
     };
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [kind, id, params.toString()]);
@@ -152,6 +154,27 @@ export default function QuizPlay() {
     discardSaved(m?.pkey, s);
   };
 
+  /**
+   * Puts an exam back exactly as it was: same paper, same answers, same
+   * question on screen. The clock is the original end time, so it kept
+   * running while the app was away; a paper whose time ran out meanwhile is
+   * handed in at once by the timer below.
+   */
+  const restoreExam = (spot, qs) => {
+    const positions = decodeDeck(spot.deck).filter((p) => p < qs.length);
+    if (!positions.length) return false;
+    const last = positions.length - 1;
+    setDeck(positions);
+    setAnswers(decodeAnswers(spot.answers));
+    setIndex(Math.min(Math.max(num(spot.index), 0), last));
+    setMaxIndex(Math.min(Math.max(num(spot.maxIndex), 0), last));
+    setFloor(0);
+    setBaseline({ played: 0, correct: 0 });
+    setEndAt(Number(spot.endAt));
+    setPhase('playing');
+    return true;
+  };
+
   // ---------------------------------------------------------------- loading
   useEffect(() => {
     if (!accessReady) return undefined;
@@ -181,6 +204,12 @@ export default function QuizPlay() {
           .then((h) => !cancelled && setHistory(h))
           .catch(() => {});
         if (mode === 'exam') {
+          // An exam left open (the phone switched to another app, or Android
+          // closed this one) carries on with its clock still running.
+          const spot = loadSpot('exam', m.pkey);
+          const end = Number(spot?.endAt) || 0;
+          if (spot && end && (end > Date.now() || intent === 'resume') && restoreExam(spot, qs)) return;
+          if (spot) clearSpot('exam', m.pkey);
           setPhase('examIntro');
           return;
         }
@@ -249,6 +278,7 @@ export default function QuizPlay() {
   // many questions rather than for the whole bank.
   const startExam = (positions) => {
     const deckToPlay = positions?.length ? positions : questions.map((_, i) => i);
+    clearSpot('exam', meta?.pkey);
     beginSession(deckToPlay);
     setEndAt(Date.now() + examDurationMs(deckToPlay.length));
   };
@@ -270,6 +300,7 @@ export default function QuizPlay() {
       submittedRef.current = true;
       setPhase('submitting');
       clearSpot('quiz', meta.pkey);
+      clearSpot('exam', meta.pkey);
       const percentage = Math.trunc((final.correct / final.played) * 100);
 
       // Which questions were right and wrong, so the setup screen can offer
@@ -500,6 +531,37 @@ export default function QuizPlay() {
       newPath: routes.newPath,
     });
   }, [phase, mode, meta, maxIndex, answers, deck, tq, played, correct, routes]);
+
+  /**
+   * Exams are kept on the phone too, with the time they end. Switching to
+   * another app, or Android closing this one in the background, then brings
+   * the same paper back with the clock where it would have been: no extra
+   * time is handed out, and nothing answered is lost.
+   */
+  useEffect(() => {
+    if (phase !== 'playing' || mode !== 'exam' || !meta?.pkey || !endAt) return;
+    saveSpot('exam', meta.pkey, {
+      deck: encodeDeck(deck),
+      answers: encodeAnswers(answers),
+      index: String(index),
+      maxIndex: String(maxIndex),
+      endAt,
+      title: meta.title || '',
+    });
+  }, [phase, mode, meta, deck, answers, index, maxIndex, endAt]);
+
+  /**
+   * Remembers that this quiz is on screen. If Android closes the app while it
+   * sits in the background, the app reopens this quiz when it starts again
+   * instead of the home page (App.jsx). Leaving the quiz in any normal way
+   * (finishing, saving, the back button) runs the clean-up and forgets it.
+   */
+  const activePath = mode === 'exam' ? routes.examPath : routes.path;
+  useEffect(() => {
+    if (phase !== 'playing') return undefined;
+    markActive(activePath);
+    return () => clearActive(activePath);
+  }, [phase, activePath, index]);
 
   // ---------------------------------------------------------------- exit / save
   const saveForLater = async () => {

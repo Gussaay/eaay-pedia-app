@@ -5,6 +5,8 @@ import { Ban } from 'lucide-react';
 import { logout, useAuth } from './hooks/useAuth';
 import { isNative } from './lib/native';
 import { runBackHandlers } from './lib/back';
+import { takeActive } from './lib/resume';
+import { syncUpdateHold } from './lib/updateHold';
 import { registerForPush, usePushEvents } from './lib/push';
 import { Spinner, useToast } from './components/ui';
 import UpdatePrompt from './components/UpdatePrompt';
@@ -144,11 +146,40 @@ function usePushBridge() {
   });
 }
 
+// Only on the first screen after the app starts.
+let reopenChecked = false;
+
+/**
+ * Android may close an app that sits in the background (to free memory), and
+ * it then starts again on the home page, as if the quiz had been closed. If a
+ * quiz was on screen when that happened, open it again: it picks up from its
+ * own bookmark (lib/resume.js). Only on the phone app, where this happens;
+ * a browser tab reopens on its own address anyway.
+ */
+function useReopenQuizAfterRestart() {
+  const { user, authLoading } = useAuth();
+  const navigate = useNavigate();
+  const location = useLocation();
+  useEffect(() => {
+    if (!isNative || reopenChecked || authLoading || !user) return;
+    reopenChecked = true;
+    if (location.pathname !== '/') return;
+    const path = takeActive();
+    if (path) navigate(path);
+  }, [user, authLoading, location.pathname, navigate]);
+}
+
 export default function App() {
   const { authLoading, blocked } = useAuth();
   const location = useLocation();
   useNativeBackButton();
   usePushBridge();
+  useReopenQuizAfterRestart();
+  // Re-check at once on every screen change, so a quiz opened a moment ago is
+  // already protected from an update reload (lib/updateHold.js).
+  useEffect(() => {
+    syncUpdateHold();
+  }, [location.pathname]);
 
   // The public download page must not wait for (or require) sign-in.
   if (authLoading && location.pathname !== '/download') return <Splash />;

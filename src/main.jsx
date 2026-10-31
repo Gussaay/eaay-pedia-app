@@ -11,8 +11,13 @@ import { ToastProvider } from './components/ui';
 import { startLiveUpdates } from './lib/liveUpdate';
 import { startConnectivityWatch } from './lib/connectivity';
 import { applyWebUpdateQuietly } from './lib/quietWebUpdate';
+import { startUpdateHold } from './lib/updateHold';
 import ErrorBoundary from './components/ErrorBoundary';
 import './index.css';
+
+// Pages where a reload could lose an answer, a study session or unsaved text.
+const BUSY_PATH = /^\/(play|setup|profile|admin|ai|flashcards\/(study|linked)|mnemonics\/(exam|paper|study))(\/|$)/;
+const busy = () => BUSY_PATH.test(window.location.pathname);
 
 if (Capacitor.isNativePlatform()) {
   StatusBar.setStyle({ style: Style.Dark }).catch(() => {});
@@ -23,6 +28,9 @@ if (Capacitor.isNativePlatform()) {
   // Over-the-air updates. This also calls notifyAppReady(), which has to run
   // on every launch or the bundle currently running is rolled back.
   startLiveUpdates();
+  // A waiting update would otherwise reload the app the moment it goes into
+  // the background, closing a quiz in progress (lib/updateHold.js).
+  startUpdateHold(busy);
 } else {
   // UPDATES ARE SILENT, like an ordinary website: no banner, no reload in
   // the middle of a quiz. A new release downloads in the background and waits;
@@ -31,8 +39,6 @@ if (Capacitor.isNativePlatform()) {
   // its own release in the service-worker cache, and the deploy keeps them on
   // the server for two weeks as well.
   let switching = false;
-  // Pages where a reload could lose an answer or unsaved text.
-  const busy = () => /^\/(play|setup|profile|admin|ai)(\/|$)/.test(window.location.pathname);
   const updateSW = registerSW({
     immediate: true,
     onNeedRefresh() {

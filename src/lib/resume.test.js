@@ -9,6 +9,10 @@ import {
   saveSpot,
   trimSpots,
   useStoreForTests,
+  markActive,
+  clearActive,
+  takeActive,
+  useActiveStoreForTests,
 } from './resume.js';
 
 function fakeStore() {
@@ -112,4 +116,50 @@ test('a missing id is ignored rather than throwing', () => {
   saveSpot('flash', '', { done: 1 });
   assert.equal(loadSpot('flash', ''), null);
   clearSpot('flash', undefined);
+});
+
+function fakeActive() {
+  let v = null;
+  return { get: () => v, set: (x) => { v = x; } };
+}
+const noReopen = () => {
+  let at = 0;
+  return { get: () => at, set: (x) => { at = x; } };
+};
+
+test('the quiz on screen when the app stopped is reopened once', () => {
+  useActiveStoreForTests(fakeActive());
+  markActive('/play/set/abc?mode=review&resume=1');
+  const r = noReopen();
+  assert.equal(takeActive(Date.now(), r), '/play/set/abc?mode=review&resume=1');
+  assert.equal(takeActive(Date.now(), r), null, 'reading it clears it, so it never loops');
+});
+
+test('a quiz left on purpose is not reopened', () => {
+  useActiveStoreForTests(fakeActive());
+  markActive('/play/set/abc?resume=1');
+  clearActive('/play/set/abc?resume=1');
+  assert.equal(takeActive(Date.now(), noReopen()), null);
+});
+
+test('clearing another quiz leaves the current one', () => {
+  useActiveStoreForTests(fakeActive());
+  markActive('/play/set/new?resume=1');
+  clearActive('/play/set/old?resume=1');
+  assert.equal(takeActive(Date.now(), noReopen()), '/play/set/new?resume=1');
+});
+
+test('an old quiz is not reopened hours later', () => {
+  useActiveStoreForTests(fakeActive());
+  markActive('/play/set/abc?resume=1');
+  assert.equal(takeActive(Date.now() + 4 * 60 * 60 * 1000, noReopen()), null);
+});
+
+test('a quiz that keeps bringing the app down is not reopened in a loop', () => {
+  useActiveStoreForTests(fakeActive());
+  const r = noReopen();
+  markActive('/play/set/abc?resume=1');
+  assert.equal(takeActive(Date.now(), r), '/play/set/abc?resume=1');
+  markActive('/play/set/abc?resume=1');
+  assert.equal(takeActive(Date.now() + 10_000, r), null);
 });

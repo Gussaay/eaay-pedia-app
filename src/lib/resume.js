@@ -108,3 +108,82 @@ export function listSpots() {
     })
     .sort((a, b) => b.at - a.at || (b.seq || 0) - (a.seq || 0));
 }
+
+// ---------------------------------------------------------------------------
+// The quiz that was on screen when the app last stopped.
+//
+// Android may close an app that sits in the background for a while (to free
+// memory), and an older phone app restarts itself on an update. Either way it
+// comes back on the home page and the quiz seems to have "closed". This keeps
+// the address of the quiz in progress, so the app can reopen it straight away
+// and the quiz picks up from its own bookmark above.
+// ---------------------------------------------------------------------------
+const ACTIVE_KEY = 'resume:active';
+const ACTIVE_MAX_AGE_MS = 3 * 60 * 60 * 1000;
+
+const activeStore = {
+  get() {
+    try {
+      return JSON.parse(localStorage.getItem(ACTIVE_KEY) || 'null');
+    } catch {
+      return null;
+    }
+  },
+  set(value) {
+    try {
+      if (value) localStorage.setItem(ACTIVE_KEY, JSON.stringify(value));
+      else localStorage.removeItem(ACTIVE_KEY);
+    } catch {
+      /* storage unavailable: the quiz just will not reopen by itself */
+    }
+  },
+};
+let active = activeStore;
+export function useActiveStoreForTests(fake) {
+  active = fake || activeStore;
+}
+
+/** Called while a quiz is being played; `path` reopens it where it was. */
+export function markActive(path) {
+  if (path) active.set({ path, at: Date.now() });
+}
+
+/** Called when the quiz is left on purpose (finished, saved, or exited). */
+export function clearActive(path) {
+  const now = active.get();
+  if (!path || now?.path === path) active.set(null);
+}
+
+const REOPEN_GAP_MS = 60 * 1000;
+let lastReopenAt = 0;
+const reopenStore = {
+  get() {
+    try {
+      return Number(localStorage.getItem('resume:reopenedAt')) || 0;
+    } catch {
+      return lastReopenAt;
+    }
+  },
+  set(at) {
+    lastReopenAt = at;
+    try {
+      localStorage.setItem('resume:reopenedAt', String(at));
+    } catch {
+      /* kept in memory instead */
+    }
+  },
+};
+
+/**
+ * The quiz to reopen, once: reading it clears it. If the app restarted again
+ * within a minute of reopening a quiz, that quiz may be what brings it down
+ * (a phone very short of memory), so it is not reopened a second time.
+ */
+export function takeActive(now = Date.now(), reopened = reopenStore) {
+  const entry = active.get();
+  active.set(null);
+  if (!entry?.path || typeof entry.at !== 'number' || now - entry.at > ACTIVE_MAX_AGE_MS) return null;
+  if (now - reopened.get() < REOPEN_GAP_MS) return null;
+  reopened.set(now);
+  return entry.path;
+}
