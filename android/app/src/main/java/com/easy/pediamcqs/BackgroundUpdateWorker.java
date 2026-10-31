@@ -124,7 +124,6 @@ public class BackgroundUpdateWorker extends Worker {
         CryptoCipher.setLogger(logger);
         final CapgoUpdater updater = new CapgoUpdater(logger);
         updater.documentsDir = context.getFilesDir();
-        updater.noBackupDir = context.getNoBackupFilesDir();
         updater.prefs = context.getSharedPreferences(WebView.WEBVIEW_PREFS_NAME, Context.MODE_PRIVATE);
         updater.editor = updater.prefs.edit();
         updater.appId = context.getPackageName();
