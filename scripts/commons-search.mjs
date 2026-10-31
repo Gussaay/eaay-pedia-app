@@ -28,7 +28,7 @@ for (const [key, list] of Object.entries(queries)) {
   const seen = new Map();
   for (const q of list) {
     const u = new URL('https://commons.wikimedia.org/w/api.php');
-    Object.entries({ action: 'query', format: 'json', generator: 'search', gsrsearch: `${q} filetype:bitmap`, gsrnamespace: '6', gsrlimit: '10',
+    Object.entries({ action: 'query', format: 'json', generator: 'search', gsrsearch: `${q}`, gsrnamespace: '6', gsrlimit: '10',
       prop: 'imageinfo', iiprop: 'url|size|mime|extmetadata', iiurlwidth: '960' }).forEach(([k, v]) => u.searchParams.set(k, v));
     const data = await (await get(u)).json();
     const pages = Object.values(data.query?.pages || {}).sort((a, b) => a.index - b.index);
