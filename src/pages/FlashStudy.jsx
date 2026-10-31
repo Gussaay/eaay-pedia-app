@@ -563,7 +563,7 @@ export default function FlashStudy() {
                 <p className="text-[11px] font-semibold uppercase tracking-wide text-violet-500">Answer</p>
                 <div className="flex flex-1 flex-col justify-center">
                   <p className="text-xl leading-relaxed text-slate-900 whitespace-pre-line">{card.back}</p>
-                  {card.back_img && <ZoomImage src={card.back_img} className="mt-4" />}
+                  {card.back_img && <ZoomImage src={card.back_img} credit={card.back_img_credit} className="mt-4" />}
                   {card.note && (
                     <p className="mt-4 border-t border-violet-200 pt-3 text-sm leading-relaxed text-slate-600 whitespace-pre-line">
                       {card.note}

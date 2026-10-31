@@ -12,6 +12,15 @@
 // Sets quizqq/<id>/exp_img (baseUrl + file) and exp_img_credit. A question
 // that already has a different explanation image is left alone and reported.
 //
+// The same image is then spread to what each of those questions links to:
+//   - its "Same question" and "Similar" questions in any bank (quizqq/<id>/same,
+//     similar), as their explanation image, when they have none;
+//   - its linked flashcards and mnemonics (card_links, mnem_links), as the
+//     picture under the answer (flashcard_items/<deck>/<card>/back_img +
+//     back_img_credit), only on cards with a written answer and no picture or
+//     drawing of their own.
+// "Linked" (related) questions are a different point, so they are not touched.
+//
 //   node scripts/explain-images.mjs [--commit]
 //       Without --commit: says what it would write, and writes nothing.
 //       The undo record (old values) is saved to .tmp/explain-images-undo.json;
@@ -37,7 +46,7 @@ const fb = (cmdArgs) =>
   });
 fs.mkdirSync('.tmp', { recursive: true });
 const read = (node) => {
-  const out = path.join('.tmp', `get-${node}.json`);
+  const out = path.join('.tmp', `get-${node.replace(/[^\w-]/g, '_')}.json`);
   fb(['database:get', `/${node}`, '--project', project, '--output', out]);
   return JSON.parse(fs.readFileSync(out, 'utf8') || 'null') || {};
 };
@@ -122,8 +131,53 @@ for (const im of images) {
     console.log(`  ${ref} (${id}) -> ${im.file}`);
   }
 }
+// ---------------------------------------------------------------- spread
+const keysOf = (v) => (v && typeof v === 'object' ? Object.keys(v).filter((k) => v[k]) : []);
+const direct = Object.keys(updates)
+  .filter((k) => k.endsWith('/exp_img'))
+  .map((k) => k.split('/')[1]);
+let spreadQ = 0;
+let spreadCards = 0;
+const cardSeen = new Set();
+for (const id of direct) {
+  const url = updates[`quizqq/${id}/exp_img`];
+  const credit = updates[`quizqq/${id}/exp_img_credit`];
+  const src = all[id] || {};
+  for (const other of [...keysOf(src.same), ...keysOf(src.similar)]) {
+    if (updates[`quizqq/${other}/exp_img`]) continue; // already set (directly or by another)
+    const o = all[other];
+    if (!o) continue;
+    if (o.exp_img && !String(o.exp_img).startsWith(baseUrl)) continue;
+    updates[`quizqq/${other}/exp_img`] = url;
+    updates[`quizqq/${other}/exp_img_credit`] = credit;
+    undo[`quizqq/${other}/exp_img`] = o.exp_img || null;
+    undo[`quizqq/${other}/exp_img_credit`] = o.exp_img_credit || null;
+    spreadQ += 1;
+    console.log(`  + question ${other} (${o.source || '?'}) -> ${url.split('/').pop()}`);
+  }
+  for (const ref of [...keysOf(src.card_links), ...keysOf(src.mnem_links)]) {
+    if (cardSeen.has(ref)) continue;
+    cardSeen.add(ref);
+    const [deck, card] = ref.split('~');
+    if (!deck || !card) continue;
+    const c = read(`flashcard_items/${deck}/${card}`);
+    if (!c || !Object.keys(c).length) continue;
+    const mine = String(c.back_img || '').startsWith(baseUrl);
+    if ((c.back_img && !mine) || c.visual || !String(c.back || '').trim()) {
+      console.log(`  - card ${ref} keeps its own picture`);
+      continue;
+    }
+    updates[`flashcard_items/${deck}/${card}/back_img`] = url;
+    updates[`flashcard_items/${deck}/${card}/back_img_credit`] = credit;
+    undo[`flashcard_items/${deck}/${card}/back_img`] = c.back_img || null;
+    undo[`flashcard_items/${deck}/${card}/back_img_credit`] = c.back_img_credit || null;
+    spreadCards += 1;
+    console.log(`  + card ${ref} "${String(c.front || '').slice(0, 60)}" -> ${url.split('/').pop()}`);
+  }
+}
+
 fs.writeFileSync('.tmp/explain-images-undo.json', JSON.stringify(undo, null, 1));
-console.log(`${Object.keys(updates).length / 2} questions to update, ${skipped} kept their own image, ${problems} problems.`);
+console.log(`${direct.length} DOH questions, ${spreadQ} same/similar questions in other papers and banks, ${spreadCards} flashcards/mnemonics; ${skipped} kept their own image, ${problems} problems.`);
 if (problems) process.exit(1);
 if (commit) {
   write(updates);
