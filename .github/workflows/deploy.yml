@@ -252,6 +252,11 @@ jobs:
       - name: Add version file to the site
         run: cp apk/native-version.json dist/native-version.json
 
+      # Explanation images (drawings + open-licence photos), served at
+      # /explain/. Added after the over-the-air zip so the bundle stays small.
+      - name: Add explanation images to the site
+        run: node scripts/explain-images-site.mjs dist
+
       # KEEP THE PREVIOUS RELEASES' FILES ON THE SITE.
       # Every release renames the code files. A phone with the app still open
       # runs the previous release and may ask for one of its files after this

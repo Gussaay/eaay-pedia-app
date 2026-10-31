@@ -125,7 +125,7 @@ export default function DailyQuiz({ daily }) {
           <div className="mt-4 rounded-xl bg-brand-50 p-3">
             <p className="font-semibold text-brand-900">Correct answer is: {answer.toUpperCase()}</p>
             {daily.exp && <p className="text-slate-700 mt-2 whitespace-pre-line">{daily.exp}</p>}
-            <ZoomImage src={daily.exp_img} className="mt-3" />
+            <ZoomImage src={daily.exp_img} credit={daily.exp_img_credit} className="mt-3" />
           </div>
         )}
         <div className="flex gap-2 justify-end mt-4">

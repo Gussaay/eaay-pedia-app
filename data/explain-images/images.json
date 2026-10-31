@@ -1,0 +1,30 @@
+{
+  "baseUrl": "https://easy-pedia.web.app/explain/",
+  "images": [
+    { "key": "eczema-herpeticum", "file": "eczema-herpeticum.jpg", "photo": "https://wwwn.cdc.gov/phil///PHIL_Images/24351/24351_lores.jpg",
+      "credit": "Photo: CDC/Dr. Hudson, PHIL #24351 (public domain)",
+      "questions": ["2023-01-30#33", "2023-03-27#43", "2024#43", "2024-05#43"] },
+    { "key": "tinea-capitis", "file": "tinea-capitis.jpg", "photo": "https://wwwn.cdc.gov/phil///PHIL_Images/22272/22272_lores.jpg",
+      "credit": "Photo: CDC/Dr. Lucille K. Georg, PHIL #22272 (public domain)",
+      "questions": ["2023-03-27#28", "2024#46"] },
+    { "key": "kerion", "file": "kerion.jpg", "photo": "https://wwwn.cdc.gov/phil///PHIL_Images/30138/30138_lores.jpg",
+      "credit": "Photo: CDC, PHIL #30138 (phil.cdc.gov)",
+      "questions": ["pv-2024-03-03a#37", "pv-2024-03-03c#4"] },
+    { "key": "chickenpox", "file": "chickenpox.jpg", "photo": "https://wwwn.cdc.gov/phil///PHIL_Images/25244/25244_lores.jpg",
+      "credit": "Photo: CDC/Dr. J.D. Millar, PHIL #25244 (public domain)",
+      "questions": ["2023-02-ad#7", "2023-06-08#40", "2023-03-27#79", "2024#29", "pv-2024-03#40"] },
+    { "key": "erythema-migrans", "file": "erythema-migrans.jpg", "photo": "https://wwwn.cdc.gov/phil///PHIL_Images/9875/9875_lores.jpg",
+      "credit": "Photo: CDC/James Gathany, PHIL #9875 (phil.cdc.gov)",
+      "questions": ["2023-03-27#61", "2024-05#47", "2024-05#57", "2024#32"] },
+    { "key": "io-tibia", "file": "io-tibia.png", "credit": "Illustration: Easy Pedia",
+      "questions": ["pv-2024-03-03c#8", "pv-2024-03#2"] },
+    { "key": "barlow-ortolani", "file": "barlow-ortolani.png", "credit": "Illustration: Easy Pedia",
+      "questions": ["2023-03-27#74", "2024#22"] },
+    { "key": "erb-palsy", "file": "erb-palsy.png", "credit": "Illustration: Easy Pedia",
+      "questions": ["2023-01-30#37", "2023-03-27#68", "2023-05-10#78", "2024#19"] },
+    { "key": "wpw-delta", "file": "wpw-delta.png", "credit": "Illustration: Easy Pedia",
+      "questions": ["pv-2024-03-03a#42", "pv-2024-03-03c#14", "pv-2024-03#31", "2024-05#8"] },
+    { "key": "perthes-scfe", "file": "perthes-scfe.png", "credit": "Illustration: Easy Pedia",
+      "questions": ["2023-01-30#12", "2023-03-27#63", "2023-03-27#77", "2023-05-10#51", "2024#8", "2024#9", "2024#10", "2024#11", "2024-05#48"] }
+  ]
+}

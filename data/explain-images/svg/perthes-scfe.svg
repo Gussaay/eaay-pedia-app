@@ -1,0 +1,50 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 800 600" font-family="system-ui,-apple-system,'Segoe UI',Roboto,sans-serif">
+<rect width="800" height="600" fill="#fff"/>
+<text x="30" y="42" font-size="26" font-weight="700" fill="#0D47A1">Limping child: Perthes vs slipped epiphysis</text>
+<text x="30" y="70" font-size="16" fill="#455A64">Left hip, AP X-ray drawing. Blue dashed line = Klein line (along the top of the femoral neck).</text>
+<rect x="20" y="90" width="240" height="450" rx="14" fill="#FAFAFA" stroke="#ECEFF1"/>
+<text x="36" y="122" font-size="19" font-weight="700" fill="#263238">Normal</text>
+<g transform="translate(30,150)">
+<path d="M10 20 L150 20 L150 45 C130 50 118 60 112 72 A42 42 0 0 0 40 110 L10 120 Z" fill="#F5EBDC" stroke="#8D6E63" stroke-width="2.5"/>
+<path d="M118 92 L178 128 C192 132 200 150 192 168 L190 300 L148 300 L146 190 C140 172 128 160 98 140 Z" fill="#F5EBDC" stroke="#8D6E63" stroke-width="2.5"/>
+<path d="M172 124 C182 108 198 112 200 128 L195 160" fill="#F5EBDC" stroke="#8D6E63" stroke-width="2.5"/>
+<path d="M93 141 A36 36 0 1 1 122 94 Z" fill="#EFDFC4" stroke="#8D6E63" stroke-width="2.5"/>
+<line x1="93" y1="141" x2="122" y2="94" stroke="#8D6E63" stroke-width="2" stroke-dasharray="3 3"/>
+<line x1="196" y1="139" x2="78" y2="68" stroke="#1976D2" stroke-width="2.5" stroke-dasharray="7 5"/>
+</g>
+<text x="36" y="470" font-size="14.5" fill="#263238">Klein line cuts through</text>
+<text x="36" y="490" font-size="14.5" fill="#263238">the edge of the epiphysis</text>
+<rect x="280" y="90" width="240" height="450" rx="14" fill="#FAFAFA" stroke="#ECEFF1"/>
+<text x="296" y="122" font-size="19" font-weight="700" fill="#6D4C41">Perthes disease</text>
+<g transform="translate(290,150)">
+<path d="M10 20 L150 20 L150 45 C130 50 118 60 112 72 A42 42 0 0 0 40 110 L10 120 Z" fill="#F5EBDC" stroke="#8D6E63" stroke-width="2.5"/>
+<path d="M118 92 L178 128 C192 132 200 150 192 168 L190 300 L148 300 L146 190 C140 172 128 160 98 140 Z" fill="#F5EBDC" stroke="#8D6E63" stroke-width="2.5"/>
+<path d="M172 124 C182 108 198 112 200 128 L195 160" fill="#F5EBDC" stroke="#8D6E63" stroke-width="2.5"/>
+<path d="M98 140 C80 132 72 118 80 106 C92 96 112 94 126 98 Z" fill="#D7C2A0" stroke="#8D6E63" stroke-width="2.5"/>
+<path d="M88 106 L96 128 M104 100 L108 124" stroke="#8D6E63" stroke-width="1.5"/>
+<line x1="196" y1="139" x2="78" y2="68" stroke="#1976D2" stroke-width="2.5" stroke-dasharray="7 5"/>
+</g>
+<text x="296" y="470" font-size="14.5" fill="#263238">Age 4–8, boys more</text>
+<text x="296" y="490" font-size="14.5" fill="#263238">Small, flat, dense, broken-up</text>
+<text x="296" y="510" font-size="14.5" fill="#263238">head; wide joint space</text>
+<text x="296" y="530" font-size="14.5" fill="#263238">Afebrile; often painless limp</text>
+<rect x="540" y="90" width="240" height="450" rx="14" fill="#FAFAFA" stroke="#ECEFF1"/>
+<text x="556" y="122" font-size="19" font-weight="700" fill="#C62828">Slipped epiphysis (SCFE)</text>
+<g transform="translate(550,150)">
+<path d="M10 20 L150 20 L150 45 C130 50 118 60 112 72 A42 42 0 0 0 40 110 L10 120 Z" fill="#F5EBDC" stroke="#8D6E63" stroke-width="2.5"/>
+<path d="M118 92 L178 128 C192 132 200 150 192 168 L190 300 L148 300 L146 190 C140 172 128 160 98 140 Z" fill="#F5EBDC" stroke="#8D6E63" stroke-width="2.5"/>
+<path d="M172 124 C182 108 198 112 200 128 L195 160" fill="#F5EBDC" stroke="#8D6E63" stroke-width="2.5"/>
+<path transform="translate(-6,12)" d="M80 152 A36 36 0 1 1 112 103 Z" fill="#EFDFC4" stroke="#8D6E63" stroke-width="2.5"/>
+<line x1="93" y1="141" x2="122" y2="94" stroke="#C62828" stroke-width="4"/>
+<line x1="196" y1="139" x2="78" y2="68" stroke="#1976D2" stroke-width="2.5" stroke-dasharray="7 5"/>
+</g>
+<text x="556" y="470" font-size="14.5" fill="#263238">Age 10–15, obese, growth spurt</text>
+<text x="556" y="490" font-size="14.5" fill="#263238">Epiphysis slips down and back</text>
+<text x="556" y="510" font-size="14.5" fill="#263238">Klein line MISSES the epiphysis</text>
+<text x="556" y="530" font-size="14.5" fill="#263238">(Trethowan sign)</text>
+<text x="556" y="146" font-size="13.5" fill="#455A64">Treatment: urgent surgical pinning</text>
+<text x="296" y="146" font-size="13.5" fill="#455A64">Treatment: analgesia, physio, brace</text>
+<rect x="0" y="560" width="800" height="40" fill="#1976D2"/>
+<text x="30" y="586" font-size="16" font-weight="700" fill="#fff">Easy Pedia</text>
+<text x="770" y="586" font-size="15" fill="#E3F2FD" text-anchor="end">easy-pedia.web.app · original illustration</text>
+</svg>

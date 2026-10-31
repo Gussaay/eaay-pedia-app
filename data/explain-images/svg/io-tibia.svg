@@ -1,0 +1,47 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 800 600" font-family="system-ui,-apple-system,'Segoe UI',Roboto,sans-serif">
+  <rect width="800" height="600" fill="#fff"/>
+  <text x="30" y="42" font-size="26" font-weight="700" fill="#0D47A1">Intraosseous access: proximal tibia</text>
+  <text x="30" y="70" font-size="16" fill="#455A64">Left leg, front view. Preferred site in children.</text>
+  <!-- leg outline (skin) -->
+  <path d="M215 90 C205 160 200 200 205 240 C200 300 215 380 222 470 L225 540 L345 540 L350 470 C360 380 372 300 365 240 C372 200 370 160 360 90 Z" fill="#F7E1CF" stroke="#C9A58A" stroke-width="2"/>
+  <!-- femur lower end -->
+  <path d="M255 90 L255 165 C240 180 236 205 250 215 L320 215 C335 205 332 180 318 165 L318 90 Z" fill="#F5EBDC" stroke="#8D6E63" stroke-width="2.5"/>
+  <!-- patella -->
+  <ellipse cx="287" cy="190" rx="22" ry="27" fill="#EFE0C8" stroke="#8D6E63" stroke-width="2.5"/>
+  <!-- tibia -->
+  <path d="M245 228 C238 240 240 255 252 262 L262 268 L266 520 L300 520 L304 268 C322 262 334 250 330 236 C325 226 312 224 300 226 L275 226 C262 224 250 224 245 228 Z" fill="#F5EBDC" stroke="#8D6E63" stroke-width="2.5"/>
+  <!-- fibula -->
+  <path d="M322 262 L330 262 L326 520 L316 520 Z" fill="#F5EBDC" stroke="#8D6E63" stroke-width="2"/>
+  <!-- growth plate -->
+  <path d="M246 246 C270 252 305 252 330 244" fill="none" stroke="#D32F2F" stroke-width="2.5" stroke-dasharray="6 5"/>
+  <!-- tibial tuberosity -->
+  <ellipse cx="285" cy="272" rx="13" ry="9" fill="#E7D3B5" stroke="#8D6E63" stroke-width="2"/>
+  <!-- needle site -->
+  <circle cx="272" cy="318" r="11" fill="#1976D2" fill-opacity="0.18" stroke="#1976D2" stroke-width="3"/>
+  <circle cx="272" cy="318" r="3.5" fill="#1976D2"/>
+  <!-- 1-3 cm bracket -->
+  <path d="M232 272 L224 272 L224 318 L232 318" fill="none" stroke="#455A64" stroke-width="2"/>
+  <text x="168" y="300" font-size="16" fill="#263238" font-weight="600">1–3 cm</text>
+  <!-- labels -->
+  <g font-size="17" fill="#263238">
+    <line x1="309" y1="190" x2="440" y2="150" stroke="#90A4AE" stroke-width="1.5"/>
+    <text x="446" y="155">Patella</text>
+    <line x1="330" y1="246" x2="440" y2="215" stroke="#D32F2F" stroke-width="1.5"/>
+    <text x="446" y="212" fill="#D32F2F" font-weight="600">Growth plate: avoid</text>
+    <line x1="298" y1="272" x2="440" y2="270" stroke="#90A4AE" stroke-width="1.5"/>
+    <text x="446" y="276">Tibial tuberosity (palpate first)</text>
+    <line x1="283" y1="318" x2="440" y2="335" stroke="#1976D2" stroke-width="1.5"/>
+    <text x="446" y="332" fill="#1976D2" font-weight="700">Needle site</text>
+    <text x="446" y="356" font-size="15" fill="#455A64">1–3 cm (about 1 finger breadth) below the</text>
+    <text x="446" y="376" font-size="15" fill="#455A64">tuberosity, on the flat anteromedial surface</text>
+  </g>
+  <rect x="440" y="410" width="330" height="118" rx="12" fill="#E3F2FD"/>
+  <text x="458" y="438" font-size="16" font-weight="700" fill="#0D47A1">Technique</text>
+  <text x="458" y="462" font-size="15" fill="#263238">• Needle at 90° to the bone (or slightly</text>
+  <text x="458" y="482" font-size="15" fill="#263238">   angled away from the joint)</text>
+  <text x="458" y="504" font-size="15" fill="#263238">• Other sites: distal femur, distal tibia</text>
+  <text x="458" y="522" font-size="15" fill="#263238">   (above the medial malleolus)</text>
+<rect x="0" y="560" width="800" height="40" fill="#1976D2"/>
+<text x="30" y="586" font-size="16" font-weight="700" fill="#fff">Easy Pedia</text>
+<text x="770" y="586" font-size="15" fill="#E3F2FD" text-anchor="end">easy-pedia.web.app · original illustration</text>
+</svg>

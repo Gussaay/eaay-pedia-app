@@ -209,7 +209,7 @@ export default function QuizAnswers() {
               {exp || (q.exp_img ? 'See the explanation image below.' : 'No explanation available for this question.')}
             </p>
             <div data-no-swipe>
-              <ZoomImage src={q.exp_img} className="mt-3" />
+              <ZoomImage src={q.exp_img} credit={q.exp_img_credit} className="mt-3" />
             </div>
             <StudyLinks question={q} />
           </Card>

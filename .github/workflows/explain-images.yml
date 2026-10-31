@@ -1,0 +1,47 @@
+name: Explanation images
+
+# Writes the explanation images listed in data/explain-images/images.json on
+# the DOH (HAAD) questions (scripts/explain-images.mjs). The image files are
+# put on the site by the deploy (scripts/explain-images-site.mjs). The undo
+# record is kept as a run artifact:
+#   node scripts/explain-images.mjs --undo explain-images-undo.json --commit
+on:
+  push:
+    branches:
+      - main
+    paths:
+      - 'data/explain-images/images.json'
+      - 'scripts/explain-images.mjs'
+      - '.github/workflows/explain-images.yml'
+  workflow_dispatch:
+
+concurrency:
+  group: explain-images
+  cancel-in-progress: false
+
+jobs:
+  write:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+      - name: Install Firebase CLI
+        run: npm i -g firebase-tools@14
+      - name: Write explanation images
+        env:
+          FIREBASE_SERVICE_ACCOUNT: ${{ secrets.FIREBASE_SERVICE_ACCOUNT_EASY_PEDIA }}
+        run: |
+          printf '%s' "$FIREBASE_SERVICE_ACCOUNT" > "$RUNNER_TEMP/sa.json"
+          export GOOGLE_APPLICATION_CREDENTIALS="$RUNNER_TEMP/sa.json"
+          node scripts/explain-images.mjs --commit
+          rm -f "$RUNNER_TEMP/sa.json"
+      - uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: explain-images-undo
+          path: .tmp/explain-images-undo.json
+          if-no-files-found: ignore
+          include-hidden-files: true
+          retention-days: 90

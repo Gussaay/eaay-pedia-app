@@ -236,7 +236,7 @@ export function Avatar({ src, size = 48, className = '' }) {
 }
 
 /** Tappable image that opens full screen with pinch-zoom (PhotoView replacement). */
-export function ZoomImage({ src, className = '' }) {
+export function ZoomImage({ src, className = '', credit = '' }) {
   const [open, setOpen] = useState(false);
   const [broken, setBroken] = useState(false);
   if (!src) return null;
@@ -255,6 +255,7 @@ export function ZoomImage({ src, className = '' }) {
         onClick={() => setOpen(true)}
         className={`rounded-xl max-h-72 w-auto mx-auto cursor-zoom-in ${className}`}
       />
+      {credit && <p className="mt-1 text-center text-[11px] leading-snug text-slate-400">{credit}</p>}
       {open && (
         <div className="fixed inset-0 z-[70] bg-black/95 flex flex-col" onClick={() => setOpen(false)}>
           <button className="self-end p-4 text-white" aria-label="Close">

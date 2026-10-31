@@ -254,7 +254,7 @@ function LinkedPeek({ same, similar, related = [], onClose }) {
                   {chosen && (q.exp || q.exp_img) && (
                     <div className="mt-2 rounded-lg bg-slate-50 p-2.5">
                       {q.exp && <p className="text-sm text-slate-700 whitespace-pre-line">{String(q.exp).trim()}</p>}
-                      <ZoomImage src={q.exp_img} className="mt-2" />
+                      <ZoomImage src={q.exp_img} credit={q.exp_img_credit} className="mt-2" />
                     </div>
                   )}
                 </li>

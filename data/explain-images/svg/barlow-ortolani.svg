@@ -1,0 +1,59 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 800 600" font-family="system-ui,-apple-system,'Segoe UI',Roboto,sans-serif">
+  <rect width="800" height="600" fill="#fff"/>
+  <defs>
+    <marker id="ah" viewBox="0 0 10 10" refX="8" refY="5" markerWidth="7" markerHeight="7" orient="auto-start-reverse"><path d="M0 0 L10 5 L0 10 z" fill="#D32F2F"/></marker>
+    <marker id="ab" viewBox="0 0 10 10" refX="8" refY="5" markerWidth="7" markerHeight="7" orient="auto-start-reverse"><path d="M0 0 L10 5 L0 10 z" fill="#1976D2"/></marker>
+  </defs>
+  <text x="30" y="42" font-size="26" font-weight="700" fill="#0D47A1">Barlow vs Ortolani (DDH screening)</text>
+  <text x="30" y="70" font-size="16" fill="#455A64">Baby supine, hip and knee flexed to 90°. Examine one hip at a time.</text>
+
+  <!-- panel frames -->
+  <rect x="30" y="92" width="360" height="330" rx="14" fill="#FFF5F5" stroke="#F3C1C1"/>
+  <rect x="410" y="92" width="360" height="330" rx="14" fill="#F1F8FE" stroke="#BBDEFB"/>
+  <text x="50" y="126" font-size="22" font-weight="700" fill="#C62828">Barlow</text>
+  <text x="50" y="150" font-size="15" fill="#455A64">Adduct + push thigh backwards</text>
+  <text x="430" y="126" font-size="22" font-weight="700" fill="#1565C0">Ortolani</text>
+  <text x="430" y="150" font-size="15" fill="#455A64">Abduct + lift greater trochanter forwards</text>
+
+  <!-- Barlow schematic: side view, acetabulum cup, head pushed out posteriorly -->
+  <g transform="translate(60,165) scale(0.85)">
+    <text x="0" y="16" font-size="13" fill="#78909C">front ↑  (side view of hip)</text>
+    <path d="M60 60 A70 70 0 0 0 60 200" fill="none" stroke="#8D6E63" stroke-width="16" stroke-linecap="round"/>
+    <text x="10" y="230" font-size="14" fill="#5D4037">Acetabulum</text>
+    <!-- ghost normal position -->
+    <circle cx="105" cy="130" r="38" fill="none" stroke="#B0BEC5" stroke-width="2" stroke-dasharray="5 4"/>
+    <!-- head displaced posteriorly (down) and out -->
+    <circle cx="140" cy="185" r="38" fill="#F5EBDC" stroke="#8D6E63" stroke-width="3"/>
+    <path d="M165 205 L290 240" stroke="#8D6E63" stroke-width="30" stroke-linecap="round"/>
+    <path d="M165 205 L290 240" stroke="#F5EBDC" stroke-width="24" stroke-linecap="round"/>
+    <text x="215" y="215" font-size="13" fill="#5D4037">femur</text>
+    <path d="M250 150 L250 205" stroke="#D32F2F" stroke-width="4" marker-end="url(#ah)"/>
+    <text x="222" y="140" font-size="16" fill="#C62828" font-weight="600">push back</text>
+  </g>
+  <text x="50" y="404" font-size="15" fill="#263238"><tspan font-weight="700" fill="#C62828">Positive:</tspan> head slips OUT = dislocatable hip</text>
+
+  <!-- Ortolani schematic: head lifted back into the cup -->
+  <g transform="translate(440,165) scale(0.85)">
+    <text x="0" y="16" font-size="13" fill="#78909C">front ↑  (side view of hip)</text>
+    <path d="M60 60 A70 70 0 0 0 60 200" fill="none" stroke="#8D6E63" stroke-width="16" stroke-linecap="round"/>
+    <text x="10" y="230" font-size="14" fill="#5D4037">Acetabulum</text>
+    <!-- ghost dislocated position -->
+    <circle cx="140" cy="185" r="38" fill="none" stroke="#B0BEC5" stroke-width="2" stroke-dasharray="5 4"/>
+    <!-- reduced head -->
+    <circle cx="105" cy="130" r="38" fill="#F5EBDC" stroke="#8D6E63" stroke-width="3"/>
+    <path d="M132 145 L280 150" stroke="#8D6E63" stroke-width="30" stroke-linecap="round"/>
+    <path d="M132 145 L280 150" stroke="#F5EBDC" stroke-width="24" stroke-linecap="round"/>
+    <text x="205" y="153" font-size="13" fill="#5D4037">femur</text>
+    <path d="M160 225 L130 180" stroke="#1976D2" stroke-width="4" marker-end="url(#ab)"/>
+    <text x="175" y="212" font-size="16" fill="#1565C0" font-weight="600">lift forwards: "clunk"</text>
+  </g>
+  <text x="430" y="404" font-size="15" fill="#263238"><tspan font-weight="700" fill="#1565C0">Positive:</tspan> head slides back IN = dislocated hip</text>
+
+  <rect x="30" y="440" width="740" height="96" rx="12" fill="#F5F5F5"/>
+  <text x="50" y="470" font-size="17" font-weight="700" fill="#263238">Memory aid</text>
+  <text x="50" y="496" font-size="16" fill="#263238"><tspan font-weight="700" fill="#C62828">B</tspan>arlow = pushes it <tspan font-weight="700" fill="#C62828">B</tspan>ack and out.   <tspan font-weight="700" fill="#1565C0">O</tspan>rtolani = brings it from <tspan font-weight="700" fill="#1565C0">O</tspan>ut back in.</text>
+  <text x="50" y="522" font-size="15" fill="#455A64">Both tests become unreliable after about 3 months: look for limited abduction and leg-length difference.</text>
+<rect x="0" y="560" width="800" height="40" fill="#1976D2"/>
+<text x="30" y="586" font-size="16" font-weight="700" fill="#fff">Easy Pedia</text>
+<text x="770" y="586" font-size="15" fill="#E3F2FD" text-anchor="end">easy-pedia.web.app · original illustration</text>
+</svg>

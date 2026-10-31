@@ -72,7 +72,7 @@ export function dailyPush(q, createdAt) {
 
 export function dailyRecord(id, q, day) {
   const out = { question: String(q.question), answer: String(q.answer).trim().toLowerCase(), auto: '1', day, qid: id };
-  for (const k of [...visibleOptions(q), 'exp', 'question_img', 'exp_img']) if (q[k]) out[k] = String(q[k]);
+  for (const k of [...visibleOptions(q), 'exp', 'question_img', 'exp_img', 'exp_img_credit']) if (q[k]) out[k] = String(q[k]);
   return out;
 }
 

@@ -1157,7 +1157,7 @@ function ExplanationModal({ question, quizTitle, selected, answer, onClose, onNe
             ? 'See the explanation image below.'
             : 'No explanation available, you can add your own by submitting your comments below.')}
       </p>
-      <ZoomImage src={question.exp_img} className="mt-3" />
+      <ZoomImage src={question.exp_img} credit={question.exp_img_credit} className="mt-3" />
       <StudyLinks question={question} />
       <Suspense fallback={null}>
         <AiExplain question={question} />
