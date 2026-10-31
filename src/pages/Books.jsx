@@ -7,6 +7,8 @@ import { countLine, countsBySource, sumCounts } from '../lib/catalogCounts';
 import { useNavigate, useParams, useSearchParams } from 'react-router-dom';
 import { BookMarked, FileQuestion, FlaskConical, FolderOpen, Layers, Library, Search } from 'lucide-react';
 import { useList } from '../hooks/useData';
+import { useQuizProgress } from '../hooks/useQuizProgress';
+import ProgressBadge from '../components/ProgressBadge';
 import { num } from '../lib/rtdb';
 import { quizPath } from '../lib/quizSource';
 import QuestionBrowser, { BrowseTabs } from '../components/QuestionBrowser';
@@ -42,6 +44,7 @@ function QuizzesByName({ books: allBooks, bank }) {
     [allBooks, levelOf, bank],
   );
   const titleOf = useMemo(() => new Map(books.map((b) => [b.source, b.title])), [books]);
+  const mine = useQuizProgress();
   const quizzes = useList('allquiz', {
     filter: (x) => titleOf.has(x.source) && String(x.preview) === 'false',
   });
@@ -81,9 +84,12 @@ function QuizzesByName({ books: allBooks, bank }) {
               title={String(x.title || '').replace('MCQs', '').trim()}
               subtitle={titleOf.get(x.source)}
               badge={
-                num(x.number) ? (
-                  <span className="text-xs font-semibold bg-brand-50 text-brand-700 rounded-full px-2 py-1 shrink-0">{num(x.number)} Qs</span>
-                ) : null
+                <span className="flex flex-col items-end gap-1 shrink-0">
+                  {num(x.number) ? (
+                    <span className="text-xs font-semibold bg-brand-50 text-brand-700 rounded-full px-2 py-1">{num(x.number)} Qs</span>
+                  ) : null}
+                  <ProgressBadge progress={mine[x.key]} total={num(x.number)} />
+                </span>
               }
               onClick={() => navigate(quizPath('exam', x._key, { name: titleOf.get(x.source) || '', source: x.source }))}
             />

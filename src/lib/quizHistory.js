@@ -15,6 +15,7 @@ import { getOne, getOneCached, removeAt, setAt, str, updateAt } from './rtdb';
 import { isConnectionBroken } from './connectivity';
 import { addCounts, dayKey, rowsOf, tallyTopics } from './performance';
 import { clearAttempts } from './quizReview';
+import { progressByQuiz } from './quizProgress';
 
 const LKEY = 'quizhistory:v1';
 
@@ -80,6 +81,20 @@ export async function loadAllHistory(uid) {
   }
   merge(out, readLocal());
   return out;
+}
+
+/**
+ * Your progress on every quiz, for the badges on the quiz lists (see
+ * quizProgress.js). Reads the saved copies when offline, plus this device's
+ * own answers, so a quiz finished without a signal shows as done too.
+ */
+export async function loadQuizProgress(uid) {
+  if (!uid) return {};
+  const [stats, history] = await Promise.all([
+    getOneCached(`quizstats/${uid}`).catch(() => null),
+    getOneCached(`quizhistory/${uid}`).catch(() => null),
+  ]);
+  return progressByQuiz(stats, history, readLocal());
 }
 
 /** Everything needed by the performance dashboard, in one go. */

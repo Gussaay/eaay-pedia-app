@@ -17,6 +17,9 @@ import { useAuth } from '../hooks/useAuth';
 import { useAccessCheck } from '../hooks/useQuizAccess';
 import { scopesOf } from '../lib/access';
 import { AccessMark } from './LockPanel';
+import ProgressBadge from './ProgressBadge';
+import { useQuizProgress } from '../hooks/useQuizProgress';
+import { progressLabel, setProgress } from '../lib/quizProgress';
 import {
   ANSWER_FILTERS,
   BATCH,
@@ -57,7 +60,7 @@ export function BrowseTabs({ tabs, tab, onChange }) {
   );
 }
 
-function Row({ icon: Icon, title, subtitle, onOpen, chips = [], onChip, level }) {
+function Row({ icon: Icon, title, subtitle, onOpen, chips = [], onChip, level, badge, chipDone = () => false }) {
   return (
     <div className="rounded-2xl border border-slate-100 bg-white shadow-sm transition hover:shadow-md">
       <button onClick={onOpen} className="group w-full text-left flex items-center gap-3 p-3 active:scale-[0.99]">
@@ -68,20 +71,29 @@ function Row({ icon: Icon, title, subtitle, onOpen, chips = [], onChip, level })
           <p className="font-semibold text-slate-800 truncate">{title}</p>
           <p className="text-xs text-slate-500 mt-0.5 line-clamp-2">{subtitle}</p>
         </div>
+        {badge}
         <AccessMark level={level} />
         <ChevronRight className="text-slate-300 group-hover:text-brand-500 shrink-0" size={20} />
       </button>
       {chips.length > 1 && (
         <div className="flex flex-wrap gap-1.5 px-3 pb-3 -mt-1">
-          {chips.map(([name, n]) => (
-            <button
-              key={name}
-              onClick={() => onChip(name)}
-              className="shrink-0 rounded-full border border-slate-200 bg-slate-50 px-2.5 py-1 text-xs text-slate-600 hover:border-brand-300 hover:text-brand-700"
-            >
-              {sectionLabel(name)} <span className="text-slate-400">{n}</span>
-            </button>
-          ))}
+          {chips.map(([name, n]) => {
+            // A finished chip turns green with a tick (its score is in its title).
+            const done = chipDone(name, n);
+            return (
+              <button
+                key={name}
+                onClick={() => onChip(name)}
+                title={done ? `Done · ${done.score ?? '–'}%` : undefined}
+                className={`shrink-0 rounded-full border px-2.5 py-1 text-xs hover:border-brand-300 hover:text-brand-700 ${
+                  done ? 'border-emerald-200 bg-emerald-50 text-emerald-700' : 'border-slate-200 bg-slate-50 text-slate-600'
+                }`}
+              >
+                {done ? '✓ ' : ''}
+                {sectionLabel(name)} <span className={done ? 'text-emerald-600/70' : 'text-slate-400'}>{n}</span>
+              </button>
+            );
+          })}
         </div>
       )}
     </div>
@@ -95,6 +107,7 @@ function Row({ icon: Icon, title, subtitle, onOpen, chips = [], onChip, level })
 export default function QuestionBrowser({ bank, book = '', bookTitle = '', name = '', mode = 'chapters', onLocked }) {
   const navigate = useNavigate();
   const check = useAccessCheck();
+  const mine = useQuizProgress();
   const data = useAsync(() => getOneCached(`qbrowse/${bank}`), [bank]);
   const stats = useMemo(() => {
     const all = data.data || null;
@@ -115,7 +128,8 @@ export default function QuestionBrowser({ bank, book = '', bookTitle = '', name 
   if (data.error) return <ErrorBox error={data.error} onRetry={data.reload} />;
   const levelOf = ({ chapter = '', science = '' }) =>
     check(scopesOf({ kind: 'set', bank, book, filterChapter: chapter, science }));
-  return <BrowseLists stats={stats} mode={mode} onOpen={open} levelOf={levelOf} />;
+  const progressOf = ({ chapter = '', science = '' }) => setProgress(mine, setId({ bank, book, chapter, science }));
+  return <BrowseLists stats={stats} mode={mode} onOpen={open} levelOf={levelOf} progressOf={progressOf} />;
 }
 
 /**
@@ -130,6 +144,7 @@ export function PracticeSets({ bank, book, bookTitle = '', name = '' }) {
   const [link, setLink] = useState('');
   const [answer, setAnswer] = useState('');
   const [times, setTimes] = useState(0);
+  const mine = useQuizProgress();
   const data = useAsync(
     () => Promise.all([loadBookQuestions(book), loadAllHistory(user?.uid)]).then(([list, history]) => practiceCounts(list, history)),
     [book, user?.uid],
@@ -139,6 +154,10 @@ export function PracticeSets({ bank, book, bookTitle = '', name = '' }) {
   const n = countFor(answer);
   const withCopies = counts && !times ? counts.copies[link] : 0;
   const filter = makeFilter({ link, answer, times });
+  // "Not answered yet" and "answered wrongly/correctly" hold other questions
+  // after every attempt, so they show your score there, never "done".
+  const changing = !!answer;
+  const partProgress = (part) => mine[setId({ bank, book, filter, part })];
   const open = (part = 0) => {
     const f = { bank, book, filter, part };
     navigate(quizPath('set', setId(f), { ...f, part: part || '', bookTitle, name }));
@@ -205,7 +224,10 @@ export function PracticeSets({ bank, book, bookTitle = '', name = '' }) {
           <p className="text-sm text-slate-500">Counting questions…</p>
         ) : (
           <>
-            <p className="font-semibold text-slate-800">{plural(n, 'question')}</p>
+            <div className="flex items-center justify-between gap-2">
+              <p className="font-semibold text-slate-800">{plural(n, 'question')}</p>
+              <ProgressBadge progress={setProgress(mine, setId({ bank, book, filter }))} total={n} changing={changing} />
+            </div>
             {!answer && withCopies > n && (
               <p className="text-xs text-slate-500 mt-0.5">
                 {withCopies.toLocaleString()} including repeats in other sittings — each counted once here
@@ -221,7 +243,7 @@ export function PracticeSets({ bank, book, bookTitle = '', name = '' }) {
                 Open these questions
               </button>
             ) : (
-              <BatchButtons total={n} onOpen={open} />
+              <BatchButtons total={n} onOpen={open} progressFor={partProgress} changing={changing} />
             )}
           </>
         )}
@@ -231,7 +253,7 @@ export function PracticeSets({ bank, book, bookTitle = '', name = '' }) {
 }
 
 /** "Part 1 (1–100)", "Part 2 (101–200)"… for a set too long for one sitting. */
-export function BatchButtons({ total, onOpen }) {
+export function BatchButtons({ total, onOpen, progressFor = () => undefined, changing = false }) {
   return (
     <div className="mt-3">
       <p className="text-xs text-slate-500 mb-2">Answer them in parts of {BATCH}:</p>
@@ -244,6 +266,13 @@ export function BatchButtons({ total, onOpen }) {
           >
             <span className="block font-semibold text-brand-800">Part {part}</span>
             <span className="block text-xs text-slate-500">Questions {batchRange(part, total)}</span>
+            <span className="block mt-1 empty:hidden">
+              <ProgressBadge
+                progress={progressFor(part)}
+                total={Math.min(part * BATCH, total) - (part - 1) * BATCH}
+                changing={changing}
+              />
+            </span>
           </button>
         ))}
       </div>
@@ -252,7 +281,12 @@ export function BatchButtons({ total, onOpen }) {
 }
 
 /** The rows themselves, from a qbrowse counts record. */
-export function BrowseLists({ stats, mode, onOpen: open, levelOf = () => 'full' }) {
+export function BrowseLists({ stats, mode, onOpen: open, levelOf = () => 'full', progressOf = () => undefined }) {
+  const badge = (where, n) => <ProgressBadge progress={progressOf(where)} total={n} />;
+  const doneOf = (where, n) => {
+    const p = progressLabel(progressOf(where), n);
+    return p?.done ? p : false;
+  };
   if (!stats?.total) return <Empty icon={<Layers size={40} />} title="Not sorted into chapters yet" />;
 
   const grid = stats.grid || {};
@@ -274,6 +308,8 @@ export function BrowseLists({ stats, mode, onOpen: open, levelOf = () => 'full' 
               subtitle={`${plural(n, 'question')} across ${plural(chapters.length, 'chapter')}`}
               onOpen={() => open({ science: sec })}
               level={levelOf({ science: sec })}
+              badge={badge({ science: sec }, n)}
+              chipDone={(chapter, k) => doneOf({ chapter, science: sec }, k)}
               chips={chapters.slice(0, 8)}
               onChip={(chapter) => open({ chapter, science: sec })}
             />
@@ -297,6 +333,8 @@ export function BrowseLists({ stats, mode, onOpen: open, levelOf = () => 'full' 
             subtitle={`${plural(n, 'question')} · ${plural(sections.length, 'section')}`}
             onOpen={() => open({ chapter })}
             level={levelOf({ chapter })}
+            badge={badge({ chapter }, n)}
+            chipDone={(science, k) => doneOf({ chapter, science }, k)}
             chips={sections}
             onChip={(science) => open({ chapter, science })}
           />

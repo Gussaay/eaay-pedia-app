@@ -6,7 +6,7 @@ import { useEffect, useState, useSyncExternalStore } from 'react';
 import { Network } from '@capacitor/network';
 import { auth } from '../firebase';
 import { getOne, num, str, updateAt } from './rtdb';
-import { computeSessionResult } from './quiz';
+import { computeSessionResult, leadPctKey } from './quiz';
 import { listQueue, removeQueued, queueResult } from './offline';
 import { connectivityStore, isConnectionBroken } from './connectivity';
 
@@ -40,9 +40,10 @@ export async function queuePendingResult(result) {
 async function sendOne(item) {
   const uid = item.uid || auth.currentUser?.uid;
   if (!uid) throw new Error('not signed in');
-  const [user, lead] = await Promise.all([
+  const [user, lead, leadPct] = await Promise.all([
     getOne(`quizusers/${uid}`),
     getOne(`quizlead/${uid}/${item.pkey}`),
+    getOne(`quizlead/${uid}/${leadPctKey(item.pkey)}`),
   ]);
   const r = computeSessionResult(
     { correct: item.correct, played: item.played },
@@ -52,6 +53,7 @@ async function sendOne(item) {
       trial: num(user?.[`${item.pkey}_trial`]),
       quizPerformance: num(user?.[item.pkey]),
       previousPoints: num(lead),
+      previousPct: leadPct == null ? null : num(leadPct),
     },
   );
   if (!r) return;
@@ -68,6 +70,7 @@ async function sendOne(item) {
     writes.push(
       updateAt(`quizlead/${uid}`, {
         [item.pkey]: str(r.points),
+        [leadPctKey(item.pkey)]: str(r.percentage),
         name: item.name || '',
         img: item.img || '',
         uid,

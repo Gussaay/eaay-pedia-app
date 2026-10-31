@@ -10,7 +10,8 @@ import { UnlockSheet } from '../components/LockPanel';
 import { LockOpen } from 'lucide-react';
 import { incrementString, str, updateAt } from '../lib/rtdb';
 import { downloadQuiz, findSavedSession, loadLeaderboard, loadQuestions, loadQuizMeta, playPath, quizPath, reviewPath } from '../lib/quizSource';
-import { BATCH, setId } from '../lib/questionBrowse';
+import { BATCH, parseFilter, setId } from '../lib/questionBrowse';
+import { useQuizProgress } from '../hooks/useQuizProgress';
 import { BatchButtons } from '../components/QuestionBrowser';
 import { loadAttempts } from '../lib/quizReview';
 import { getQuiz, quizKey, removeQuiz } from '../lib/offline';
@@ -23,6 +24,7 @@ export default function QuizDetail() {
   const location = useLocation();
   const { user, profile } = useAuth();
   const extra = Object.fromEntries(params);
+  const mine = useQuizProgress();
 
   const meta = useAsync(() => loadQuizMeta(kind, id, extra), [kind, id, params.toString()]);
   const [count, setCount] = useState(null);
@@ -119,6 +121,8 @@ export default function QuizDetail() {
           {full && q.set && !q.part && count > BATCH && (
             <BatchButtons
               total={count}
+              progressFor={(part) => mine[setId({ ...extra, part })]}
+              changing={!!parseFilter(extra.filter).answer}
               onOpen={(part) => {
                 const params = { ...extra, part };
                 navigate(quizPath('set', setId({ ...extra, part }), params));
@@ -245,7 +249,10 @@ export default function QuizDetail() {
                   <span className={`w-6 text-center font-bold ${i < 3 ? 'text-amber-500' : 'text-slate-400'}`}>{i + 1}</span>
                   <Avatar src={l.img} size={36} />
                   <span className="flex-1 truncate text-slate-800">{l.name || 'Anonymous'}</span>
-                  <span className="font-semibold text-brand-700">{l.points}</span>
+                  <span className="text-right leading-tight shrink-0">
+                    <span className="block font-semibold text-brand-700">{l.points}</span>
+                    {l.pct != null && <span className="block text-[11px] text-slate-500">{Math.round(l.pct)}% correct</span>}
+                  </span>
                 </li>
               ))}
             </ol>

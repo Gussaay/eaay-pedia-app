@@ -21,6 +21,7 @@ import { getOne, getWhere, num, pushTo, removeAt, str, updateAt, newKey } from '
 import {
   buildAttempt,
   computeSessionResult,
+  leadPctKey,
   decodeAnswers,
   decodeDeck,
   encodeAnswers,
@@ -377,8 +378,12 @@ export default function QuizPlay() {
       }
 
       try {
-        const [u, lead] = await withTimeout(
-          Promise.all([getOne(`quizusers/${user.uid}`), getOne(`quizlead/${user.uid}/${meta.pkey}`)]),
+        const [u, lead, leadPct] = await withTimeout(
+          Promise.all([
+            getOne(`quizusers/${user.uid}`),
+            getOne(`quizlead/${user.uid}/${meta.pkey}`),
+            getOne(`quizlead/${user.uid}/${leadPctKey(meta.pkey)}`),
+          ]),
           8000,
         );
         const r = computeSessionResult(final, {
@@ -387,6 +392,7 @@ export default function QuizPlay() {
           trial: num(u?.[`${meta.pkey}_trial`]),
           quizPerformance: num(u?.[meta.pkey]),
           previousPoints: num(lead),
+          previousPct: leadPct == null ? null : num(leadPct),
         });
         const writes = [
           updateAt(`quizusers/${user.uid}`, {
@@ -401,6 +407,7 @@ export default function QuizPlay() {
           writes.push(
             updateAt(`quizlead/${user.uid}`, {
               [meta.pkey]: str(r.points),
+              [leadPctKey(meta.pkey)]: str(r.percentage),
               name: profile?.name || user.displayName || '',
               img: profile?.img || '',
               uid: user.uid,

@@ -2,7 +2,7 @@ import { test } from 'node:test';
 import assert from 'node:assert/strict';
 import {
   visibleOptions, isCorrect, planSession, examDurationMs, formatDuration,
-  computeSessionResult, rating, answerStats, matchesChapter,
+  computeSessionResult, rankLeaders, rating, answerStats, matchesChapter,
   planDeck, historyCounts, tallyAnswers, encodeDeck, decodeDeck, encodeAnswers, decodeAnswers,
   buildAttempt, encodeAttempt, decodeAttempt, reviewItems, filterItems, reviewCounts,
   questionParagraphs, optionText,
@@ -161,4 +161,24 @@ test('reviewItems follows keys after a reorder and drops deleted questions', () 
   assert.deepEqual(reviewCounts(items), { all: 3, correct: 1, wrong: 1, blank: 1 });
   assert.equal(filterItems(items, 'wrong').length, 1);
   assert.equal(filterItems(items, 'all').length, 3);
+});
+
+test('computeSessionResult: same points with a better percentage replaces the leaderboard row', () => {
+  const prev = { previousPoints: 8 };
+  assert.equal(computeSessionResult({ correct: 8, played: 10 }, { ...prev, previousPct: 72 }).newBest, true);
+  assert.equal(computeSessionResult({ correct: 8, played: 12 }, { ...prev, previousPct: 80 }).newBest, false);
+  // An old row with no percentage gets one on a tie.
+  assert.equal(computeSessionResult({ correct: 8, played: 12 }, prev).newBest, true);
+  assert.equal(computeSessionResult({ correct: 7, played: 7 }, { ...prev, previousPct: 50 }).newBest, false);
+  assert.equal(computeSessionResult({ correct: 0, played: 5 }, {}).newBest, false);
+});
+
+test('rankLeaders: by points, then by percentage, unknown percentage last', () => {
+  const rows = [
+    { uid: 'a', points: 40, pct: 70 },
+    { uid: 'b', points: 50, pct: 60 },
+    { uid: 'c', points: 40, pct: 90 },
+    { uid: 'd', points: 40, pct: null },
+  ];
+  assert.deepEqual(rankLeaders(rows).map((r) => r.uid), ['b', 'c', 'a', 'd']);
 });

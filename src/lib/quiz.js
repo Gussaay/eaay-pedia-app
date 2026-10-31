@@ -89,8 +89,33 @@ export function computeSessionResult({ correct, played }, prev = {}) {
     overall,
     trial,
     quizPerformance,
-    newBest: points > (prev.previousPoints || 0),
+    newBest: isNewBest(points, percentage, prev),
   };
+}
+
+/**
+ * Whether this attempt replaces your row on the points leaderboard: more
+ * points, or the same points with a better percentage (which then decides
+ * the order among people tied on points). previousPct is unknown (null) on
+ * rows written before the percentage was kept; a tie then fills it in.
+ */
+function isNewBest(points, percentage, prev) {
+  const before = prev.previousPoints || 0;
+  if (points > before) return true;
+  if (!points || points < before) return false;
+  return prev.previousPct == null || percentage > prev.previousPct;
+}
+
+/** quizlead/<uid>/<pkey>_pct: the percentage of the attempt that set the points. */
+export const leadPctKey = (pkey) => `${pkey}_pct`;
+
+/**
+ * Points leaderboard order: most points first; on equal points, the higher
+ * percentage correct first (rows without one last).
+ */
+export function rankLeaders(list) {
+  const pct = (r) => (r.pct == null ? -1 : r.pct);
+  return [...list].sort((a, b) => b.points - a.points || pct(b) - pct(a));
 }
 
 /** Result banner (ResultsActivity thresholds). */

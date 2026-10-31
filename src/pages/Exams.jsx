@@ -6,6 +6,8 @@ import { useState } from 'react';
 import { useNavigate, useParams, useSearchParams } from 'react-router-dom';
 import { FileQuestion } from 'lucide-react';
 import { useList } from '../hooks/useData';
+import { useQuizProgress } from '../hooks/useQuizProgress';
+import ProgressBadge from '../components/ProgressBadge';
 import { num } from '../lib/rtdb';
 import { quizPath } from '../lib/quizSource';
 import QuestionBrowser, { PracticeSets } from '../components/QuestionBrowser';
@@ -15,10 +17,15 @@ import { bookScopes, scopesOf, unlockChoices } from '../lib/access';
 import { groupBooks } from '../lib/bookGroups';
 import { AppBar, Empty, ErrorBox, ListCard, Page, SkeletonList } from '../components/ui';
 
-const countBadge = (n, level) => (
+// "55 Qs" and, under it, how far you got: "Done · 72%" (your average over
+// every attempt) or "26/55 · 65%" for a quiz you have only partly answered.
+const countBadge = (n, level, progress) => (
   <>
     <AccessMark level={level} />
-    {n ? <span className="text-xs font-semibold bg-brand-50 text-brand-700 rounded-full px-2 py-1 shrink-0">{n} Qs</span> : null}
+    <span className="flex flex-col items-end gap-1 shrink-0">
+      {n ? <span className="text-xs font-semibold bg-brand-50 text-brand-700 rounded-full px-2 py-1">{n} Qs</span> : null}
+      <ProgressBadge progress={progress} total={n} />
+    </span>
   </>
 );
 
@@ -32,6 +39,8 @@ export default function Exams() {
   const isCollection = source.includes('smsb');
   const [tab, setTab] = useState('exam');
   const levelOf = useAccessCheck();
+  // Your score on each quiz, from the saved copy when offline (lib/quizProgress.js).
+  const mine = useQuizProgress(!editMode);
 
   const exams = useList('allquiz', {
     filter: (q) =>
@@ -136,7 +145,7 @@ export default function Exams() {
                 img={q.img}
                 title={String(q.title || '').replace('MCQs', '').trim()}
                 subtitle={q.uploader ? `by ${q.uploader}` : q.des}
-                badge={countBadge(num(q.number))}
+                badge={countBadge(num(q.number), undefined, mine[q.key])}
                 onClick={() =>
                   navigate(
                     editMode
@@ -157,6 +166,7 @@ export default function Exams() {
                 badge={countBadge(
                   num(c[`${type}number`]),
                   levelOf(scopesOf({ kind: 'chapter', pkey: `${c._key}${type}`, source }, { bank, group: groupKey })),
+                  mine[`${c._key}${type}`],
                 )}
                 onClick={() => navigate(quizPath('chapter', c._key, { type, source, name }))}
               />

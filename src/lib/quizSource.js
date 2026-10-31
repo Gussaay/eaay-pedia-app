@@ -14,7 +14,7 @@ import { get, query, ref, orderByChild, startAt } from 'firebase/database';
 import { auth, db } from '../firebase';
 import { getOne, getWhere, getWhereCached, toList, num } from './rtdb';
 import { listSpots, loadSpot } from './resume';
-import { matchesChapter } from './quiz';
+import { leadPctKey, matchesChapter, rankLeaders } from './quiz';
 import { getQuiz, saveQuiz } from './offline';
 import { isConnectionBroken } from './connectivity';
 import { batchOf, filterLabel, isPersonalFilter, parseFilter, practiceFilter, setTitle, uniqueQuestions } from './questionBrowse';
@@ -308,11 +308,35 @@ export async function loadLeaderboard(pkey, limit = 50) {
   } catch {
     list = toList(await get(ref(db, 'quizlead')));
   }
-  return list
+  const pctKey = leadPctKey(pkey);
+  const rows = list
     .filter((u) => u[pkey] !== undefined)
-    .map((u) => ({ uid: u._key, name: u.name, img: u.img, points: num(u[pkey]) }))
-    .sort((a, b) => b.points - a.points)
-    .slice(0, limit);
+    .map((u) => ({
+      uid: u._key,
+      name: u.name,
+      img: u.img,
+      points: num(u[pkey]),
+      pct: u[pctKey] === undefined ? null : num(u[pctKey]),
+    }))
+    .sort((a, b) => b.points - a.points);
+  // Everyone who can still make the list, ties at the cut included.
+  const cut = rows[limit - 1]?.points ?? -Infinity;
+  const top = rows.filter((r) => r.points >= cut);
+  // Rows saved before the percentage was kept: use that person's own score
+  // on this quiz instead (quizusers/<uid>/<pkey>, the average of their
+  // attempts). Their next attempt with the same points stores the real one.
+  await Promise.all(
+    top
+      .filter((r) => r.pct == null)
+      .map((r) =>
+        getOne(`quizusers/${r.uid}/${pkey}`)
+          .then((v) => {
+            if (v != null && v !== '') r.pct = num(v);
+          })
+          .catch(() => {}),
+      ),
+  );
+  return rankLeaders(top).slice(0, limit);
 }
 
 /**
