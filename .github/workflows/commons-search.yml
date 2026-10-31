@@ -1,0 +1,33 @@
+name: Explanation photo search
+
+# Read only on the app data: searches Wikimedia Commons for openly licensed
+# photos (scripts/commons-search.mjs) and saves previews to this branch for review.
+on:
+  push:
+    branches:
+      - claude/project-thread-4sow4l
+    paths:
+      - 'data/explain-images/search.json'
+      - 'scripts/commons-search.mjs'
+      - '.github/workflows/commons-search.yml'
+  workflow_dispatch:
+
+permissions:
+  contents: write
+
+jobs:
+  search:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+      - run: node scripts/commons-search.mjs
+      - name: Save previews to the branch
+        run: |
+          git config user.name "Gussaay"
+          git config user.email "Gussaay@gmail.com"
+          git add -f .tmp/candidates
+          git commit -m "Photo candidates for explanation images (review only)" || exit 0
+          git push
