@@ -40,7 +40,7 @@ import MnemonicVisual from '../components/MnemonicVisual';
 import MnemonicPeek from '../components/MnemonicPeek';
 import ShareMnemonicButton from '../components/ShareMnemonic';
 import { clearSpot, loadSpot, saveSpot } from '../lib/resume';
-import { AppBar, Button, Card, Empty, Page, SkeletonList, ZoomImage, useToast } from '../components/ui';
+import { AppBar, Button, Card, Empty, Page, SkeletonList, ZoomImage, useDeviceImage, useToast } from '../components/ui';
 
 const RATING_BUTTONS = [
   { rating: 'again', label: 'Again', hint: 'Show it later today', icon: X, className: 'bg-red-50 text-red-700 hover:bg-red-100 border-red-200' },
@@ -98,7 +98,8 @@ function Face({ children, back = false, visible, className = '' }) {
  * That viewer is portalled to <body>: inside the turning card, `fixed` would
  * be fixed to the card (a transformed ancestor), not to the screen.
  */
-function PictureBack({ src, caption }) {
+function PictureBack({ src: original, caption }) {
+  const src = useDeviceImage(original);
   const [open, setOpen] = useState(false);
   const [broken, setBroken] = useState(false);
   useBackHandler(() => {
@@ -108,7 +109,9 @@ function PictureBack({ src, caption }) {
   });
   return (
     <div className="relative flex h-full flex-col">
-      {broken ? (
+      {!src ? (
+        <div className="flex-1" aria-hidden="true" />
+      ) : broken ? (
         <p className="m-auto text-sm text-slate-400">The picture could not be loaded. Check your connection.</p>
       ) : (
         <img
@@ -118,7 +121,7 @@ function PictureBack({ src, caption }) {
           className="min-h-0 w-full flex-1 rounded-2xl object-contain"
         />
       )}
-      {!broken && (
+      {src && !broken && (
         <span
           role="button"
           tabIndex={0}

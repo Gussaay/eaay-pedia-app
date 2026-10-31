@@ -63,6 +63,17 @@ export default defineConfig({
             },
           },
           {
+            // Explanation pictures served by the site (/explain/...): download
+            // once, then always from the device.
+            urlPattern: ({ url }) => url.pathname.startsWith('/explain/'),
+            handler: 'CacheFirst',
+            options: {
+              cacheName: 'explain-images',
+              expiration: { maxEntries: 600, maxAgeSeconds: 365 * 24 * 60 * 60 },
+              cacheableResponse: { statuses: [0, 200] },
+            },
+          },
+          {
             // Quiz covers / explanation images from Firebase Storage.
             urlPattern: /^https:\/\/firebasestorage\.googleapis\.com\//,
             handler: 'CacheFirst',

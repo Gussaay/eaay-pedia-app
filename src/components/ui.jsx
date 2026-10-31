@@ -1,6 +1,8 @@
 import { createContext, useCallback, useContext, useEffect, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
+import { Capacitor } from '@capacitor/core';
 import { ArrowLeft, ChevronRight, ImageOff, Loader2, WifiOff, X } from 'lucide-react';
+import { cachedImageSrc, isCacheableImage } from '../lib/imageCache';
 
 // ---------------------------------------------------------------------------
 // Layout
@@ -236,10 +238,34 @@ export function Avatar({ src, size = 48, className = '' }) {
 }
 
 /** Tappable image that opens full screen with pinch-zoom (PhotoView replacement). */
-export function ZoomImage({ src, className = '', credit = '' }) {
+// In the phone app, our explanation pictures are downloaded once and then
+// shown from the copy saved on the device (lib/imageCache.js). On the web the
+// service worker does the same.
+const keepOnDevice = (url) => Capacitor.isNativePlatform() && isCacheableImage(url);
+
+export function useDeviceImage(src) {
+  const [shown, setShown] = useState(() => (keepOnDevice(src) ? '' : src));
+  useEffect(() => {
+    if (!keepOnDevice(src)) {
+      setShown(src);
+      return undefined;
+    }
+    let alive = true;
+    setShown('');
+    cachedImageSrc(src).then((u) => alive && setShown(u));
+    return () => {
+      alive = false;
+    };
+  }, [src]);
+  return shown;
+}
+
+export function ZoomImage({ src: original, className = '', credit = '' }) {
   const [open, setOpen] = useState(false);
   const [broken, setBroken] = useState(false);
-  if (!src) return null;
+  const src = useDeviceImage(original);
+  if (!original) return null;
+  if (!src) return <div className="h-40" aria-hidden="true" />;
   if (broken)
     return (
       <div className="flex items-center gap-2 text-sm text-slate-400 py-2">
