@@ -10,7 +10,7 @@ import { useMemo, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { ChevronRight, FlaskConical, Layers } from 'lucide-react';
 import { useAsync } from '../hooks/useData';
-import { getOne } from '../lib/rtdb';
+import { getOneCached } from '../lib/rtdb';
 import { loadBookQuestions, quizPath } from '../lib/quizSource';
 import { loadAllHistory } from '../lib/quizHistory';
 import { useAuth } from '../hooks/useAuth';
@@ -95,7 +95,7 @@ function Row({ icon: Icon, title, subtitle, onOpen, chips = [], onChip, level })
 export default function QuestionBrowser({ bank, book = '', bookTitle = '', name = '', mode = 'chapters', onLocked }) {
   const navigate = useNavigate();
   const check = useAccessCheck();
-  const data = useAsync(() => getOne(`qbrowse/${bank}`), [bank]);
+  const data = useAsync(() => getOneCached(`qbrowse/${bank}`), [bank]);
   const stats = useMemo(() => {
     const all = data.data || null;
     if (!all) return null;

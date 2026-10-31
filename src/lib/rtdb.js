@@ -19,7 +19,8 @@ import {
 } from 'firebase/database';
 import { ref as sRef, uploadBytes, getDownloadURL } from 'firebase/storage';
 import { db, storage } from '../firebase';
-import { reportRequestFailure, reportRequestSuccess } from './connectivity';
+import { isConnectionBroken, reportRequestFailure, reportRequestSuccess } from './connectivity';
+import { cacheGet, cacheHas, cachePatch, cachePut, cacheSet, whereKey } from './readCache';
 
 /** Android wrote numbers as String.valueOf((long) x). */
 export const str = (n) => String(Math.trunc(Number(n) || 0));
@@ -107,20 +108,77 @@ export async function getLatest(path, n) {
 
 export async function getOne(path) {
   const snap = await track(get(ref(db, path)));
-  return snap.exists() ? snap.val() : null;
+  const value = snap.exists() ? snap.val() : null;
+  // Keep a saved copy current when a screen has asked for this node before.
+  if (cacheHas(path)) cachePut(path, value);
+  return value;
 }
+
+// ---------------------------------------------------------------------------
+// Reads for screens that must still show something offline (readCache.js).
+// The server's answer wins; the saved copy is used when there is no working
+// connection, when the request fails, or when it is slower than `wait` ms.
+// Never use these for a read whose value is then added to and written back.
+// ---------------------------------------------------------------------------
+const inFlight = new Map();
+
+async function cachedRead(key, fetcher, wait) {
+  const saved = await cacheGet(key);
+  let net = inFlight.get(key);
+  if (!net) {
+    net = fetcher().then((value) => {
+      cachePut(key, value);
+      return value;
+    });
+    inFlight.set(key, net);
+    net.then(
+      () => inFlight.delete(key),
+      () => inFlight.delete(key),
+    );
+  }
+  if (isConnectionBroken()) {
+    // Do not wait on a request that cannot get through; it still runs and
+    // saves its answer if the connection turns out to be back.
+    net.catch(() => {});
+    if (saved === undefined) throw Object.assign(new Error('No internet and nothing saved yet.'), { offline: true });
+    return saved;
+  }
+  if (saved === undefined) return net;
+  return new Promise((resolve) => {
+    const timer = setTimeout(() => resolve(saved), wait);
+    net.then(
+      (value) => {
+        clearTimeout(timer);
+        resolve(value);
+      },
+      () => {
+        clearTimeout(timer);
+        resolve(saved);
+      },
+    );
+  });
+}
+
+export const getOneCached = (path, { wait = 5000 } = {}) =>
+  cachedRead(path, () => track(get(ref(db, path))).then((s) => (s.exists() ? s.val() : null)), wait);
+
+export const getWhereCached = (path, child, value, { wait = 5000 } = {}) =>
+  cachedRead(whereKey(path, child, value), () => getWhere(path, child, value), wait);
 
 export const updateAt = (path, values) => {
   forget(path);
+  cachePatch(path, values);
   return update(ref(db, path), values);
 };
 /** Replaces the whole node at `path`. */
 export const setAt = (path, value) => {
   forget(path);
+  cacheSet(path, value);
   return set(ref(db, path), value);
 };
 export const removeAt = (path) => {
   forget(path);
+  cacheSet(path, null);
   return remove(ref(db, path));
 };
 
@@ -130,6 +188,7 @@ export const removeAt = (path) => {
  */
 export const updatePaths = (updates) => {
   Object.keys(updates).forEach(forget);
+  Object.entries(updates).forEach(([p, v]) => cacheSet(p, v));
   return update(ref(db), updates);
 };
 
@@ -139,7 +198,10 @@ export const removePaths = (paths) =>
 export async function pushTo(path, values) {
   forget(path);
   const r = push(ref(db, path));
-  if (values) await update(r, values);
+  if (values) {
+    cachePatch(`${path}/${r.key}`, values);
+    await update(r, values);
+  }
   return r.key;
 }
 export const newKey = (path) => push(ref(db, path)).key;
@@ -149,12 +211,35 @@ export function incrementString(path) {
   return runTransaction(ref(db, path), (current) => str(num(current) + 1));
 }
 
-export function subscribe(path, cb) {
-  return onValue(
+/**
+ * Live value of a node. With { cache: true } the saved copy is passed first
+ * (the database sends nothing at all while offline, so without it the screen
+ * would wait for ever), and each live value replaces the saved copy.
+ */
+export function subscribe(path, cb, { cache = false } = {}) {
+  let live = false;
+  let closed = false;
+  if (cache)
+    cacheGet(path).then((saved) => {
+      if (!live && !closed && saved !== undefined) cb(saved);
+    });
+  const off = onValue(
     ref(db, path),
-    (snap) => cb(snap.exists() ? snap.val() : null),
-    () => cb(null),
+    (snap) => {
+      live = true;
+      const value = snap.exists() ? snap.val() : null;
+      if (cache) cachePut(path, value);
+      cb(value);
+    },
+    () => {
+      // Refused (rules): only report nothing when there is no saved copy.
+      if (!cache || !cacheHas(path)) cb(null);
+    },
   );
+  return () => {
+    closed = true;
+    off();
+  };
 }
 
 // ---------------------------------------------------------------------------

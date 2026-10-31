@@ -246,7 +246,7 @@ const readPref = () => {
 export function useBooks() {
   const [list, setList] = useState(null);
   const [on, setOnState] = useState(readPref);
-  useEffect(() => subscribe('books/list', setList), []);
+  useEffect(() => subscribe('books/list', setList, { cache: true }), []);
   const setOn = (v) => {
     setOnState(v);
     try {

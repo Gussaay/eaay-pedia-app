@@ -3,6 +3,8 @@ import { createContext, useContext, useEffect, useMemo, useState } from 'react';
 import { onAuthStateChanged, signOut } from 'firebase/auth';
 import { auth } from '../firebase';
 import { subscribe, updateAt } from '../lib/rtdb';
+import { cacheClear } from '../lib/readCache';
+import { warmUserCache } from '../lib/offlineWarm';
 import { forgetPushToken } from '../lib/push';
 import { App as CapApp } from '@capacitor/app';
 import { APP_VERSION, APP_VERSION_NUMBER, isAdminEmail } from '../config';
@@ -78,10 +80,22 @@ export function AuthProvider({ children }) {
       CapApp.getInfo()
         .then((info) => updateAt(`quizusers/${user.uid}`, { apk: String(info.version || '') }))
         .catch(() => {});
-    return subscribe(`quizusers/${user.uid}`, (val) => {
-      setProfile(val || {});
-      setProfileLoading(false);
-    });
+    // Your progress is saved on the phone a few seconds after start, so the
+    // app still shows it with no internet (lib/readCache.js).
+    const warm = setTimeout(() => warmUserCache(user.uid), 4000);
+    // The saved copy comes first, so your totals show with no internet.
+    const off = subscribe(
+      `quizusers/${user.uid}`,
+      (val) => {
+        setProfile(val || {});
+        setProfileLoading(false);
+      },
+      { cache: true },
+    );
+    return () => {
+      clearTimeout(warm);
+      off();
+    };
   }, [user]);
 
   useEffect(() => {
@@ -159,5 +173,6 @@ export function useAuth() {
  */
 export const logout = async () => {
   await forgetPushToken(auth.currentUser?.uid).catch(() => {});
+  await cacheClear();
   return signOut(auth);
 };

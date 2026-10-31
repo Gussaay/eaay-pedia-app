@@ -54,6 +54,6 @@ export function useAccessCheck() {
 export function useMyRequests() {
   const { user } = useAuth();
   const [requests, setRequests] = useState({});
-  useEffect(() => (user ? subscribe(`unlock_requests/${user.uid}`, (v) => setRequests(v || {})) : undefined), [user]);
+  useEffect(() => (user ? subscribe(`unlock_requests/${user.uid}`, (v) => setRequests(v || {}), { cache: true }) : undefined), [user]);
   return requests;
 }

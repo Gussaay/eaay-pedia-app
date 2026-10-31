@@ -11,7 +11,8 @@
 //     setup screen are correct even on a phone that has never had a signal
 //   - the database copy is what makes the same progress appear on a second
 //     device, and it is allowed to fail without the session being lost
-import { getOne, removeAt, setAt, str, updateAt } from './rtdb';
+import { getOne, getOneCached, removeAt, setAt, str, updateAt } from './rtdb';
+import { isConnectionBroken } from './connectivity';
 import { addCounts, dayKey, rowsOf, tallyTopics } from './performance';
 import { clearAttempts } from './quizReview';
 
@@ -44,7 +45,7 @@ export async function loadHistory(uid, pkey) {
   const local = readLocal()[pkey] || {};
   let remote = {};
   try {
-    remote = (await getOne(`quizhistory/${uid}/${pkey}`)) || {};
+    remote = (await getOneCached(`quizhistory/${uid}/${pkey}`)) || {};
   } catch {
     /* offline, or rules not deployed yet: the local copy is enough */
   }
@@ -73,7 +74,7 @@ export async function loadAllHistory(uid) {
     );
   const out = {};
   try {
-    merge(out, (await getOne(`quizhistory/${uid}`)) || {});
+    merge(out, (await getOneCached(`quizhistory/${uid}`)) || {});
   } catch {
     /* offline: the local copy is enough */
   }
@@ -84,13 +85,15 @@ export async function loadAllHistory(uid) {
 /** Everything needed by the performance dashboard, in one go. */
 export async function loadDashboard(uid) {
   let [stats, cats, perf] = await Promise.all([
-    getOne(`quizstats/${uid}`).catch(() => null),
-    getOne(`quizcats/${uid}`).catch(() => null),
-    getOne(`quizperf/${uid}`).catch(() => null),
+    getOneCached(`quizstats/${uid}`).catch(() => null),
+    getOneCached(`quizcats/${uid}`).catch(() => null),
+    getOneCached(`quizperf/${uid}`).catch(() => undefined),
   ]);
   // Counts written before the topics came from the questions themselves (most
   // of them filed under "?") are worked out again once, from your answers.
-  if (perf?.v !== PERF_VERSION) {
+  // Only online, and only when the counts were really read: rebuilding from a
+  // failed read would write empty counts over the real ones.
+  if (perf !== undefined && perf?.v !== PERF_VERSION && !isConnectionBroken()) {
     const rebuilt = await rebuildBreakdown(uid).catch(() => null);
     if (rebuilt) ({ cats, perf } = rebuilt);
   }

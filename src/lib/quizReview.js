@@ -11,7 +11,7 @@
 // Like the history, each one is written to localStorage first (synchronous,
 // works offline) and to the database second. The database keeps them all and
 // is what a second device sees; the device keeps the newest few hundred.
-import { getOne, newKey, str, updateAt } from './rtdb';
+import { getOneCached, newKey, str, updateAt } from './rtdb';
 import { encodeAttempt, decodeAttempt, isCorrect } from './quiz';
 
 const LKEY = 'quizreview:v2';
@@ -90,7 +90,7 @@ export async function loadAttempts(uid, pkey) {
   if (!pkey) return [];
   const merged = { ...(readLocal()[pkey] || {}) };
   try {
-    const remote = (await getOne(`quizreview/${uid}/${pkey}`)) || {};
+    const remote = (await getOneCached(`quizreview/${uid}/${pkey}`)) || {};
     Object.entries(remote).forEach(([id, r]) => {
       if (r && typeof r === 'object') merged[id] = r;
     });

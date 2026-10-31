@@ -33,7 +33,7 @@
 // to the old Sketchware app, which keeps per-topic scores there — writing
 // decks into it would mix two unrelated things in one place and put live data
 // within reach of this screen's "delete all" button.
-import { getList, getOne, num, removeAt, updatePaths } from './rtdb';
+import { getList, getOneCached, num, removeAt, updatePaths } from './rtdb';
 import { bumpStreak, today } from './flashcards';
 
 /** Database keys cannot contain . # $ [ ] or /, and system names might. */
@@ -56,13 +56,13 @@ export async function loadCards(deckId) {
 }
 
 export const loadDeckProgress = (uid, deckId) =>
-  uid ? getOne(`flashprogress/${uid}/${deckId}`).then((v) => v || {}) : Promise.resolve({});
+  uid ? getOneCached(`flashprogress/${uid}/${deckId}`).then((v) => v || {}) : Promise.resolve({});
 
 export const loadAllProgress = (uid) =>
-  uid ? getOne(`flashprogress/${uid}`).then((v) => v || {}) : Promise.resolve({});
+  uid ? getOneCached(`flashprogress/${uid}`).then((v) => v || {}) : Promise.resolve({});
 
 export const loadStats = (uid) =>
-  uid ? getOne(`flashstats/${uid}`).then((v) => v || {}) : Promise.resolve({});
+  uid ? getOneCached(`flashstats/${uid}`).then((v) => v || {}) : Promise.resolve({});
 
 // ---------------------------------------------------------------------------
 // Writing

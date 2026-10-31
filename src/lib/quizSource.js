@@ -12,7 +12,7 @@
 // and reads fall back to that copy when the device has no connection.
 import { get, query, ref, orderByChild, startAt } from 'firebase/database';
 import { auth, db } from '../firebase';
-import { getOne, getWhere, toList, num } from './rtdb';
+import { getOne, getWhere, getWhereCached, toList, num } from './rtdb';
 import { listSpots, loadSpot } from './resume';
 import { matchesChapter } from './quiz';
 import { getQuiz, saveQuiz } from './offline';
@@ -326,8 +326,9 @@ export async function loadLeaderboard(pkey, limit = 50) {
  */
 export async function findSavedSession(uid, pkey) {
   if (!uid || !pkey) return null;
-  // Offline, the device's own bookmark is all there is; do not wait on the database.
-  const remote = isOffline() ? [] : await withTimeout(getWhere('resume', 'uid', uid), 6000).catch(() => []);
+  // Offline, the saved copy of your "Save for later" list and the device's own
+  // bookmark are used straight away; nothing waits on the database.
+  const remote = await withTimeout(getWhereCached('resume', 'uid', uid), 6000).catch(() => []);
   const rows = remote.filter((r) => r.key === pkey);
   if (rows.length) return rows[rows.length - 1];
   const local = loadSpot('quiz', pkey);
@@ -357,7 +358,7 @@ export async function listPausedSessions(uid) {
         at: s.at || 0,
       }),
     );
-  const rows = await getWhere('resume', 'uid', uid).catch(() => []);
+  const rows = await withTimeout(getWhereCached('resume', 'uid', uid), 6000).catch(() => []);
   rows
     .filter((r) => r.path)
     .forEach((r) =>
