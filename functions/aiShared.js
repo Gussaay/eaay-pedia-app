@@ -9,10 +9,14 @@
 //       the next person to ask gets a new one, which replaces it.
 //   aiUsage/log/<day>/<id>/vote   1 or -1 from the person who used it (👍/👎).
 //
+//       `v` is the prompt version (EXPLAIN_VERSION): older answers are asked again.
+//
 // Also gathers the bank's own linked questions for an explanation, so the AI
-// explains in step with the bank's answer keys and teaching.
+// explains in step with the bank's answer keys and teaching and sums up what
+// they say (functions/explainPrompt.js).
 import { getDatabase } from 'firebase-admin/database';
 import { HttpsError } from 'firebase-functions/v2/https';
+import { EXPLAIN_VERSION, linkedBlock, pickLinks } from './explainPrompt.js';
 
 const SAFE_KEY = /^[^/.#$[\]]{1,200}$/;
 export const validKey = (k) => (typeof k === 'string' && SAFE_KEY.test(k) ? k : '');
@@ -38,6 +42,8 @@ export async function sharedExplanation(qid, data) {
   if (!qid || !data?.question) return null;
   const hit = (await sharedRef(qid, explainMode(data)).get()).val();
   if (!hit?.text || hit.fp !== questionFingerprint(data.question) || !isTrusted(hit)) return null;
+  // Written by an older prompt (before linked-question summaries): ask again.
+  if ((Number(hit.v) || 1) < EXPLAIN_VERSION) return null;
   return hit;
 }
 
@@ -49,10 +55,11 @@ export async function saveExplanation(qid, data, out, { uid, staff }) {
   if (!qid || !out?.text) return;
   const ref = sharedRef(qid, explainMode(data));
   const old = (await ref.get()).val();
-  const fits = old?.fp === questionFingerprint(data.question) && isTrusted(old);
+  const fits = old?.fp === questionFingerprint(data.question) && isTrusted(old) && (Number(old.v) || 1) >= EXPLAIN_VERSION;
   if (fits && data.fresh && !staff) return;
   await ref.set({
     fp: questionFingerprint(data.question),
+    v: EXPLAIN_VERSION,
     text: out.text,
     model: out.model || '',
     ...(out.sources ? { sources: out.sources } : {}),
@@ -63,42 +70,19 @@ export async function saveExplanation(qid, data, out, { uid, staff }) {
   });
 }
 
-const ids = (v) => (v && typeof v === 'object' ? Object.keys(v).filter((k) => v[k] && validKey(k)) : []);
-const clip = (s, n) => str(s).slice(0, n);
-
 /**
- * Up to `max` of the bank's questions linked to this one (similar first, then
- * related; its own copies in other sittings add nothing), as prompt text.
+ * The bank's questions linked to this one (similar first, then linked; its own
+ * copies in other sittings add nothing), each with its stem, options, key and
+ * explanation, capped for length: { text, shown } for explainPrompt.
  */
-export async function linkedQuestions(qid, max = 4) {
-  if (!qid) return '';
+export async function linkedQuestions(qid) {
+  if (!qid) return { text: '', shown: 0 };
   const db = getDatabase();
   const me = (await db.ref(`quizqq/${qid}`).get()).val();
-  if (!me) return '';
-  const same = new Set(ids(me.same));
-  const similar = ids(me.similar).filter((k) => !same.has(k) && k !== qid);
-  const related = ids(me.related).filter((k) => !same.has(k) && !similar.includes(k) && k !== qid);
-  const pick = [...similar.slice(0, max).map((k) => ['similar', k]), ...related.slice(0, max).map((k) => ['linked', k])].slice(0, max);
-  if (!pick.length) return '';
-  const rows = await Promise.all(pick.map(([kind, k]) => db.ref(`quizqq/${k}`).get().then((s) => [kind, s.val()])));
-  const blocks = rows
-    .filter(([, q]) => q?.question)
-    .map(([kind, q], i) => {
-      const opts = ['a', 'b', 'c', 'd', 'e'].filter((o) => str(q[o])).map((o) => `${o.toUpperCase()}. ${clip(q[o], 200)}`).join(' / ');
-      return [
-        `(${i + 1}) ${kind === 'similar' ? 'Similar question (same fact)' : 'Linked question (same condition, connected point)'}: ${clip(q.question, 700)}`,
-        opts,
-        str(q.answer) ? `Key: ${str(q.answer).toUpperCase()}` : '',
-        str(q.exp) ? `Bank explanation: ${clip(q.exp, 700)}` : '',
-      ]
-        .filter(Boolean)
-        .join('\n');
-    });
-  return blocks.length
-    ? `Questions from the same bank linked to this one:\n\n${blocks.join('\n\n')}\n\n` +
-        'Keep the explanation consistent with these keys where they agree. If one of them contradicts this ' +
-        "question's key, say so in one line. Do not explain them separately.\n\n"
-    : '';
+  const { pick, total } = pickLinks(me, qid, { ok: validKey });
+  if (!pick.length) return { text: '', shown: 0 };
+  const rows = await Promise.all(pick.map(({ kind, id }) => db.ref(`quizqq/${id}`).get().then((s) => ({ kind, q: s.val() }))));
+  return linkedBlock(rows, total);
 }
 
 /** 👍 / 👎 on a logged use, by the person who made it. */

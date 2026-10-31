@@ -44,6 +44,7 @@ import { findPassages } from './books.js';
 import { runAgent } from './agent.js';
 import { activeUsers, dailyPool, modelKey, quotaConfig, userQuota } from './aiQuota.js';
 import { linkedQuestions, saveExplanation, sharedExplanation, validKey, vote } from './aiShared.js';
+import { explainPrompt } from './explainPrompt.js';
 
 const GROQ_API_KEY = defineSecret('GROQ_API_KEY');
 const GEMINI_API_KEY = defineSecret('GEMINI_API_KEY');
@@ -256,19 +257,13 @@ function withPassages(contents, passages) {
 const count = (n, def, max) => Math.max(1, Math.min(max, parseInt(n, 10) || def));
 
 /** Turns a request into Gemini `contents` (+ JSON schema for structured tasks). */
-function buildRequest(data) {
+function buildRequest(data, linked) {
   const task = String(data?.task || '');
   const user = (text) => [{ role: 'user', parts: [{ text }] }];
 
   if (task === 'explain') {
     if (!data.question?.question) throw new HttpsError('invalid-argument', 'No question to explain.');
-    return {
-      contents: user(
-        `${questionText(data.question)}\n\nExplain this MCQ for exam revision: why the keyed answer is ` +
-          'correct, then one line on why each other option is wrong. End with a short "Key point" line ' +
-          'worth memorising. If you believe the answer key is wrong, say so clearly and why.',
-      ),
-    };
+    return { contents: user(explainPrompt(questionText(data.question), linked)) };
   }
 
   if (task === 'chat') {
@@ -476,12 +471,10 @@ async function handle(request, response, use) {
     }));
   }
 
-  let { contents, schema } = buildRequest(request.data);
+  // An explanation also reads the bank's linked questions (stem, key, explanation).
+  const linked = qid ? await linkedQuestions(qid).catch((e) => logger.warn(`linked questions: ${e.message}`)) : null;
+  let { contents, schema } = buildRequest(request.data, linked || undefined);
   let sources;
-  if (qid) {
-    const linked = await linkedQuestions(qid).catch((e) => logger.warn(`linked questions: ${e.message}`));
-    if (linked) contents[0].parts[0].text = linked + contents[0].parts[0].text;
-  }
   if (request.data?.books && ['explain', 'chat'].includes(request.data.task)) {
     if (!key) throw new HttpsError('failed-precondition', 'Textbook search needs GEMINI_API_KEY (for embeddings).');
     try {
