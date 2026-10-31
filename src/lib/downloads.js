@@ -94,7 +94,11 @@ const humanSize = (bytes) => {
  * file that downloaded but could not be opened still reports ok, because the
  * file is there and the UI offers an "Open" button for it.
  */
-export async function startDownload({ id, url, fileName, title, onDone }) {
+// A download that gets no progress for this long is reported as stalled, so
+// the screen never sits on "Downloading…" for ever on a dead connection.
+const STALL_MS = 90 * 1000;
+
+export async function startDownload({ id, url, fileName, title, onDone, meta, autoOpen = true }) {
   if (!url) return { ok: false, error: 'No download link' };
 
   if (!isNative) {
@@ -117,11 +121,26 @@ export async function startDownload({ id, url, fileName, title, onDone }) {
     error: null,
     uri: null,
     at: Date.now(),
+    ...(meta || {}),
   });
 
   let progressHandle = null;
+  let stallTimer = null;
+  let stalled = null;
+  const stall = new Promise((_, reject) => {
+    stalled = () => {
+      clearTimeout(stallTimer);
+      stallTimer = setTimeout(
+        () => reject(new Error('The download stopped (slow or broken connection).')),
+        STALL_MS,
+      );
+    };
+  });
+  stall.catch(() => {});
   try {
+    stalled();
     progressHandle = await Filesystem.addListener('progress', (p) => {
+      stalled();
       if (p?.contentLength > 0) {
         upsert(key, {
           progress: Math.min(100, Math.round((p.bytes / p.contentLength) * 100)),
@@ -132,24 +151,37 @@ export async function startDownload({ id, url, fileName, title, onDone }) {
 
     // Redirects matter here: the public APK link is a 302 to the GitHub
     // release, and the native HTTP client follows it.
-    await Filesystem.downloadFile({
-      url,
-      path: name,
-      directory: Directory.Cache,
-      progress: true,
-      recursive: true,
-    });
-
-    const { uri } = await Filesystem.getUri({ path: name, directory: Directory.Cache });
-    upsert(key, { status: 'done', progress: 100, uri, at: Date.now() });
+    const result = await Promise.race([
+      Filesystem.downloadFile({
+        url,
+        path: name,
+        directory: Directory.Cache,
+        progress: true,
+        recursive: true,
+      }),
+      stall,
+    ]);
+    // Some servers answer an error page with 200; an installer of a few KB is
+    // never right.
+    const st = await Filesystem.stat({ path: name, directory: Directory.Cache }).catch(() => null);
+    if (st && Number(st.size) > 0 && Number(st.size) < 50 * 1024 && /\.apk$/i.test(name)) {
+      throw new Error('The server sent an incomplete file.');
+    }
+    const uri = result?.path?.startsWith?.('file:')
+      ? result.path
+      : (await Filesystem.getUri({ path: name, directory: Directory.Cache })).uri;
+    upsert(key, { status: 'done', progress: 100, uri, at: Date.now(), error: null });
     onDone?.(uri);
 
+    if (!autoOpen) return { ok: true, uri };
     const opened = await openFile(uri, name);
-    return { ok: true, uri, opened };
+    if (!opened.ok) upsert(key, { error: opened.error });
+    return { ok: true, uri, opened: opened.ok };
   } catch (e) {
     upsert(key, { status: 'error', error: e?.message || 'The download failed.' });
     return { ok: false, error: e?.message || 'The download failed.' };
   } finally {
+    clearTimeout(stallTimer);
     progressHandle?.remove?.();
   }
 }
@@ -157,19 +189,40 @@ export async function startDownload({ id, url, fileName, title, onDone }) {
 async function openFile(uri, name) {
   try {
     await FileOpener.open({ filePath: uri, contentType: mimeFor(name) });
-    return true;
+    return { ok: true };
+  } catch (e) {
+    return { ok: false, error: e?.message || 'No app on this phone can open this file.' };
+  }
+}
+
+/** True when a finished download's file is still on the phone. Android may
+ * clear the cache directory at any time. */
+export async function downloadFileExists(id) {
+  const item = getDownload(id);
+  if (!item?.fileName) return false;
+  if (!isNative) return true;
+  try {
+    const st = await Filesystem.stat({ path: item.fileName, directory: Directory.Cache });
+    return Number(st?.size) > 0;
   } catch {
     return false;
   }
 }
 
-/** Re-opens a file that was downloaded earlier (the installer, usually). */
+/**
+ * Re-opens a file that was downloaded earlier (the installer, usually).
+ * Returns { ok } or { ok: false, error, missing } — a missing file is marked
+ * as failed so the screen offers to download it again.
+ */
 export async function openDownload(id) {
   const item = getDownload(id);
-  if (!item?.uri) return false;
-  const ok = await openFile(item.uri, item.fileName);
-  if (!ok) upsert(id, { error: 'No app on this phone can open this file.' });
-  return ok;
+  if (!item?.uri || !(await downloadFileExists(id))) {
+    if (item) upsert(id, { status: 'error', error: 'The downloaded file is no longer on the phone.' });
+    return { ok: false, missing: true, error: 'The downloaded file is no longer on the phone.' };
+  }
+  const res = await openFile(item.uri, item.fileName);
+  upsert(id, { error: res.ok ? null : res.error });
+  return res;
 }
 
 export async function removeDownload(id) {

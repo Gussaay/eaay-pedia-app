@@ -20,7 +20,7 @@ import {
   postponeLiveUpdate,
   reopenLiveUpdate,
 } from '../lib/liveUpdate';
-import { downloadStore, getDownload, startDownload } from '../lib/downloads';
+import { downloadStore, getDownload, openDownload, removeDownload, startDownload } from '../lib/downloads';
 import { fetchNativeVersion, isNewerBuild } from '../lib/nativeVersion';
 import { subscribe } from '../lib/rtdb';
 import { isNative } from '../lib/native';
@@ -36,8 +36,15 @@ export function useAppUpdate() {
   const [apk, setApk] = useState(null);
   const [nativeConfig, setNativeConfig] = useState(null);
   const [notice, setNotice] = useState(null); // { tone, text } for the manual check
+  const [installing, setInstalling] = useState(false);
 
-  const apkDownload = downloads.find((d) => d.id === APK_DOWNLOAD_ID) || null;
+  // The download record is kept across restarts. One left over from an
+  // earlier version (or saved before records carried a version) is not this
+  // update: showing it as "Downloaded" made Install open an old or deleted
+  // installer and nothing happened. Only a record for the offered build counts.
+  const savedApk = downloads.find((d) => d.id === APK_DOWNLOAD_ID) || null;
+  const apkDownload =
+    savedApk && apk && Number(savedApk.versionCode) === Number(apk.versionCode) ? savedApk : null;
 
   // Admin overrides for the APK prompt (force it, hide it, change the wording).
   useEffect(() => {
@@ -89,15 +96,35 @@ export function useAppUpdate() {
     lookForApk();
   }, [lookForApk]);
 
-  const downloadApk = useCallback(() => {
+  const downloadApk = useCallback(async () => {
     const url = apk?.url || APK_URL;
+    const old = getDownload(APK_DOWNLOAD_ID);
+    if (old && old.status !== 'downloading' && Number(old.versionCode) !== Number(apk?.versionCode)) {
+      await removeDownload(APK_DOWNLOAD_ID); // frees the old installer's space
+    }
     return startDownload({
       id: APK_DOWNLOAD_ID,
       url,
-      fileName: 'easy-pedia-mcqs.apk',
+      fileName: `easy-pedia-mcqs-${apk?.versionCode || 'latest'}.apk`,
       title: `Easy Pedia MCQs ${apk?.version || ''}`.trim(),
+      meta: { versionCode: apk?.versionCode ?? null },
     });
   }, [apk]);
+
+  /** Install: opens the downloaded installer, downloading it again when
+   * Android has cleared it. Errors land on the download record, which the
+   * dialog shows. */
+  const installApk = useCallback(async () => {
+    if (installing) return;
+    setInstalling(true);
+    try {
+      const res = await openDownload(APK_DOWNLOAD_ID);
+      if (!res.ok && res.missing) await downloadApk();
+    } finally {
+      setInstalling(false);
+    }
+  }, [installing, downloadApk]);
+
 
   const skipApk = useCallback(() => {
     if (apk?.mandatory) return;
@@ -169,9 +196,10 @@ export function useAppUpdate() {
     checkNow,
     onUpdateButton,
     downloadApk,
+    installApk,
+    installing,
     skipApk,
     installLiveUpdate,
     postponeLiveUpdate,
-    retryApkOpen: () => getDownload(APK_DOWNLOAD_ID),
   };
 }

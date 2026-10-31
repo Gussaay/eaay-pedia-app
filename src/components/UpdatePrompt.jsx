@@ -3,7 +3,6 @@
 import { useEffect } from 'react';
 import { AlertTriangle, CheckCircle2, Download, Info, RefreshCw, RotateCw } from 'lucide-react';
 import { useAppUpdate } from '../hooks/useAppUpdate';
-import { openDownload } from '../lib/downloads';
 import { Button, Modal } from './ui';
 import { useConnectivity } from './ConnectionNotice';
 
@@ -30,6 +29,8 @@ export default function UpdatePrompt() {
     notice,
     clearNotice,
     downloadApk,
+    installApk,
+    installing,
     skipApk,
     installLiveUpdate,
     postponeLiveUpdate,
@@ -37,6 +38,7 @@ export default function UpdatePrompt() {
 
   const apkBusy = apkDownload?.status === 'downloading';
   const apkReady = apkDownload?.status === 'done';
+  const apkError = apkDownload?.error || null;
   // The APK prompt hides the over-the-air one: installing the new APK replaces
   // the web bundle anyway, so showing both would ask for the same thing twice.
   // Offline, update popups wait for the internet: nothing should interrupt
@@ -71,8 +73,8 @@ export default function UpdatePrompt() {
               </Button>
             )}
             {apkReady ? (
-              <Button onClick={() => openDownload(apkDownload.id)}>
-                <Download size={18} /> Install
+              <Button onClick={installApk} loading={installing}>
+                <Download size={18} /> {apkError ? 'Try again' : 'Install'}
               </Button>
             ) : (
               <Button onClick={downloadApk} loading={apkBusy}>
@@ -89,15 +91,15 @@ export default function UpdatePrompt() {
         {apk?.size && !apkBusy && <p className="text-sm text-slate-500 mt-2">Download size: {apk.size}</p>}
 
         {apkBusy && <Progress percent={apkProgress} label={`Downloading… ${apkProgress}%`} />}
-        {apkReady && (
+        {apkReady && !apkError && (
           <p className="mt-3 rounded-xl bg-emerald-50 p-3 text-sm text-emerald-800">
             Downloaded. Tap Install — Android may first ask you to allow installing from Easy Pedia
-            MCQs.
+            MCQs. Turn that on, then come back and tap Install again.
           </p>
         )}
-        {apkDownload?.status === 'error' && (
-          <p className="mt-3 rounded-xl bg-red-50 p-3 text-sm text-red-700">
-            {apkDownload.error} Tap Download to try again.
+        {apkError && !apkBusy && (
+          <p role="alert" className="mt-3 rounded-xl bg-red-50 p-3 text-sm text-red-700">
+            {apkError} {apkReady ? 'Tap Try again.' : 'Tap Download to try again.'}
           </p>
         )}
       </Modal>
