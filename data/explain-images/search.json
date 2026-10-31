@@ -1,7 +1,5 @@
 {
-  "atopic-eczema": ["Atopic dermatitis", "Atopic eczema", "eczema child", "Dermatitis atopica"],
-  "hsv-vesicles": ["Herpes labialis", "Herpes simplex lip", "cold sore herpes", "Herpes simplex virus skin lesion"],
-  "gingivostomatitis": ["gingivostomatitis", "herpes gingivostomatitis", "primary herpes mouth"],
-  "acrodermatitis": ["Acrodermatitis enteropathica", "zinc deficiency", "acrodermatitis"],
-  "coin-xray": ["coin esophagus", "foreign body coin", "ingested coin", "swallowed coin"]
+  "ash-leaf": ["Ash leaf spot tuberous sclerosis", "Ash-leaf macule", "hypomelanotic macule tuberous sclerosis", "Tuberous sclerosis skin"],
+  "shagreen": ["Shagreen patch", "Shagreen patch tuberous sclerosis", "connective tissue nevus tuberous sclerosis"],
+  "angiofibroma": ["Facial angiofibromas tuberous sclerosis", "Adenoma sebaceum"]
 }
