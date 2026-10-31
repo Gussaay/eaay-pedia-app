@@ -254,8 +254,25 @@ jobs:
 
       # Explanation images (drawings + open-licence photos), served at
       # /explain/. Added after the over-the-air zip so the bundle stays small.
+      # Photos are downloaded once and kept in the Actions cache, so later
+      # releases do not fetch them again (Wikimedia rate-limits repeat downloads).
+      - name: Restore saved explanation photos
+        uses: actions/cache/restore@v4
+        with:
+          path: .cache/explain-photos
+          key: explain-photos-${{ github.run_id }}
+          restore-keys: explain-photos-
+
       - name: Add explanation images to the site
+        env:
+          EXPLAIN_PHOTO_CACHE: .cache/explain-photos
         run: node scripts/explain-images-site.mjs dist
+
+      - name: Save explanation photos for the next release
+        uses: actions/cache/save@v4
+        with:
+          path: .cache/explain-photos
+          key: explain-photos-${{ github.run_id }}
 
       # KEEP THE PREVIOUS RELEASES' FILES ON THE SITE.
       # Every release renames the code files. A phone with the app still open
