@@ -26,7 +26,10 @@ for (const im of images) {
     continue;
   }
   let ok = false;
-  for (let attempt = 1; attempt <= 3 && !ok; attempt += 1) {
+  // Wikimedia answers 429 (too many requests) when files are fetched quickly,
+  // so space the downloads out and back off longer on each retry.
+  await new Promise((r) => setTimeout(r, 1500));
+  for (let attempt = 1; attempt <= 5 && !ok; attempt += 1) {
     try {
       const res = await fetch(im.photo, { headers: { 'User-Agent': 'EasyPedia explanation images (easy-pedia.web.app)' } });
       const type = res.headers.get('content-type') || '';
@@ -38,7 +41,7 @@ for (const im of images) {
       ok = true;
     } catch (e) {
       console.log(`  try ${attempt} for ${im.file}: ${e.message}`);
-      await new Promise((r) => setTimeout(r, 3000 * attempt));
+      await new Promise((r) => setTimeout(r, 5000 * 2 ** (attempt - 1)));
     }
   }
   if (!ok) failed += 1;
