@@ -1,0 +1,43 @@
+name: Group banks
+
+# Writes the main groups of question banks in data/groups/banks.json (e.g. PREP
+# and Nelson → "General MCQs Books") with scripts/group-banks.mjs, when that
+# file changes on main. The undo record is kept as a run artifact
+# (node scripts/group-banks.mjs --undo <file> --commit).
+on:
+  push:
+    branches:
+      - main
+    paths:
+      - 'data/groups/banks.json'
+  workflow_dispatch:
+
+concurrency:
+  group: group-banks
+  cancel-in-progress: false
+
+jobs:
+  group:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+      - name: Install Firebase CLI
+        run: npm i -g firebase-tools@14
+      - name: Write groups
+        env:
+          FIREBASE_SERVICE_ACCOUNT: ${{ secrets.FIREBASE_SERVICE_ACCOUNT_EASY_PEDIA }}
+        run: |
+          printf '%s' "$FIREBASE_SERVICE_ACCOUNT" > "$RUNNER_TEMP/sa.json"
+          export GOOGLE_APPLICATION_CREDENTIALS="$RUNNER_TEMP/sa.json"
+          node scripts/group-banks.mjs data/groups/banks.json --commit
+          rm -f "$RUNNER_TEMP/sa.json"
+      - uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: group-banks-undo
+          path: .tmp/group-banks.json
+          if-no-files-found: ignore
+          include-hidden-files: true

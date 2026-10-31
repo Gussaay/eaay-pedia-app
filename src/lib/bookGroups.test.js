@@ -1,6 +1,6 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
-import { groupBooks } from './bookGroups.js';
+import { groupBanks, groupBooks } from './bookGroups.js';
 
 const books = [
   { source: 'pastests', group: 'TAS' },
@@ -32,4 +32,23 @@ test('a bank without groups lists its books unchanged', () => {
 test('a group the bank does not name still shows, after the named ones', () => {
   const { groups } = groupBooks([{ source: 'x', group: 'Extra' }, ...books], bank);
   assert.deepEqual(groups.map((g) => g.key), ['TAS', 'FOP', 'Extra']);
+});
+
+test('banks with the same group share one card where the first one was', () => {
+  const items = groupBanks([
+    { source: 'nelson', group: 'General MCQs Books' },
+    { source: 'arab' },
+    { source: 'prep', group: ' General MCQs Books ' },
+    { source: 'mrcpch' },
+  ]);
+  assert.deepEqual(
+    items.map((i) => i.bank?.source || `group:${i.group.title}`),
+    ['group:General MCQs Books', 'arab', 'mrcpch'],
+  );
+  assert.deepEqual(items[0].group.banks.map((b) => b.source), ['nelson', 'prep']);
+});
+
+test('banks without a group list unchanged', () => {
+  const items = groupBanks([{ source: 'a' }, { source: 'b' }]);
+  assert.deepEqual(items.map((i) => i.bank.source), ['a', 'b']);
 });
