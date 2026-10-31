@@ -1,6 +1,8 @@
 // Question banks. This was the old main page; it moved here when the app
-// grew other sections.
-import { useNavigate } from 'react-router-dom';
+// grew other sections. Banks that share a main group (lib/bookGroups.js
+// groupBanks, e.g. PREP and Nelson → "General MCQs Books") show as one card;
+// ?group=<title> lists the banks inside it.
+import { useNavigate, useSearchParams } from 'react-router-dom';
 import { BookOpen, ChevronRight } from 'lucide-react';
 import { useAuth } from '../hooks/useAuth';
 import { useList } from '../hooks/useData';
@@ -10,6 +12,7 @@ import { AccessMark } from '../components/LockPanel';
 import { useAccessCheck } from '../hooks/useQuizAccess';
 import { bankScopes, scopeKey } from '../lib/access';
 import { countLine, countsBySource, sumCounts } from '../lib/catalogCounts';
+import { groupBanks } from '../lib/bookGroups';
 import DailyQuiz, { useDailyQuiz } from '../components/DailyQuiz';
 import { AppBar, Empty, ErrorBox, Page, Thumb } from '../components/ui';
 
@@ -36,6 +39,8 @@ export default function Mcqs() {
   const { isAdmin, access } = useAuth();
   const levelOf = useAccessCheck();
   const navigate = useNavigate();
+  const [params] = useSearchParams();
+  const openKey = params.get('group') || '';
   const daily = useDailyQuiz();
 
   // Admins also see unpublished categories (same as the Android app).
@@ -45,9 +50,16 @@ export default function Mcqs() {
   const quizzes = useList('allquiz');
   const books = useList('mcqs');
   const counts = countsBySource(quizzes.data);
+  const quizSources = (banks) =>
+    books.data.filter((b) => banks.includes(b.main_category) && String(b.type) === 'quiz').map((b) => b.source);
   const bankLine = (bank) => {
-    const sources = books.data.filter((b) => b.main_category === bank && String(b.type) === 'quiz');
-    return sources.length ? countLine(sumCounts(counts, sources.map((b) => b.source))) : '';
+    const sources = quizSources([bank]);
+    return sources.length ? countLine(sumCounts(counts, sources)) : '';
+  };
+  const groupLine = (g) => {
+    const sources = quizSources(g.banks.map((c) => c.source));
+    const n = `${g.banks.length} ${g.banks.length === 1 ? 'bank' : 'banks'}`;
+    return sources.length ? countLine(sumCounts(counts, sources), n) : n;
   };
   // Locked only when nothing in the bank is unlocked: a bank with one open
   // group or book shows no lock.
@@ -61,6 +73,18 @@ export default function Mcqs() {
     return keys.some((k) => k.startsWith(`group~${bank}|`) || mine.has(k)) ? 'full' : 'locked';
   };
 
+  // Open when any bank inside is open.
+  const groupLevel = (g) => {
+    const levels = g.banks.map((c) => bankLevel(c.source));
+    return levels.find((l) => l !== 'locked') || 'locked';
+  };
+
+  const items = groupBanks(categories.data);
+  const openGroup = openKey ? items.find((i) => i.group?.key === openKey)?.group : null;
+  const shown = openKey ? (openGroup?.banks || []).map((bank) => ({ bank })) : items;
+  const openBank = (c) =>
+    navigate(`/cat/${encodeURIComponent(c.source)}?title=${encodeURIComponent(c.title || '')}`);
+
   const totalQuestions = quizzes.data
     .filter((q) => String(q.preview) !== 'true')
     .reduce((sum, q) => sum + num(q.number), 0);
@@ -68,19 +92,27 @@ export default function Mcqs() {
   return (
     <div className="min-h-screen pb-28">
       <AppBar
-        title="MCQs"
-        subtitle={totalQuestions ? `${totalQuestions.toLocaleString()} questions` : undefined}
+        title={openKey ? openGroup?.title || openKey : 'MCQs'}
+        subtitle={
+          openKey
+            ? openGroup && groupLine(openGroup)
+            : totalQuestions
+              ? `${totalQuestions.toLocaleString()} questions`
+              : undefined
+        }
       />
       <Page className="space-y-5">
-        <DailyQuiz daily={daily} />
+        {!openKey && <DailyQuiz daily={daily} />}
 
         <div>
-          <div className="flex items-end justify-between mb-3">
-            <h2 className="font-display text-slate-800 text-xl">Question banks</h2>
-            {categories.data.length > 0 && (
-              <span className="text-xs text-slate-400">{categories.data.length} banks</span>
-            )}
-          </div>
+          {!openKey && (
+            <div className="flex items-end justify-between mb-3">
+              <h2 className="font-display text-slate-800 text-xl">Question banks</h2>
+              {categories.data.length > 0 && (
+                <span className="text-xs text-slate-400">{categories.data.length} banks</span>
+              )}
+            </div>
+          )}
           <ErrorBox error={!categories.data.length && categories.error} onRetry={categories.reload} />
           {categories.loading ? (
             <div className="grid gap-3 sm:grid-cols-2">
@@ -88,22 +120,30 @@ export default function Mcqs() {
                 <div key={i} className="h-24 sm:h-48 rounded-2xl bg-slate-200/70 animate-pulse" />
               ))}
             </div>
-          ) : categories.data.length === 0 && !categories.error ? (
+          ) : shown.length === 0 && !categories.error ? (
             <Empty icon={<BookOpen size={40} />} title="No question banks yet" />
           ) : (
             <div className="grid gap-3 sm:grid-cols-2">
-              {categories.data.map((c) => (
-                <CategoryCard
-                  key={c._key}
-                  c={c}
-                  hidden={isAdmin && String(c.publish) !== 'true'}
-                  line={bankLine(c.source)}
-                  level={bankLevel(c.source)}
-                  onClick={() =>
-                    navigate(`/cat/${encodeURIComponent(c.source)}?title=${encodeURIComponent(c.title || '')}`)
-                  }
-                />
-              ))}
+              {shown.map(({ bank: c, group: g }) =>
+                g ? (
+                  <CategoryCard
+                    key={`group:${g.key}`}
+                    c={{ title: g.title, img: g.banks.find((b) => b.img)?.img }}
+                    line={groupLine(g)}
+                    level={groupLevel(g)}
+                    onClick={() => navigate(`/mcqs?group=${encodeURIComponent(g.key)}`)}
+                  />
+                ) : (
+                  <CategoryCard
+                    key={c._key}
+                    c={c}
+                    hidden={isAdmin && String(c.publish) !== 'true'}
+                    line={bankLine(c.source)}
+                    level={bankLevel(c.source)}
+                    onClick={() => openBank(c)}
+                  />
+                ),
+              )}
             </div>
           )}
         </div>

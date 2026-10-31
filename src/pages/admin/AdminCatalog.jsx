@@ -72,6 +72,8 @@ export function Categories() {
         type: 'quiz',
         publish: form.publish ? 'true' : 'false',
         img: form.img,
+        // Optional main group on the MCQs page, e.g. "General MCQs Books".
+        group: (form.group || '').trim(),
       };
       if (form._key) await updateAt(`main_category/${form._key}`, record);
       else await pushTo('main_category', record);
@@ -104,7 +106,7 @@ export function Categories() {
       <AppBar title="Categories" subtitle="Tap a category to open its books" />
       <Page className="space-y-3">
         {canAdd ? (
-          <AddButton onClick={() => setForm({ title: '', source: '', img: '', publish: true })}>Add new category</AddButton>
+          <AddButton onClick={() => setForm({ title: '', source: '', img: '', group: '', publish: true })}>Add new category</AddButton>
         ) : (
           <p className="text-sm text-slate-500">Only the main admin can add new sources.</p>
         )}
@@ -116,11 +118,11 @@ export function Categories() {
               key={c._key}
               img={c.img}
               title={c.title}
-              subtitle={`source: ${c.source} · ${plural(booksUnder(c.source), 'book')}${String(c.publish) === 'true' ? '' : ' · hidden'}`}
+              subtitle={`source: ${c.source}${c.group ? ` · ${c.group}` : ''} · ${plural(booksUnder(c.source), 'book')}${String(c.publish) === 'true' ? '' : ' · hidden'}`}
               onClick={() => navigate(`/admin/category/${encodeURIComponent(c.source)}?title=${encodeURIComponent(c.title || '')}`)}
               right={
                 <RowActions
-                  onEdit={() => setForm({ _key: c._key, title: c.title || '', source: c.source || '', img: c.img || '', publish: String(c.publish) === 'true' })}
+                  onEdit={() => setForm({ _key: c._key, title: c.title || '', source: c.source || '', img: c.img || '', group: c.group || '', publish: String(c.publish) === 'true' })}
                   onDelete={() => setConfirm(c)}
                 />
               }
@@ -143,6 +145,12 @@ export function Categories() {
               hint={form._key ? 'Books are linked to this category by source — changing it hides the books already under it.' : undefined}
               value={form.source}
               onChange={(e) => setForm({ ...form, source: e.target.value })}
+            />
+            <Input
+              label="Main group (optional)"
+              hint="Categories with the same group share one card on the MCQs page, e.g. General MCQs Books."
+              value={form.group}
+              onChange={(e) => setForm({ ...form, group: e.target.value })}
             />
             <ImageField folder="source" value={form.img} onChange={(img) => setForm({ ...form, img })} />
             <Toggle label="Published (visible to users)" checked={form.publish} onChange={(v) => setForm({ ...form, publish: v })} />
