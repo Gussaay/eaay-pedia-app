@@ -11,7 +11,11 @@ public class MainActivity extends BridgeActivity {
 
     @Override
     public void onCreate(Bundle savedInstanceState) {
+        BackgroundUpdateWorker.openActivities++;
+        registerPlugin(BackgroundUpdatePlugin.class);
         super.onCreate(savedInstanceState);
+        // New over-the-air releases are also fetched while the app is closed.
+        BackgroundUpdateWorker.schedule(this);
         // Android 15 draws the app edge-to-edge, so the window no longer shrinks
         // for the keyboard. Capacitor's "force" margins only cover the system
         // bars, which left text fields (the AI tutor chat) under the keyboard.
@@ -27,5 +31,11 @@ public class MainActivity extends BridgeActivity {
             v.setLayoutParams(mlp);
             return WindowInsetsCompat.CONSUMED;
         });
+    }
+
+    @Override
+    public void onDestroy() {
+        BackgroundUpdateWorker.openActivities = Math.max(0, BackgroundUpdateWorker.openActivities - 1);
+        super.onDestroy();
     }
 }

@@ -19,6 +19,7 @@
 //   2. notifyAppReady() must run on every launch. If it does not, Capgo
 //      assumes the bundle is broken and rolls back to the previous one.
 import { CapacitorUpdater } from '@capgo/capacitor-updater';
+import { Capacitor, registerPlugin } from '@capacitor/core';
 import { App as CapApp } from '@capacitor/app';
 import { isNative } from './native';
 import { subscribe } from './rtdb';
@@ -67,6 +68,9 @@ function set(patch) {
   state = { ...state, ...patch };
   listeners.forEach((l) => l());
 }
+
+// Native helper in the APK (android/.../BackgroundUpdatePlugin.java); absent in older APKs.
+const BackgroundUpdate = registerPlugin('BackgroundUpdate');
 
 let pendingBundleId = null;
 let checking = false;
@@ -320,6 +324,14 @@ export function startLiveUpdates() {
   // The admin override, live. onValue keeps working offline from its cache.
   subscribe('update/live', (value) => {
     override = value && typeof value === 'object' ? value : null;
+    // The APK also updates while the app is closed (BackgroundUpdateWorker).
+    // It cannot read the database, so tell it when an admin has paused
+    // updates or pinned a version; it then leaves updating to the app.
+    if (Capacitor.isPluginAvailable('BackgroundUpdate')) {
+      const paused = override?.paused === true || override?.paused === 'true';
+      const pinned = !!(override?.url && override?.version);
+      BackgroundUpdate.setHold({ hold: paused || pinned }).catch(() => {});
+    }
   });
 
   setTimeout(() => checkForLiveUpdate('startup'), STARTUP_DELAY_MS);

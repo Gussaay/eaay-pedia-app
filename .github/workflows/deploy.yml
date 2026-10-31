@@ -357,8 +357,11 @@ jobs:
       # second or two, holding the credential inside Firebase where it belongs.
       # Anything an admin queued in the Notification manager goes out the same
       # way, the moment they queue it, so there is nothing to drain here.
+      # Over-the-air updates are silent, so a release no longer sends a "new
+      # version" notification to every phone. Put [notify] in the commit
+      # message for a big release that users should hear about.
       - name: Queue the "new version" notification
-        if: ${{ !contains(github.event.head_commit.message, '[no-notify]') && !contains(github.event.head_commit.message, '[hold]') }}
+        if: ${{ contains(github.event.head_commit.message, '[notify]') && !contains(github.event.head_commit.message, '[hold]') }}
         continue-on-error: true
         timeout-minutes: 3
         env:

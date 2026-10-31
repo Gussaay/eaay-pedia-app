@@ -1,0 +1,71 @@
+name: Test APK (background updates)
+
+# Builds a signed TEST APK from this branch only. Nothing is deployed and no
+# device is told about it: the APK is attached to the run as an artifact for
+# testing on a phone. The web layer inside shows "6.0-test", so you can see
+# when the background updater has replaced it with the live release (6.0).
+on:
+  push:
+    branches:
+      - claude/project-thread-rz6vnt
+  workflow_dispatch:
+
+jobs:
+  apk:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+          cache: 'npm'
+      - uses: actions/setup-java@v4
+        with:
+          distribution: 'zulu'
+          java-version: '21'
+          cache: 'gradle'
+      - name: Install dependencies
+        run: npm ci
+      - name: google-services.json
+        env:
+          GOOGLE_SERVICES_JSON: ${{ secrets.GOOGLE_SERVICES_JSON }}
+        run: printf '%s' "$GOOGLE_SERVICES_JSON" > android/app/google-services.json
+      - name: Build the test web layer and sync Android
+        run: |
+          npm pkg set releaseVersion=6.0-test
+          npm run build
+          npx cap sync android
+      - name: Build and sign the test APK
+        env:
+          KEYSTORE_PASSWORD: ${{ secrets.KEYSTORE_PASSWORD }}
+          KEY_PASSWORD: ${{ secrets.KEY_PASSWORD }}
+          KEY_ALIAS: ${{ secrets.KEY_ALIAS }}
+        run: |
+          # Above the live APK (versionCode 74), so it installs as an update.
+          sed -i -e "s/versionCode [0-9]*/versionCode 75/" android/app/build.gradle
+          sed -i -e "s/versionName \".*\"/versionName \"bg-test\"/" android/app/build.gradle
+          # Test builds look for updates 15 minutes after the app is closed
+          # instead of 1 hour.
+          sed -i -e "s/setInitialDelay(1, TimeUnit.HOURS)/setInitialDelay(15, TimeUnit.MINUTES)/" \
+            android/app/src/main/java/com/easy/pediamcqs/BackgroundUpdateWorker.java
+          echo "${{ secrets.KEYSTORE_BASE64 }}" | base64 --decode > "$RUNNER_TEMP/src.keystore"
+          export SRC_KEYSTORE="$RUNNER_TEMP/src.keystore" OUT_P12="$RUNNER_TEMP/release.p12"
+          SIGN_ALIAS=$(bash scripts/prepare-keystore.sh | tee /dev/stderr | sed -n 's/^SIGN_ALIAS=//p')
+          cd android
+          chmod +x gradlew
+          ./gradlew assembleRelease
+          BT=$(ls -d ${ANDROID_HOME}/build-tools/* | sort -V | tail -1)
+          $BT/zipalign -v -p 4 app/build/outputs/apk/release/app-release-unsigned.apk app/build/outputs/apk/release/aligned.apk > /dev/null
+          $BT/apksigner sign --ks "$OUT_P12" --ks-type PKCS12 \
+            --ks-key-alias "$SIGN_ALIAS" \
+            --ks-pass env:KEYSTORE_PASSWORD \
+            --key-pass env:KEYSTORE_PASSWORD \
+            --out ../EasyPedia-background-update-TEST.apk \
+            app/build/outputs/apk/release/aligned.apk
+          $BT/apksigner verify ../EasyPedia-background-update-TEST.apk
+          rm -f "$RUNNER_TEMP/src.keystore" "$OUT_P12"
+      - uses: actions/upload-artifact@v4
+        with:
+          name: EasyPedia-background-update-TEST
+          path: EasyPedia-background-update-TEST.apk
+          retention-days: 7
