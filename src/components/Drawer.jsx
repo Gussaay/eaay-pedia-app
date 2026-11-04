@@ -1,13 +1,21 @@
 import { useNavigate } from 'react-router-dom';
-import { ArrowUpCircle, BarChart3, Info, LogOut, Megaphone, Shield, Share2, Smartphone, Sparkles, User, X } from 'lucide-react';
+import { ArrowUpCircle, BarChart3, Info, LogOut, Megaphone, Monitor, Moon, Shield, Share2, Smartphone, Sparkles, Sun, User, X } from 'lucide-react';
 import { useAuth, logout } from '../hooks/useAuth';
 import { isNative, shareApp } from '../lib/native';
 import { SHOWN_VERSION } from '../config';
 import { Avatar } from './ui';
+import { useTheme } from '../hooks/useTheme';
+
+const THEME_OPTIONS = [
+  { id: 'light', label: 'Light', icon: Sun },
+  { id: 'dark', label: 'Dark', icon: Moon },
+  { id: 'system', label: 'Auto', icon: Monitor },
+];
 
 export default function Drawer({ open, onClose }) {
   const { profile, user } = useAuth();
   const navigate = useNavigate();
+  const [themePref, setThemePref] = useTheme(user?.uid);
   const go = (path) => {
     onClose();
     navigate(path);
@@ -53,6 +61,24 @@ export default function Drawer({ open, onClose }) {
               <Icon size={20} className="text-brand-600" /> {label}
             </button>
           ))}
+          <div className="px-5 pt-3 pb-2">
+            <p className="text-xs font-semibold text-slate-500 mb-2">Appearance</p>
+            <div className="grid grid-cols-3 gap-1 rounded-xl bg-slate-100 p-1" role="radiogroup" aria-label="Appearance">
+              {THEME_OPTIONS.map(({ id, label, icon: Icon }) => (
+                <button
+                  key={id}
+                  role="radio"
+                  aria-checked={themePref === id}
+                  onClick={() => setThemePref(id)}
+                  className={`flex items-center justify-center gap-1.5 rounded-lg py-2 text-sm font-medium ${
+                    themePref === id ? 'bg-white text-brand-700 shadow-sm' : 'text-slate-600'
+                  }`}
+                >
+                  <Icon size={15} /> {label}
+                </button>
+              ))}
+            </div>
+          </div>
         </nav>
         <div className="p-4 border-t border-slate-100 pb-safe">
           <button

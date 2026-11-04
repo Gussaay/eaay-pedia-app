@@ -3,6 +3,7 @@ import { Navigate, Route, Routes, useLocation, useNavigate } from 'react-router-
 import { App as CapApp } from '@capacitor/app';
 import { Ban } from 'lucide-react';
 import { logout, useAuth } from './hooks/useAuth';
+import { useTheme } from './hooks/useTheme';
 import { isNative } from './lib/native';
 import { runBackHandlers } from './lib/back';
 import { takeActive } from './lib/resume';
@@ -170,7 +171,8 @@ function useReopenQuizAfterRestart() {
 }
 
 export default function App() {
-  const { authLoading, blocked } = useAuth();
+  const { authLoading, blocked, user } = useAuth();
+  useTheme(user?.uid);
   const location = useLocation();
   useNativeBackButton();
   usePushBridge();

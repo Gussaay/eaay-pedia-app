@@ -118,7 +118,7 @@ function PictureBack({ src: original, caption }) {
           src={src}
           alt={caption || 'Mnemonic'}
           onError={() => setBroken(true)}
-          className="min-h-0 w-full flex-1 rounded-2xl object-contain"
+          className="content-img min-h-0 w-full flex-1 rounded-2xl object-contain"
         />
       )}
       {src && !broken && (
@@ -148,7 +148,7 @@ function PictureBack({ src: original, caption }) {
               <X size={28} />
             </button>
             <div className="flex flex-1 items-center justify-center overflow-auto p-2 touch-pinch-zoom">
-              <img src={src} alt="" className="h-auto w-full max-w-none" onClick={(e) => e.stopPropagation()} />
+              <img src={src} alt="" className="content-img h-auto w-full max-w-none" onClick={(e) => e.stopPropagation()} />
             </div>
           </div>,
           document.body,

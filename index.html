@@ -8,6 +8,16 @@
     <meta name="apple-mobile-web-app-capable" content="yes" />
     <meta name="description" content="Easy Pedia MCQs - made by a pediatrician for pediatricians" />
     <link rel="apple-touch-icon" href="/icon-192.png" />
+    <script>
+      // Apply the saved appearance before the first paint (no white flash).
+      try {
+        var t = localStorage.getItem('ep-theme');
+        if (t === 'dark' || (t !== 'light' && window.matchMedia('(prefers-color-scheme: dark)').matches)) {
+          document.documentElement.classList.add('dark');
+          document.documentElement.style.colorScheme = 'dark';
+        }
+      } catch (e) {}
+    </script>
     <title>Easy Pedia MCQs</title>
   </head>
   <body>

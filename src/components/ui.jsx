@@ -279,7 +279,7 @@ export function ZoomImage({ src: original, className = '', credit = '' }) {
         alt=""
         onError={() => setBroken(true)}
         onClick={() => setOpen(true)}
-        className={`rounded-xl max-h-72 w-auto mx-auto cursor-zoom-in ${className}`}
+        className={`content-img rounded-xl max-h-72 w-auto mx-auto cursor-zoom-in ${className}`}
       />
       {credit && <p className="mt-1 text-center text-[11px] leading-snug text-slate-400">{credit}</p>}
       {open && (
@@ -288,7 +288,7 @@ export function ZoomImage({ src: original, className = '', credit = '' }) {
             <X size={28} />
           </button>
           <div className="flex-1 overflow-auto touch-pinch-zoom flex items-center justify-center p-2">
-            <img src={src} alt="" className="max-w-none w-full h-auto" onClick={(e) => e.stopPropagation()} />
+            <img src={src} alt="" className="content-img max-w-none w-full h-auto" onClick={(e) => e.stopPropagation()} />
           </div>
         </div>
       )}
