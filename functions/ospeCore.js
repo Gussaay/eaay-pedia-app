@@ -33,9 +33,34 @@ export function srcKey(src) {
 }
 
 /** The cards users can see (checked or auto, with a picture), by title. */
+/**
+ * OSPE shows real photographs only (owner's rule, 2026-11-09): our own
+ * drawings (credit "Illustration: Easy Pedia" / "Easy Pedia drawing") and SVGs
+ * stay out of the module, though they keep their place in the explanations.
+ */
+export function isDrawing(card) {
+  return /easy pedia/i.test(String(card?.credit || '')) || card?.kind === 'drawing' || /\.svg(\?|$)/i.test(String(card?.img || ''));
+}
+
+/** First sentence of the caption: the short description on the back. */
+export function shortCaption(caption) {
+  const s = String(caption || '').trim();
+  const m = s.match(/^.+?[.!?](?=\s|$)/);
+  return (m ? m[0] : s).trim();
+}
+
+/** How many different exams (quizzes) the picture appears in. */
+export function examCount(card) {
+  const seen = new Set();
+  for (const s of Object.values(card?.sources || {})) {
+    if (s?.type === 'q') seen.add(s.quiz || s.label || s.qid);
+  }
+  return seen.size;
+}
+
 export function visibleCards(cardsObj) {
   return Object.entries(cardsObj || {})
-    .filter(([, c]) => c && (c.status === 'checked' || c.status === 'auto') && c.img)
+    .filter(([, c]) => c && (c.status === 'checked' || c.status === 'auto') && c.img && !isDrawing(c))
     .map(([_key, c]) => ({ _key, ...c }))
     .sort((a, b) => String(a.title || '').localeCompare(String(b.title || ''), 'en', { sensitivity: 'base' }) || (a._key < b._key ? -1 : a._key > b._key ? 1 : 0));
 }

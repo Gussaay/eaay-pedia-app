@@ -217,3 +217,19 @@ test('parseCaptionReply fixes a bad kind, trims a long caption and refuses non-J
   assert.equal(parseCaptionReply('[1,2]'), null);
   assert.equal(parseCaptionReply('{broken'), null);
 });
+
+import { isDrawing, shortCaption, examCount } from '../../functions/ospeCore.js';
+
+test('OSPE keeps real photos only', () => {
+  assert.equal(isDrawing({ credit: 'Illustration: Easy Pedia', img: 'https://x/a.png' }), true);
+  assert.equal(isDrawing({ credit: 'Photo: CDC, PHIL #1 (public domain)', img: 'https://x/a.jpg' }), false);
+  assert.equal(isDrawing({ credit: '', img: 'https://x/a.svg' }), true);
+  const vis = visibleCards({ a: { status: 'checked', img: 'u', credit: 'Illustration: Easy Pedia' }, b: { status: 'checked', img: 'v', credit: 'Photo: CDC' } });
+  assert.deepEqual(vis.map((c) => c._key), ['b']);
+});
+
+test('short caption and exam count', () => {
+  assert.equal(shortCaption('Vesicles on palms. Coxsackie A16.'), 'Vesicles on palms.');
+  assert.equal(shortCaption('No full stop'), 'No full stop');
+  assert.equal(examCount({ sources: { a: { type: 'q', quiz: 'p1' }, b: { type: 'q', quiz: 'p1' }, c: { type: 'q', quiz: 'p2' }, d: { type: 'card', label: 'x' } } }), 2);
+});
