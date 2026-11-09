@@ -52,7 +52,7 @@ const GEMINI_API_KEY = defineSecret('GEMINI_API_KEY');
 // and 200K tokens a day for GPT-OSS), so the smaller model takes over when the
 // big one runs out, and Gemini after both. Pin one with GROQ_MODEL=... in
 // functions/.env
-const GROQ_MODELS = process.env.GROQ_MODEL
+export const GROQ_MODELS = process.env.GROQ_MODEL
   ? [process.env.GROQ_MODEL]
   : ['openai/gpt-oss-120b', 'openai/gpt-oss-20b'];
 const GROQ_URL = 'https://api.groq.com/openai/v1/chat/completions';

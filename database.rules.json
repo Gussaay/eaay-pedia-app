@@ -145,6 +145,13 @@
       ".write": "auth.token.email === 'gussaay@gmail.com' || auth.token.email === 'malazmuzamil55@gmail.com' || root.child('quizusers').child(auth.uid).child('admin').val() === 'true'"
     },
 
+    // OSPE picture cards (ospe/cards/<id>). Everyone signed in reads them; the
+    // admin panel's editors and managers may check, edit and hide them too.
+    "ospe": {
+      ".read": "auth.uid != null",
+      ".write": "auth.token.email === 'gussaay@gmail.com' || auth.token.email === 'malazmuzamil55@gmail.com' || root.child('quizusers').child(auth.uid).child('admin').val() === 'true' || root.child('access').child(auth.uid).child('role').val() === 'manager' || root.child('access').child(auth.uid).child('role').val() === 'editor'"
+    },
+
     // The cards themselves. Deliberately NOT under `flashcards`, which the old
     // Android app already uses for per-topic scores. No .indexOn is needed: a
     // deck is always read whole, by its id.

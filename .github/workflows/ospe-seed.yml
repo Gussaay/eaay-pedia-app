@@ -1,0 +1,64 @@
+name: OSPE seed
+
+# Builds the OSPE image cards (ospe/cards) from pictures already in the
+# database (scripts/ospe-seed.mjs). Report mode only reads and writes a report;
+# commit mode writes the cards. The report, the cards and the undo record are
+# kept as a run artifact:
+#   node scripts/ospe-seed.mjs --undo ospe-undo.json --commit
+on:
+  push:
+    branches:
+      - claude/project-thread-4gljik
+    paths:
+      - 'scripts/ospe-seed.mjs'
+      - '.github/workflows/ospe-seed.yml'
+  workflow_dispatch:
+    inputs:
+      mode:
+        description: 'report = read only, commit = write the cards'
+        type: choice
+        options:
+          - report
+          - commit
+        default: report
+
+concurrency:
+  group: ospe-seed
+  cancel-in-progress: false
+
+jobs:
+  seed:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+      - name: Install dependencies
+        run: npm ci
+      - name: Build OSPE cards
+        env:
+          FIREBASE_SERVICE_ACCOUNT: ${{ secrets.FIREBASE_SERVICE_ACCOUNT_EASY_PEDIA }}
+          GROQ_API_KEY: ${{ secrets.GROQ_API_KEY }}
+          MODE: ${{ github.event.inputs.mode || 'report' }}
+        run: |
+          if [ "$MODE" = "commit" ]; then
+            node scripts/ospe-seed.mjs --commit
+          else
+            node scripts/ospe-seed.mjs
+          fi
+      - name: Report in the run summary
+        if: always()
+        run: |
+          if [ -f .tmp/ospe-report.md ]; then cat .tmp/ospe-report.md >> "$GITHUB_STEP_SUMMARY"; fi
+      - uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: ospe-seed
+          path: |
+            .tmp/ospe-report.md
+            .tmp/ospe-cards.json
+            .tmp/ospe-undo.json
+          if-no-files-found: ignore
+          include-hidden-files: true
+          retention-days: 90

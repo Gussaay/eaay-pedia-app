@@ -240,3 +240,6 @@ export { aiStudy } from './ai.js';
 
 // Question of the day at 7 am Sudan time, with a push to every phone — see daily.js.
 export { dailyQuestion } from './daily.js';
+
+// OSPE image cards kept up to date from question and flashcard pictures — see ospe.js.
+export { ospeQuestionExpImg, ospeQuestionImg, ospeFlashImg, ospeFlashBackImg } from './ospe.js';

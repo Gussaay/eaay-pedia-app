@@ -48,6 +48,9 @@ const MnemonicExam = lazy(() => import('./pages/MnemonicExam'));
 const MnemonicPaper = lazy(() => import('./pages/MnemonicPaper'));
 const MnemonicSet = lazy(() => import('./pages/MnemonicSet'));
 const MnemonicGallery = lazy(() => import('./pages/MnemonicGallery'));
+const Ospe = lazy(() => import('./pages/Ospe'));
+const OspeSystem = lazy(() => import('./pages/OspeSystem'));
+const OspeStudy = lazy(() => import('./pages/OspeStudy'));
 const AiStudy = lazy(() => import('./pages/AiStudy'));
 
 function Splash() {
@@ -215,6 +218,9 @@ export default function App() {
           <Route path="/mnemonics/study" element={guard(<FlashStudy />)} />
           <Route path="/mnemonics/gallery" element={guard(<MnemonicGallery />)} />
           <Route path="/flashcards/linked" element={guard(<FlashStudy />)} />
+          <Route path="/ospe" element={guard(<Ospe />)} />
+          <Route path="/ospe/system/:chapter" element={guard(<OspeSystem />)} />
+          <Route path="/ospe/study" element={guard(<OspeStudy />)} />
           <Route path="/cat/:source" element={guard(<Books />)} />
           <Route path="/book/:source" element={guard(<Exams />)} />
           <Route path="/quiz/:kind/:id" element={guard(<QuizDetail />)} />

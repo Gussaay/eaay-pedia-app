@@ -3,6 +3,10 @@
  "images": [
   {
    "key": "eczema-herpeticum",
+   "title": "Eczema herpeticum",
+   "caption": "Punched-out erosions and crusted vesicles on eczematous skin. Needs urgent aciclovir; impetiginised eczema gives golden crusts instead.",
+   "kind": "skin",
+   "chapter": "Dermatology",
    "file": "eczema-herpeticum.jpg",
    "photo": "https://wwwn.cdc.gov/phil///PHIL_Images/24351/24351_lores.jpg",
    "credit": "Photo: CDC/Dr. Hudson, PHIL #24351 (public domain)",
@@ -15,6 +19,10 @@
   },
   {
    "key": "tinea-capitis",
+   "title": "Tinea capitis",
+   "caption": "Scaly red patch of hair loss on the scalp of a school-age child; hairs may be broken at the surface (black dots).",
+   "kind": "skin",
+   "chapter": "Dermatology",
    "file": "tinea-capitis.jpg",
    "photo": "https://wwwn.cdc.gov/phil///PHIL_Images/22272/22272_lores.jpg",
    "credit": "Photo: CDC/Dr. Lucille K. Georg, PHIL #22272 (public domain)",
@@ -25,6 +33,10 @@
   },
   {
    "key": "kerion",
+   "title": "Kerion",
+   "caption": "Boggy, swollen, circular scalp lesion with alopecia and pustules: inflammatory tinea capitis.",
+   "kind": "skin",
+   "chapter": "Dermatology",
    "file": "kerion.jpg",
    "photo": "https://wwwn.cdc.gov/phil///PHIL_Images/30138/30138_lores.jpg",
    "credit": "Photo: CDC, PHIL #30138 (phil.cdc.gov)",
@@ -35,6 +47,10 @@
   },
   {
    "key": "chickenpox",
+   "title": "Chickenpox (varicella)",
+   "caption": "Vesicular rash with lesions at different stages; infectious until every lesion has crusted over.",
+   "kind": "skin",
+   "chapter": "Infection",
    "file": "chickenpox.jpg",
    "photo": "https://wwwn.cdc.gov/phil///PHIL_Images/25244/25244_lores.jpg",
    "credit": "Photo: CDC/Dr. J.D. Millar, PHIL #25244 (public domain)",
@@ -48,6 +64,10 @@
   },
   {
    "key": "erythema-migrans",
+   "title": "Erythema migrans (Lyme disease)",
+   "caption": "Circular, target-like expanding lesion at the site of a tick or insect bite.",
+   "kind": "skin",
+   "chapter": "Infection",
    "file": "erythema-migrans.jpg",
    "photo": "https://wwwn.cdc.gov/phil///PHIL_Images/9875/9875_lores.jpg",
    "credit": "Photo: CDC/James Gathany, PHIL #9875 (phil.cdc.gov)",
@@ -60,6 +80,10 @@
   },
   {
    "key": "io-tibia",
+   "title": "Intraosseous access site: proximal tibia",
+   "caption": "Flat anteromedial proximal tibia, 1-3 cm (about one finger breadth) below the tibial tuberosity; avoid the growth plate.",
+   "kind": "sign",
+   "chapter": "Emergency medicine & toxicology",
    "file": "io-tibia.png",
    "credit": "Illustration: Easy Pedia",
    "questions": [
@@ -69,6 +93,10 @@
   },
   {
    "key": "barlow-ortolani",
+   "title": "Barlow and Ortolani tests (DDH)",
+   "caption": "Baby supine, hip and knee flexed to 90 degrees. Barlow adducts and pushes back to dislocate; Ortolani abducts and lifts forwards to relocate with a clunk.",
+   "kind": "sign",
+   "chapter": "Rheumatology & musculoskeletal",
    "file": "barlow-ortolani.png",
    "credit": "Illustration: Easy Pedia",
    "questions": [
@@ -78,6 +106,10 @@
   },
   {
    "key": "erb-palsy",
+   "title": "Erb palsy (waiter's tip)",
+   "caption": "Arm adducted and internally rotated, elbow extended, forearm pronated, wrist flexed (C5-C6). Klumpke (C8-T1) gives a claw hand.",
+   "kind": "sign",
+   "chapter": "Neonatology",
    "file": "erb-palsy.png",
    "credit": "Illustration: Easy Pedia",
    "questions": [
@@ -89,6 +121,10 @@
   },
   {
    "key": "wpw-delta",
+   "title": "Wolff-Parkinson-White pattern",
+   "caption": "Short PR interval, slurred delta wave at the QRS upstroke and a wide QRS from an accessory pathway; causes SVT.",
+   "kind": "ecg",
+   "chapter": "Cardiology",
    "file": "wpw-delta.png",
    "credit": "Illustration: Easy Pedia",
    "questions": [
@@ -100,6 +136,10 @@
   },
   {
    "key": "perthes-scfe",
+   "title": "Perthes disease vs slipped capital femoral epiphysis",
+   "caption": "Perthes: small, flat, dense head with wide joint space. SCFE: epiphysis slips down and back and Klein line misses it.",
+   "kind": "xray",
+   "chapter": "Rheumatology & musculoskeletal",
    "file": "perthes-scfe.png",
    "credit": "Illustration: Easy Pedia",
    "questions": [
@@ -116,6 +156,10 @@
   },
   {
    "key": "atopic-eczema",
+   "title": "Atopic eczema",
+   "caption": "Dry, scaly, itchy flexural rash with scratch marks (excoriation).",
+   "kind": "skin",
+   "chapter": "Dermatology",
    "file": "atopic-eczema.jpg",
    "photo": "https://upload.wikimedia.org/wikipedia/commons/7/7b/Eczema_%2814100950936%29.jpg",
    "credit": "Photo: NIAID, CC BY 2.0, via Wikimedia Commons",
@@ -127,6 +171,10 @@
   },
   {
    "key": "hsv-vesicles",
+   "title": "Herpes simplex vesicles",
+   "caption": "Grouped painful vesicles that ulcerate and crust.",
+   "kind": "skin",
+   "chapter": "Infection",
    "file": "hsv-vesicles.jpg",
    "photo": "https://upload.wikimedia.org/wikipedia/commons/8/8d/Herpes_labialis_Ulcus.jpeg",
    "credit": "Photo: Speifensender, CC BY-SA 3.0, via Wikimedia Commons",
@@ -138,6 +186,10 @@
   },
   {
    "key": "herpangina",
+   "title": "Herpangina",
+   "caption": "Vesicles and ulcers at the back of the mouth (soft palate, uvula, tonsillar pillars) with no gum involvement.",
+   "kind": "sign",
+   "chapter": "Infection",
    "file": "herpangina.jpg",
    "photo": "https://thumb.wikimedia.org/wikipedia/commons/thumb/9/9b/Herpangine_03.jpg/960px-Herpangine_03.jpg",
    "credit": "Photo: Sterenau, CC BY-SA 4.0, via Wikimedia Commons",
@@ -148,6 +200,10 @@
   },
   {
    "key": "hfmd",
+   "title": "Hand, foot and mouth disease",
+   "caption": "Vesicles on the palms and soles (also buttocks) with oral ulcers; coxsackie A16 or enterovirus 71.",
+   "kind": "skin",
+   "chapter": "Infection",
    "file": "hfmd.jpg",
    "photo": "https://thumb.wikimedia.org/wikipedia/commons/thumb/5/5f/Hand_Foot_Mouth_Disease_Adult_36Years.jpg/960px-Hand_Foot_Mouth_Disease_Adult_36Years.jpg",
    "credit": "Photo: KlatschmohnAcker, CC BY-SA 3.0, via Wikimedia Commons",
@@ -159,6 +215,10 @@
   },
   {
    "key": "ssss",
+   "title": "Staphylococcal scalded skin syndrome",
+   "caption": "Tender red skin that peels easily (positive Nikolsky sign) with fever; mucosae are spared.",
+   "kind": "skin",
+   "chapter": "Dermatology",
    "file": "ssss.jpg",
    "photo": "https://upload.wikimedia.org/wikipedia/commons/3/3e/OSC_Microbio_21_02_SSSS.jpg",
    "credit": "Photo: CNX OpenStax, CC BY 4.0, via Wikimedia Commons",
@@ -171,6 +231,10 @@
   },
   {
    "key": "tinea-corporis",
+   "title": "Tinea corporis (ringworm)",
+   "caption": "Circular scaly lesion with a raised edge and central clearing.",
+   "kind": "skin",
+   "chapter": "Dermatology",
    "file": "tinea-corporis.png",
    "photo": "https://thumb.wikimedia.org/wikipedia/commons/thumb/3/37/Tinea_corporis.png/960px-Tinea_corporis.png",
    "credit": "Photo: Corina G., public domain, via Wikimedia Commons",
@@ -181,6 +245,10 @@
   },
   {
    "key": "port-wine",
+   "title": "Port-wine stain",
+   "caption": "Capillary malformation present from birth that grows with the child.",
+   "kind": "skin",
+   "chapter": "Dermatology",
    "file": "port-wine.jpg",
    "photo": "https://thumb.wikimedia.org/wikipedia/commons/thumb/a/ab/Port-wine_stain_on_leg.jpg/960px-Port-wine_stain_on_leg.jpg",
    "credit": "Photo: Dr. Wonko, CC BY-SA 4.0, via Wikimedia Commons",
@@ -192,6 +260,10 @@
   },
   {
    "key": "cafe-au-lait",
+   "title": "Cafe-au-lait macules",
+   "caption": "Flat, uniformly pale-brown patches; six or more (over 5 mm before puberty) is one NF1 criterion.",
+   "kind": "skin",
+   "chapter": "Genetics & syndromes",
    "file": "cafe-au-lait.png",
    "photo": "https://upload.wikimedia.org/wikipedia/commons/c/ca/Caf%C3%A9-au-lait_spot_on_the_abdomen_in_neurofibromatosis_type_1.png",
    "credit": "Photo: Idiculla J. et al., CC BY 4.0, via Wikimedia Commons",
@@ -205,6 +277,10 @@
   },
   {
    "key": "incontinentia-pigmenti",
+   "title": "Incontinentia pigmenti",
+   "caption": "Linear streaky lesions along Blaschko lines that go vesicular, then warty, then hyperpigmented.",
+   "kind": "skin",
+   "chapter": "Genetics & syndromes",
    "file": "incontinentia-pigmenti.jpg",
    "photo": "https://upload.wikimedia.org/wikipedia/commons/7/72/Maculae_Bloch-Sulzberger_syndrome.jpg",
    "credit": "Photo: Kitakawa et al., CC BY 2.0, via Wikimedia Commons",
@@ -218,6 +294,10 @@
   },
   {
    "key": "aplasia-cutis",
+   "title": "Aplasia cutis congenita",
+   "caption": "Well-demarcated, hairless, membranous skin defect on the scalp vertex of a newborn.",
+   "kind": "skin",
+   "chapter": "Neonatology",
    "file": "aplasia-cutis.jpg",
    "photo": "https://thumb.wikimedia.org/wikipedia/commons/thumb/5/59/Aplasia_cutis_congenita.jpg/960px-Aplasia_cutis_congenita.jpg",
    "credit": "Photo: Liwen Xu, Kevin X. Liu, Maryanne M. Senna, CC BY 4.0, via Wikimedia Commons",
@@ -229,6 +309,10 @@
   },
   {
    "key": "acanthosis",
+   "title": "Acanthosis nigricans",
+   "caption": "Rough, dark skin at the back of the neck, a marker of insulin resistance.",
+   "kind": "skin",
+   "chapter": "Endocrinology & growth",
    "file": "acanthosis.jpg",
    "photo": "https://upload.wikimedia.org/wikipedia/commons/0/04/Acanthious_nigricans_new_photo_for_diagnosis%2C_pigmentation_appears_in_neck_%2Carm%2Celbow%2Cit_be_related_often_to_insulin_it_related_to_obesity_and_some_times_called_pseudonigricans.jpg",
    "credit": "Photo: Masryyy, CC BY-SA 4.0, via Wikimedia Commons",
@@ -240,6 +324,10 @@
   },
   {
    "key": "slapped-cheek",
+   "title": "Slapped cheek disease (erythema infectiosum)",
+   "caption": "Bright red cheeks, followed by a lacy reticular rash on the trunk and limbs; parvovirus B19.",
+   "kind": "skin",
+   "chapter": "Infection",
    "file": "slapped-cheek.jpg",
    "photo": "https://thumb.wikimedia.org/wikipedia/commons/thumb/b/ba/Fifth_disease.jpg/960px-Fifth_disease.jpg",
    "credit": "Photo: Andrew Kerr, public domain, via Wikimedia Commons",
@@ -250,6 +338,10 @@
   },
   {
    "key": "roseola",
+   "title": "Roseola infantum (exanthem subitum)",
+   "caption": "Pink maculopapular rash on the trunk appearing as a high fever settles in an infant; HHV-6.",
+   "kind": "skin",
+   "chapter": "Infection",
    "file": "roseola.jpg",
    "photo": "https://thumb.wikimedia.org/wikipedia/commons/thumb/5/5c/Sestamalattia_%282%29.JPG/960px-Sestamalattia_%282%29.JPG",
    "credit": "Photo: Emiliano Burzagli, public domain, via Wikimedia Commons",
@@ -260,6 +352,10 @@
   },
   {
    "key": "meningococcal",
+   "title": "Meningococcal septicaemia rash",
+   "caption": "Non-blanching purpuric rash in a febrile, toxic child, sometimes with neck stiffness.",
+   "kind": "skin",
+   "chapter": "Infection",
    "file": "meningococcal.jpg",
    "photo": "https://thumb.wikimedia.org/wikipedia/commons/thumb/6/62/%D0%A2%D0%B8%D0%BF%D0%BE%D0%B2%D0%B8%D0%B9_%D0%B2%D0%B8%D1%81%D0%B8%D0%BF_%D0%BD%D0%B0_%D0%BA%D0%B8%D1%81%D1%82%D1%96_%D0%BF%D1%80%D0%B8_%D0%BC%D0%B5%D0%BD%D1%96%D0%BD%D0%B3%D0%BE%D0%BA%D0%BE%D0%BA%D1%86%D0%B5%D0%BC%D1%96%D1%97.jpg/960px-%D0%A2%D0%B8%D0%BF%D0%BE%D0%B2%D0%B8%D0%B9_%D0%B2%D0%B8%D1%81%D0%B8%D0%BF_%D0%BD%D0%B0_%D0%BA%D0%B8%D1%81%D1%82%D1%96_%D0%BF%D1%80%D0%B8_%D0%BC%D0%B5%D0%BD%D1%96%D0%BD%D0%B3%D0%BE%D0%BA%D0%BE%D0%BA%D1%86%D0%B5%D0%BC%D1%96%D1%97.jpg",
    "credit": "Photo: Glei A.I., Shkurba A.V., public domain, via Wikimedia Commons",
@@ -271,6 +367,10 @@
   },
   {
    "key": "hsp",
+   "title": "Henoch-Schonlein purpura (IgA vasculitis)",
+   "caption": "Palpable purpura and petechiae over the buttocks and extensor lower limbs.",
+   "kind": "skin",
+   "chapter": "Rheumatology & musculoskeletal",
    "file": "hsp.png",
    "photo": "https://thumb.wikimedia.org/wikipedia/commons/thumb/1/17/Henoch-Sch%C3%B6nlein.png/960px-Henoch-Sch%C3%B6nlein.png",
    "credit": "Photo: Profrofrof, CC0, via Wikimedia Commons",
@@ -283,6 +383,10 @@
   },
   {
    "key": "psoriasis",
+   "title": "Psoriasis",
+   "caption": "Well-demarcated scaly plaques on knees and elbows, with nail pitting.",
+   "kind": "skin",
+   "chapter": "Dermatology",
    "file": "psoriasis.jpg",
    "photo": "https://thumb.wikimedia.org/wikipedia/commons/thumb/b/b3/Luszczyca_paznokcia.jpg/960px-Luszczyca_paznokcia.jpg",
    "credit": "Photo: Seenms, CC BY-SA 3.0, via Wikimedia Commons",
@@ -293,6 +397,10 @@
   },
   {
    "key": "dermatomyositis",
+   "title": "Juvenile dermatomyositis",
+   "caption": "Violaceous heliotrope rash around the eyes and Gottron papules.",
+   "kind": "skin",
+   "chapter": "Rheumatology & musculoskeletal",
    "file": "dermatomyositis.jpg",
    "photo": "https://upload.wikimedia.org/wikipedia/commons/0/0f/Dermatomyositis11.jpg",
    "credit": "Photo: Dugan E.M. et al., CC BY-SA 3.0, via Wikimedia Commons",
@@ -305,6 +413,10 @@
   },
   {
    "key": "malar-rash",
+   "title": "Malar rash (SLE)",
+   "caption": "Facial rash over the cheeks and nose in a child with arthritis, cytopenias and positive ANA.",
+   "kind": "skin",
+   "chapter": "Rheumatology & musculoskeletal",
    "file": "malar-rash.jpg",
    "photo": "https://upload.wikimedia.org/wikipedia/commons/9/98/Butterfly_rash_of_lupus_erythematosus.jpg",
    "credit": "Photo: CNX OpenStax, CC BY 4.0, via Wikimedia Commons",
@@ -315,6 +427,10 @@
   },
   {
    "key": "kawasaki",
+   "title": "Kawasaki disease",
+   "caption": "Fever with conjunctivitis, red lips and mucosal changes, rash, extremity changes and a cervical node.",
+   "kind": "sign",
+   "chapter": "Rheumatology & musculoskeletal",
    "file": "kawasaki.png",
    "photo": "https://thumb.wikimedia.org/wikipedia/commons/thumb/4/47/Kawasaki.PNG/960px-Kawasaki.PNG",
    "credit": "Photo: Dong Soo Kim, CC BY-SA 4.0, via Wikimedia Commons",
@@ -325,6 +441,10 @@
   },
   {
    "key": "urticaria",
+   "title": "Urticaria",
+   "caption": "Itchy raised red wheals over the body, circular in shape.",
+   "kind": "skin",
+   "chapter": "Immunology & allergy",
    "file": "urticaria.jpg",
    "photo": "https://thumb.wikimedia.org/wikipedia/commons/thumb/1/19/Rash.jpg/960px-Rash.jpg",
    "credit": "Photo: Enochlau, CC BY-SA 3.0, via Wikimedia Commons",
@@ -337,6 +457,10 @@
   },
   {
    "key": "erythema-nodosum",
+   "title": "Erythema nodosum",
+   "caption": "Tender red nodules on the shins; the commonest skin sign of IBD, especially Crohn disease.",
+   "kind": "skin",
+   "chapter": "Gastroenterology & hepatology",
    "file": "erythema-nodosum.jpg",
    "photo": "https://upload.wikimedia.org/wikipedia/commons/f/fb/EN2021.jpg",
    "credit": "Photo: Doc James, CC BY-SA 4.0, via Wikimedia Commons",
@@ -348,6 +472,10 @@
   },
   {
    "key": "ophthalmia",
+   "title": "Gonococcal ophthalmia neonatorum",
+   "caption": "Injected conjunctivae with copious purulent discharge at day 2-5 of life.",
+   "kind": "sign",
+   "chapter": "Neonatology",
    "file": "ophthalmia.jpg",
    "photo": "https://thumb.wikimedia.org/wikipedia/commons/thumb/2/27/Gonococcal_ophthalmia_neonatorum.jpg/960px-Gonococcal_ophthalmia_neonatorum.jpg",
    "credit": "Photo: CDC/J. Pledger, public domain, via Wikimedia Commons",
@@ -359,6 +487,10 @@
   },
   {
    "key": "congenital-cataract",
+   "title": "Congenital cataract (rubella)",
+   "caption": "White opacity of the lens with an absent red reflex; part of the congenital rubella picture.",
+   "kind": "sign",
+   "chapter": "Ophthalmology",
    "file": "congenital-cataract.jpg",
    "photo": "https://upload.wikimedia.org/wikipedia/commons/0/07/Cataracts_due_to_Congenital_Rubella_Syndrome_%28CRS%29_PHIL_4284_lores.jpg",
    "credit": "Photo: CDC, PHIL #4284, public domain, via Wikimedia Commons",
@@ -370,6 +502,10 @@
   },
   {
    "key": "preseptal-cellulitis",
+   "title": "Preseptal (periorbital) cellulitis",
+   "caption": "Red, swollen eyelids with full, painless eye movements and normal vision.",
+   "kind": "sign",
+   "chapter": "Ophthalmology",
    "file": "preseptal-cellulitis.jpg",
    "photo": "https://thumb.wikimedia.org/wikipedia/commons/thumb/0/05/Celulitis_Periorbitaria_%28Preseptal%29.JPG/960px-Celulitis_Periorbitaria_%28Preseptal%29.JPG",
    "credit": "Photo: Afrodriguezg, CC BY-SA 3.0, via Wikimedia Commons",
@@ -382,6 +518,10 @@
   },
   {
    "key": "orbital-cellulitis",
+   "title": "Orbital cellulitis",
+   "caption": "Painful, swollen red eye with visual disturbance, pain on eye movement or proptosis.",
+   "kind": "sign",
+   "chapter": "Ophthalmology",
    "file": "orbital-cellulitis.jpg",
    "photo": "https://upload.wikimedia.org/wikipedia/commons/b/bc/Orbital_cellulitis_-_no_watermark.jpg",
    "credit": "Photo: Jonathan Trobe, MD (Kellogg Eye Center), CC BY 3.0, via Wikimedia Commons",
@@ -393,6 +533,10 @@
   },
   {
    "key": "leukocoria",
+   "title": "Leukocoria (retinoblastoma until proven otherwise)",
+   "caption": "White pupillary reflex, sometimes with a squint; needs urgent ophthalmology review.",
+   "kind": "sign",
+   "chapter": "Ophthalmology",
    "file": "leukocoria.jpg",
    "photo": "https://thumb.wikimedia.org/wikipedia/commons/thumb/c/c6/Retinoblastoma.jpg/960px-Retinoblastoma.jpg",
    "credit": "Photo: National Cancer Institute, public domain, via Wikimedia Commons",
@@ -405,6 +549,10 @@
   },
   {
    "key": "mono-rash",
+   "title": "Amoxicillin rash in EBV infection",
+   "caption": "Rash after amoxicillin in a child with sore throat and lymphadenopathy; not a true allergy.",
+   "kind": "skin",
+   "chapter": "Infection",
    "file": "mono-rash.jpg",
    "photo": "https://thumb.wikimedia.org/wikipedia/commons/thumb/3/34/Amoxycillin_rash_in_infectious_mononucleosis_on_back_of_hand.jpg/960px-Amoxycillin_rash_in_infectious_mononucleosis_on_back_of_hand.jpg",
    "credit": "Photo: RainbowKatie, CC BY-SA 3.0, via Wikimedia Commons",
@@ -417,6 +565,10 @@
   },
   {
    "key": "gn-diplococci",
+   "title": "Gram-negative intracellular diplococci (meningococcus)",
+   "caption": "Gram-negative diplococci seen in CSF; pneumococcus is Gram-positive.",
+   "kind": "micro",
+   "chapter": "Infection",
    "file": "gn-diplococci.jpg",
    "photo": "https://upload.wikimedia.org/wikipedia/commons/7/75/Neisseria_meningitidis.jpg",
    "credit": "Photo: CDC/Dr. Brodsky, public domain, via Wikimedia Commons",
@@ -427,6 +579,10 @@
   },
   {
    "key": "cryptosporidium",
+   "title": "Cryptosporidium oocysts",
+   "caption": "Oocysts on modified Ziehl-Neelsen stain; causes watery diarrhoea and bloating.",
+   "kind": "micro",
+   "chapter": "Infection",
    "file": "cryptosporidium.jpg",
    "photo": "https://thumb.wikimedia.org/wikipedia/commons/thumb/2/22/Oocists_de_Cryptosporidium_parvum_2.jpg/960px-Oocists_de_Cryptosporidium_parvum_2.jpg",
    "credit": "Photo: CDC DPDx, public domain, via Wikimedia Commons",
@@ -437,6 +593,10 @@
   },
   {
    "key": "nec-xray",
+   "title": "Necrotising enterocolitis",
+   "caption": "Abdominal X-ray showing pneumatosis intestinalis (air in the bowel wall); free air under the diaphragm would mean perforation.",
+   "kind": "xray",
+   "chapter": "Neonatology",
    "file": "nec-xray.jpg",
    "photo": "https://thumb.wikimedia.org/wikipedia/commons/thumb/6/6a/Pneumatosis_intestinalis_und_hepatis_bei_NEC_0W_-_CR_ap_-_001.jpg/960px-Pneumatosis_intestinalis_und_hepatis_bei_NEC_0W_-_CR_ap_-_001.jpg",
    "credit": "Photo: Hellerhoff, CC BY-SA 4.0, via Wikimedia Commons",
@@ -448,6 +608,10 @@
   },
   {
    "key": "long-qt",
+   "title": "Long QT syndrome",
+   "caption": "QT 540 ms with a long, broad T wave versus a normal 360 ms; risk of torsades and exertional syncope.",
+   "kind": "ecg",
+   "chapter": "Cardiology",
    "file": "long-qt.png",
    "credit": "Illustration: Easy Pedia",
    "questions": [
@@ -463,6 +627,10 @@
   },
   {
    "key": "svt",
+   "title": "Supraventricular tachycardia",
+   "caption": "Regular narrow-complex tachycardia at about 270/min with no visible P waves.",
+   "kind": "ecg",
+   "chapter": "Cardiology",
    "file": "svt.png",
    "credit": "Illustration: Easy Pedia",
    "questions": [
@@ -472,6 +640,10 @@
   },
   {
    "key": "hyperkalaemia",
+   "title": "Hyperkalaemia ECG changes",
+   "caption": "Peaked T waves, then flat P and wide QRS, then a sine wave before VF or asystole.",
+   "kind": "ecg",
+   "chapter": "Emergency medicine & toxicology",
    "file": "hyperkalaemia.png",
    "credit": "Illustration: Easy Pedia",
    "questions": [
@@ -481,6 +653,10 @@
   },
   {
    "key": "broad-qrs",
+   "title": "Tricyclic overdose: broad QRS",
+   "caption": "QRS widened to 160 ms (normal under 100) from sodium-channel block; treated with IV sodium bicarbonate.",
+   "kind": "ecg",
+   "chapter": "Emergency medicine & toxicology",
    "file": "broad-qrs.png",
    "credit": "Illustration: Easy Pedia",
    "questions": [
@@ -489,6 +665,10 @@
   },
   {
    "key": "heart-block",
+   "title": "Congenital complete heart block",
+   "caption": "P waves (about 125/min) and QRS (about 55/min) beat independently; maternal anti-Ro/La antibodies.",
+   "kind": "ecg",
+   "chapter": "Cardiology",
    "file": "heart-block.png",
    "credit": "Illustration: Easy Pedia",
    "questions": [
@@ -498,6 +678,10 @@
   },
   {
    "key": "neonatal-ecg",
+   "title": "Normal neonatal ECG",
+   "caption": "Dominant R wave in V1, right axis, and T wave in V1 inverted after the first week.",
+   "kind": "ecg",
+   "chapter": "Cardiology",
    "file": "neonatal-ecg.png",
    "credit": "Illustration: Easy Pedia",
    "questions": [
@@ -506,6 +690,10 @@
   },
   {
    "key": "hypsarrhythmia",
+   "title": "Hypsarrhythmia (infantile spasms)",
+   "caption": "Chaotic, very high-voltage slow waves with multifocal spikes on EEG.",
+   "kind": "other",
+   "chapter": "Neurology",
    "file": "hypsarrhythmia.png",
    "credit": "Illustration: Easy Pedia",
    "questions": [
@@ -515,6 +703,10 @@
   },
   {
    "key": "tanner",
+   "title": "Tanner stages",
+   "caption": "Breast stages 1-5 and pubic hair stages 1-5; stage 3 breast has no separation of areola from breast contour.",
+   "kind": "drawing",
+   "chapter": "Endocrinology & growth",
    "file": "tanner.png",
    "credit": "Illustration: Easy Pedia",
    "questions": [
@@ -524,6 +716,10 @@
   },
   {
    "key": "fontanelles",
+   "title": "Cranial sutures and craniosynostosis",
+   "caption": "Skull from above showing sutures and fontanelles; early sagittal fusion gives a long narrow head (scaphocephaly) with a palpable ridge.",
+   "kind": "drawing",
+   "chapter": "Neurology",
    "file": "fontanelles.png",
    "credit": "Illustration: Easy Pedia",
    "questions": [
@@ -533,6 +729,10 @@
   },
   {
    "key": "lymph-nodes",
+   "title": "Cervical lymph node regions",
+   "caption": "Occipital, post-auricular, pre-auricular, submandibular, anterior and posterior cervical and supraclavicular nodes; supraclavicular is always abnormal.",
+   "kind": "drawing",
+   "chapter": "Haematology & oncology",
    "file": "lymph-nodes.png",
    "credit": "Illustration: Easy Pedia",
    "questions": [
@@ -542,6 +742,10 @@
   },
   {
    "key": "salter-harris",
+   "title": "Salter-Harris fractures",
+   "caption": "Types I-V of growth plate fracture (SALTR); type I goes through the physis only and usually heals in a cast.",
+   "kind": "drawing",
+   "chapter": "Rheumatology & musculoskeletal",
    "file": "salter-harris.png",
    "credit": "Illustration: Easy Pedia",
    "questions": [
@@ -550,6 +754,10 @@
   },
   {
    "key": "osgood",
+   "title": "Osgood-Schlatter disease",
+   "caption": "Painful, tender bony swelling at the tibial tuberosity in an active adolescent; traction apophysitis.",
+   "kind": "sign",
+   "chapter": "Rheumatology & musculoskeletal",
    "file": "osgood.png",
    "credit": "Illustration: Easy Pedia",
    "questions": [
@@ -558,6 +766,10 @@
   },
   {
    "key": "bell-palsy",
+   "title": "Bell palsy (LMN facial palsy)",
+   "caption": "Whole half of the face weak including the forehead, eye cannot close; UMN lesions spare the forehead.",
+   "kind": "sign",
+   "chapter": "Neurology",
    "file": "bell-palsy.png",
    "credit": "Illustration: Easy Pedia",
    "questions": [
@@ -567,6 +779,10 @@
   },
   {
    "key": "rop",
+   "title": "Retinopathy of prematurity",
+   "caption": "Zones I-III and stages 1-5: demarcation line, ridge, extraretinal fibrovascular proliferation, partial and total detachment.",
+   "kind": "drawing",
+   "chapter": "Ophthalmology",
    "file": "rop.png",
    "credit": "Illustration: Easy Pedia",
    "questions": [
@@ -576,6 +792,10 @@
   },
   {
    "key": "ivh",
+   "title": "Intraventricular haemorrhage and PVL",
+   "caption": "Cranial ultrasound drawing of grades I-IV IVH; periventricular leukomalacia shows white-matter cysts beside the ventricles.",
+   "kind": "drawing",
+   "chapter": "Neonatology",
    "file": "ivh.png",
    "credit": "Illustration: Easy Pedia",
    "questions": [
@@ -585,6 +805,10 @@
   },
   {
    "key": "vsd",
+   "title": "Ventricular septal defect",
+   "caption": "Hole in the ventricular septum with left-to-right shunt; pansystolic murmur at the left lower sternal edge.",
+   "kind": "drawing",
+   "chapter": "Cardiology",
    "file": "vsd.png",
    "credit": "Illustration: Easy Pedia",
    "questions": [
@@ -595,6 +819,10 @@
   },
   {
    "key": "pda",
+   "title": "Patent ductus arteriosus",
+   "caption": "Duct joining the aorta to the pulmonary artery; continuous machinery murmur and bounding pulses.",
+   "kind": "drawing",
+   "chapter": "Cardiology",
    "file": "pda.png",
    "credit": "Illustration: Easy Pedia",
    "questions": [
@@ -604,6 +832,10 @@
   },
   {
    "key": "avsd",
+   "title": "Atrioventricular septal defect",
+   "caption": "Hole at the centre of the heart with one common AV valve; the typical defect in Down syndrome.",
+   "kind": "drawing",
+   "chapter": "Cardiology",
    "file": "avsd.png",
    "credit": "Illustration: Easy Pedia",
    "questions": [
@@ -615,6 +847,10 @@
   },
   {
    "key": "hlhs",
+   "title": "Hypoplastic left heart syndrome",
+   "caption": "Tiny left ventricle and aorta with the body supplied through the duct; collapse when the duct closes.",
+   "kind": "drawing",
+   "chapter": "Cardiology",
    "file": "hlhs.png",
    "credit": "Illustration: Easy Pedia",
    "questions": [
@@ -624,6 +860,10 @@
   },
   {
    "key": "puv",
+   "title": "Posterior urethral valves",
+   "caption": "Dilated ureters and kidneys with a thick-walled trabeculated bladder in a boy; confirmed by MCUG.",
+   "kind": "drawing",
+   "chapter": "Nephrology & urology",
    "file": "puv.png",
    "credit": "Illustration: Easy Pedia",
    "questions": [
@@ -634,6 +874,10 @@
   },
   {
    "key": "trisomies",
+   "title": "Trisomies 21, 18 and 13",
+   "caption": "Down: single palmar crease, sandal gap, upslanting eyes. Edwards: overlapping fingers, rocker-bottom foot. Patau: polydactyly, cleft lip and palate.",
+   "kind": "syndrome",
+   "chapter": "Genetics & syndromes",
    "file": "trisomies.png",
    "credit": "Illustration: Easy Pedia",
    "questions": [
@@ -648,6 +892,10 @@
   },
   {
    "key": "tuberous",
+   "title": "Tuberous sclerosis",
+   "caption": "Ash-leaf macules, facial angiofibromas, shagreen patch, periungual fibromas and cardiac rhabdomyomas.",
+   "kind": "syndrome",
+   "chapter": "Genetics & syndromes",
    "file": "tuberous.png",
    "credit": "Illustration: Easy Pedia",
    "questions": [
@@ -658,6 +906,10 @@
   },
   {
    "key": "digeorge",
+   "title": "22q11 deletion (DiGeorge syndrome)",
+   "caption": "CATCH-22: cardiac conotruncal defects, abnormal face, thymic hypoplasia, cleft palate, hypocalcaemia.",
+   "kind": "syndrome",
+   "chapter": "Genetics & syndromes",
    "file": "digeorge.png",
    "credit": "Illustration: Easy Pedia",
    "questions": [
@@ -669,6 +921,10 @@
   },
   {
    "key": "lens",
+   "title": "Ectopia lentis: Marfan vs homocystinuria",
+   "caption": "Marfan lens dislocates up; homocystinuria lens dislocates down, with learning difficulty and thrombosis.",
+   "kind": "sign",
+   "chapter": "Genetics & syndromes",
    "file": "lens.png",
    "credit": "Illustration: Easy Pedia",
    "questions": [
@@ -677,6 +933,10 @@
   },
   {
    "key": "tuberous-skin",
+   "title": "Ash-leaf macule (tuberous sclerosis)",
+   "caption": "Hypopigmented leaf-shaped patch in a child with seizures; other skin signs are shagreen patch and angiofibromas.",
+   "kind": "skin",
+   "chapter": "Genetics & syndromes",
    "file": "tuberous-skin.png",
    "photo": "https://upload.wikimedia.org/wikipedia/commons/f/ff/Hypopigmented_macules%2C_Shagreen_patch_and_periungual_fibroma_of_tuberous_sclerosis.png",
    "credit": "Photo: Portocarrero et al. 2018, CC BY 4.0, via Wikimedia Commons (top: hypopigmented macules; middle: shagreen patch; bottom: periungual fibroma)",
