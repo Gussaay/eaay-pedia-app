@@ -1,6 +1,7 @@
-// /ospe/study?chapter=&topic=&kind=&mode= — flip cards for picture
-// identification. The front is the picture and "What is this?"; tap to see
-// the answer, then rate it Again / Good / Easy (same Leitner boxes as
+// /ospe/study?chapter=&topic=&kind=&source=&science=&mode= — flip cards for
+// picture identification. The front is the picture and "What is this?"; tap
+// and the card turns over: the picture goes away and the back shows only the
+// answer. Then rate it Again / Good / Easy (same Leitner boxes as
 // flashcards). Answers are kept in memory and saved once at the end or when
 // you leave, like FlashStudy. With mode=browse the same cards show as a
 // gallery with a swipe viewer, no grading.
@@ -8,7 +9,7 @@
 // Leaving REPLACES the history entry, as in FlashStudy, so back reaches the menu.
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import { useNavigate, useSearchParams } from 'react-router-dom';
-import { ChevronLeft, ChevronRight, Images, PartyPopper, Play, X } from 'lucide-react';
+import { ChevronLeft, ChevronRight, Images, PartyPopper, Play, RotateCw, X } from 'lucide-react';
 import { useAuth } from '../hooks/useAuth';
 import { useAsync } from '../hooks/useData';
 import { useBackHandler } from '../lib/back';
@@ -18,6 +19,33 @@ import { gradeCard } from '../lib/flashcards';
 import { filterOspe, loadOspeCards, loadOspeProgress, ospeQueue, saveOspeProgress } from '../lib/ospeData';
 import { OspeBack, OspePicture, OspeTile } from '../components/OspeCard';
 import { AppBar, Button, Empty, ErrorBox, Page, SkeletonList, useToast } from '../components/ui';
+
+const FLIP_MS = 500;
+
+/**
+ * One face of the study card, as in FlashStudy: both fill the same box and the
+ * back starts turned away. Visibility is switched explicitly halfway through
+ * the turn as well, because some Android WebViews ignore backface-visibility
+ * and would show both faces at once.
+ */
+function Face({ children, back = false, visible, className = '' }) {
+  return (
+    <div
+      className={`absolute inset-0 overflow-y-auto rounded-3xl border bg-white p-4 shadow-sm ${className}`}
+      style={{
+        backfaceVisibility: 'hidden',
+        WebkitBackfaceVisibility: 'hidden',
+        transform: back ? 'rotateY(180deg)' : undefined,
+        opacity: visible ? 1 : 0,
+        visibility: visible ? 'visible' : 'hidden',
+        pointerEvents: visible ? undefined : 'none',
+      }}
+      aria-hidden={!visible}
+    >
+      {children}
+    </div>
+  );
+}
 
 const RATINGS = [
   { rating: 'again', label: 'Again', cls: 'bg-rose-50 text-rose-700' },
@@ -79,8 +107,14 @@ export function OspeViewer({ cards, at, setAt, onClose }) {
 
 export default function OspeStudy() {
   const [params] = useSearchParams();
-  const filters = { chapter: params.get('chapter') || '', topic: params.get('topic') || '', kind: params.get('kind') || '' };
-  const scoped = !!(filters.chapter || filters.topic);
+  const filters = {
+    chapter: params.get('chapter') || '',
+    topic: params.get('topic') || '',
+    kind: params.get('kind') || '',
+    source: params.get('source') || '',
+    science: params.get('science') || '',
+  };
+  const scoped = !!(filters.chapter || filters.topic || filters.source || filters.science);
   const [browse, setBrowse] = useState(params.get('mode') === 'browse');
   const { user } = useAuth();
   const navigate = useNavigate();
@@ -90,13 +124,16 @@ export default function OspeStudy() {
   const data = useAsync(() => Promise.all([loadOspeCards(), loadOspeProgress(user?.uid)]).then(([cards, progress]) => ({ cards, progress })), [user?.uid]);
   const scope = useMemo(
     () => filterOspe(data.data?.cards || [], filters, CHAPTERS),
-    [data.data, filters.chapter, filters.topic, filters.kind], // eslint-disable-line react-hooks/exhaustive-deps
+    [data.data, filters.chapter, filters.topic, filters.kind, filters.source, filters.science], // eslint-disable-line react-hooks/exhaustive-deps
   );
-  const title = filters.topic ? scope[0]?.topic_label || scope[0]?.title || 'Topic' : filters.chapter || 'Study all due';
+  const title = filters.topic
+    ? scope[0]?.topic_label || scope[0]?.title || 'Topic'
+    : filters.chapter || (filters.source && filters.source.split(' › ').pop()) || filters.science || 'Study all due';
 
   const [queue, setQueue] = useState(null);
   const [at, setAt] = useState(0);
   const [flipped, setFlipped] = useState(false);
+  const [faceShown, setFaceShown] = useState('front');
   const [graded, setGraded] = useState({});
   const [open, setOpen] = useState(null);
   const gradedRef = useRef(graded);
@@ -132,7 +169,16 @@ export default function OspeStudy() {
   useEffect(() => {
     if (finished) persist();
   }, [finished, persist]);
-  useEffect(() => setFlipped(false), [card?._key]);
+  // A new card arrives front side up at once (waiting for the half-turn would
+  // flash its answer); a flip swaps the visible face when the card is edge-on.
+  useEffect(() => {
+    setFlipped(false);
+    setFaceShown('front');
+  }, [card?._key]);
+  useEffect(() => {
+    const timer = setTimeout(() => setFaceShown(flipped ? 'back' : 'front'), FLIP_MS / 2);
+    return () => clearTimeout(timer);
+  }, [flipped]);
 
   const answer = (rating) => {
     if (!card) return;
@@ -226,13 +272,40 @@ export default function OspeStudy() {
           <div className="h-full bg-sky-500 transition-all" style={{ width: `${Math.round((at / queue.length) * 100)}%` }} />
         </div>
         <p className="text-xs text-slate-500 text-right">{at + 1} of {queue.length}</p>
-        <div
-          className="rounded-3xl border border-slate-100 bg-white p-4 shadow-sm space-y-3 cursor-pointer"
+        <button
+          type="button"
           onClick={() => setFlipped((f) => !f)}
+          aria-label={flipped ? 'Show the picture' : 'Show the answer'}
+          className="block h-[58vh] w-full text-left"
+          style={{ perspective: '1400px' }}
         >
-          <OspePicture src={card.img} className="h-[45vh] w-full" />
-          {flipped ? <OspeBack card={card} /> : <p className="text-center font-display text-lg text-slate-700">What is this?</p>}
-        </div>
+          <div
+            className="relative h-full"
+            style={{
+              transformStyle: 'preserve-3d',
+              transition: `transform ${FLIP_MS}ms cubic-bezier(0.4, 0.0, 0.2, 1)`,
+              transform: flipped ? 'rotateY(180deg)' : 'rotateY(0deg)',
+            }}
+          >
+            <Face visible={faceShown === 'front'} className="border-slate-100">
+              <div className="flex h-full flex-col gap-3">
+                <OspePicture src={card.img} className="min-h-0 w-full flex-1" />
+                <p className="text-center font-display text-lg text-slate-700">What is this?</p>
+                <p className="flex items-center justify-center gap-1.5 text-xs text-slate-400">
+                  <RotateCw size={13} /> Tap to turn the card over
+                </p>
+              </div>
+            </Face>
+            <Face back visible={faceShown === 'back'} className="border-sky-200">
+              <div className="flex min-h-full flex-col justify-center gap-4">
+                <OspeBack card={card} />
+                <p className="flex items-center justify-center gap-1.5 text-xs text-slate-400">
+                  <RotateCw size={13} /> Tap to see the picture again
+                </p>
+              </div>
+            </Face>
+          </div>
+        </button>
         {flipped ? (
           <div className="grid grid-cols-3 gap-2">
             {RATINGS.map((r) => (

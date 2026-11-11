@@ -89,6 +89,7 @@ async function questionInfo(qid, field) {
     chapter: q.chapter || '',
     topic: q.topic || '',
     topic_label: q.tags?.[q.topic] || '',
+    science: q.science || '',
   };
 }
 
@@ -124,7 +125,7 @@ async function add(url, field, load) {
   const exists = (await cardRef(id).get()).exists();
   const info = await load();
   if (!info) return;
-  const base = { src: info.src, img: url.trim(), field, chapter: info.chapter, topic: info.topic, topic_label: info.topic_label };
+  const base = { src: info.src, img: url.trim(), field, chapter: info.chapter, topic: info.topic, topic_label: info.topic_label, science: info.science };
 
   let ai = null;
   if (!exists) ai = await askGroq(captionPrompt(info.prompt));

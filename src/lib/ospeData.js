@@ -6,10 +6,10 @@
 // kept for offline use by getOneCached. Progress uses the flashcard Leitner
 // boxes, under a fixed "ospe" deck id so it never mixes with a real deck.
 import { getOneCached, updateAt, updatePaths } from './rtdb';
-import { visibleCards } from '../../functions/ospeCore.js';
+import { ospeScience, sourcePaths, visibleCards } from '../../functions/ospeCore.js';
 import { isDue, isNew } from './flashcards';
 
-export { OSPE_KINDS, groupBySystem } from '../../functions/ospeCore.js';
+export { OSPE_KINDS, groupBySystem, groupBySource, groupByScience, ospeScience } from '../../functions/ospeCore.js';
 
 const raw = () => getOneCached('ospe/cards').then((v) => v || {});
 
@@ -32,14 +32,19 @@ export function saveOspeProgress(uid, graded) {
   return updatePaths(Object.fromEntries(Object.entries(graded).map(([id, p]) => [`flashprogress/${uid}/ospe/${id}`, p])));
 }
 
-/** The cards of one system / topic / kind. `chapters` is the known list, so unknown chapters count as 'Other'. */
-export function filterOspe(cards, { chapter = '', topic = '', kind = '' } = {}, chapters = []) {
+/**
+ * The cards of one system / topic / kind / source (exam or deck path) /
+ * basic science. `chapters` is the known list, so unknown chapters count as 'Other'.
+ */
+export function filterOspe(cards, { chapter = '', topic = '', kind = '', source = '', science = '' } = {}, chapters = []) {
   const known = new Set(chapters);
   return cards.filter(
     (c) =>
       (!chapter || (known.has(c.chapter) ? c.chapter : 'Other') === chapter) &&
       (!topic || (c.topic || c.title || '') === topic) &&
-      (!kind || c.kind === kind),
+      (!kind || c.kind === kind) &&
+      (!source || sourcePaths(c).includes(source)) &&
+      (!science || ospeScience(c) === science),
   );
 }
 

@@ -4,8 +4,14 @@ import { createHash } from 'node:crypto';
 import {
   OSPE_KINDS,
   captionPrompt,
+  groupByScience,
+  groupBySource,
   groupBySystem,
   mergeSource,
+  ospeScience,
+  sourceName,
+  sourcePath,
+  sourcePaths,
   normalizeImgUrl,
   parseCaptionReply,
   questionSourceLabel,
@@ -100,7 +106,7 @@ test('groupBySystem follows the chapter order, drops empty ones and files the re
 });
 
 test('mergeSource makes a waiting skeleton for a new picture', () => {
-  const card = mergeSource(null, { src: Q, img: 'u', field: 'exp_img', chapter: 'Cardiology', topic: 'chd', topic_label: 'CHD', now: NOW });
+  const card = mergeSource(null, { src: Q, img: 'u', field: 'exp_img', chapter: 'Cardiology', topic: 'chd', topic_label: 'CHD', science: 'Anatomy', now: NOW });
   assert.deepEqual(card, {
     img: 'u',
     title: '',
@@ -109,6 +115,7 @@ test('mergeSource makes a waiting skeleton for a new picture', () => {
     chapter: 'Cardiology',
     topic: 'chd',
     topic_label: 'CHD',
+    science: 'Anatomy',
     credit: '',
     status: 'waiting',
     sources: { 'q~abc': Q },
@@ -232,4 +239,39 @@ test('short caption and exam count', () => {
   assert.equal(shortCaption('Vesicles on palms. Coxsackie A16.'), 'Vesicles on palms.');
   assert.equal(shortCaption('No full stop'), 'No full stop');
   assert.equal(examCount({ sources: { a: { type: 'q', quiz: 'p1' }, b: { type: 'q', quiz: 'p1' }, c: { type: 'q', quiz: 'p2' }, d: { type: 'card', label: 'x' } } }), 2);
+});
+
+test('source paths drop the question number; the name is the last part', () => {
+  assert.equal(sourcePath('MRCPCH › AKP › AKP Recalls › AKP Recall Jan 2024 · Q12'), 'MRCPCH › AKP › AKP Recalls › AKP Recall Jan 2024');
+  assert.equal(sourceName('MRCPCH › AKP › AKP Recalls › AKP Recall Jan 2024 · Q12'), 'AKP Recall Jan 2024');
+  assert.equal(sourceName('Flashcards › AKP Images › AKP ECGs'), 'AKP ECGs');
+  assert.equal(sourcePath(''), '');
+});
+
+test('a picture used twice in one exam counts once for that exam', () => {
+  const card = { sources: { a: { label: 'Bank › Quiz 2 · Q1' }, b: { label: 'Bank › Quiz 2 · Q7' }, c: { label: 'Flashcards › Deck' } } };
+  assert.deepEqual(sourcePaths(card), ['Bank › Quiz 2', 'Flashcards › Deck']);
+});
+
+test('groupBySource lists every exam or deck by name, numbers in order', () => {
+  const cards = [
+    { sources: { a: { label: 'Bank › Quiz 10 · Q1' } } },
+    { sources: { a: { label: 'Bank › Quiz 2 · Q3' }, b: { label: 'Bank › Quiz 10 · Q4' } } },
+  ];
+  assert.deepEqual(groupBySource(cards), [
+    { path: 'Bank › Quiz 2', name: 'Quiz 2', from: 'Bank', n: 1 },
+    { path: 'Bank › Quiz 10', name: 'Quiz 10', from: 'Bank', n: 2 },
+  ]);
+});
+
+test('basic science defaults to Clinical and follows the given order', () => {
+  assert.equal(ospeScience({}), 'Clinical');
+  assert.equal(ospeScience({ science: 'Anatomy' }), 'Anatomy');
+  const cards = [{ science: 'Physiology' }, {}, { science: 'Anatomy' }, { science: 'Anatomy' }, { science: 'Zoology' }];
+  assert.deepEqual(groupByScience(cards, ['Clinical', 'Anatomy', 'Physiology']), [
+    { science: 'Clinical', n: 1 },
+    { science: 'Anatomy', n: 2 },
+    { science: 'Physiology', n: 1 },
+    { science: 'Zoology', n: 1 },
+  ]);
 });

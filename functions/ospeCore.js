@@ -89,7 +89,7 @@ export function groupBySystem(cards, chapters) {
 }
 
 /** Adds one source to a card (a new waiting card when there is none). Never overwrites title, caption, credit or status. */
-export function mergeSource(card, { src, img, field, chapter, topic, topic_label, now }) {
+export function mergeSource(card, { src, img, field, chapter, topic, topic_label, science, now }) {
   const key = srcKey(src);
   if (!card) {
     return {
@@ -100,6 +100,7 @@ export function mergeSource(card, { src, img, field, chapter, topic, topic_label
       chapter: chapter || '',
       topic: topic || '',
       topic_label: topic_label || '',
+      science: science || '',
       credit: '',
       status: 'waiting',
       sources: { [key]: src },
@@ -113,6 +114,7 @@ export function mergeSource(card, { src, img, field, chapter, topic, topic_label
     chapter: card.chapter || chapter || '',
     topic: card.topic || topic || '',
     topic_label: card.topic_label || topic_label || '',
+    science: card.science || science || '',
     sources: { ...(card.sources || {}), [key]: src },
     updated: now,
   };
@@ -183,4 +185,53 @@ export function parseCaptionReply(text) {
   let caption = clean(obj.caption);
   if (caption.length > 300) caption = `${caption.slice(0, 299).trimEnd()}…`;
   return { title, caption, kind, ok: obj.ok === true && !!title };
+}
+
+// ---------------------------------------------------------------------------
+// Browsing the cards the way the quizzes are browsed: by name (the exam or deck
+// a picture came from), by chapter (groupBySystem) and by basic science.
+// ---------------------------------------------------------------------------
+
+/** 'Bank › Group › Book › Quiz · Q5' → the place without the question number. */
+export const sourcePath = (label) => clean(label).replace(/\s*·\s*Q[\w-]*$/i, '');
+
+/** The last part of a source path: the quiz or deck name itself. */
+export const sourceName = (label) => sourcePath(label).split(' › ').pop() || '';
+
+/** The distinct places (paths) a card's picture appears in. */
+export function sourcePaths(card) {
+  return [...new Set(Object.values(card?.sources || {}).map((s) => sourcePath(s?.label)).filter(Boolean))];
+}
+
+/** One row per exam or deck: { path, name, from, n }, sorted by name (numbers in order). */
+export function groupBySource(cards) {
+  const rows = new Map();
+  for (const card of cards || []) {
+    for (const path of sourcePaths(card)) {
+      if (!rows.has(path)) {
+        const parts = path.split(' › ');
+        rows.set(path, { path, name: parts.pop(), from: parts.join(' › '), n: 0 });
+      }
+      rows.get(path).n += 1;
+    }
+  }
+  return [...rows.values()].sort(
+    (a, b) => a.name.localeCompare(b.name, 'en', { numeric: true, sensitivity: 'base' }) || a.from.localeCompare(b.from),
+  );
+}
+
+/** A card's basic-science section (Clinical when it does not say). */
+export const ospeScience = (card) => clean(card?.science) || 'Clinical';
+
+/** One row per basic science: { science, n }, in `order` first, then any others by name. */
+export function groupByScience(cards, order = []) {
+  const counts = new Map();
+  for (const card of cards || []) {
+    const s = ospeScience(card);
+    counts.set(s, (counts.get(s) || 0) + 1);
+  }
+  const rank = (s) => (order.includes(s) ? order.indexOf(s) : order.length);
+  return [...counts.entries()]
+    .map(([science, n]) => ({ science, n }))
+    .sort((a, b) => rank(a.science) - rank(b.science) || a.science.localeCompare(b.science));
 }
