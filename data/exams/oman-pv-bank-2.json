@@ -927,6 +927,20 @@
    "question_img": "",
    "category1": "Rheumatology & musculoskeletal",
    "category2": ""
+  },
+  {
+   "question": "A 12-year-old is short. His father is 175 cm and his mother 160 cm, and the examination is completely normal with normal body proportions. Which genetic cause should be considered for isolated short stature?",
+   "a": "Turner syndrome",
+   "b": "Panhypopituitarism",
+   "c": "Growth hormone deficiency with obesity",
+   "d": "Familial short stature",
+   "e": "SHOX gene deficiency",
+   "answer": "e",
+   "exp": "The parents are of average height, so familial short stature is unlikely. A normal examination makes hypothyroidism, panhypopituitarism and syndromes less likely. SHOX haploinsufficiency is found in a few percent of children labelled \"idiopathic short stature\", sometimes with subtle mesomelia or Madelung deformity; growth hormone treatment is licensed. Check bone age, IGF-1, TFTs, coeliac screen and karyotype (in girls) as well.",
+   "exp_img": "",
+   "question_img": "",
+   "category1": "Endocrinology & growth",
+   "category2": ""
   }
  ]
 }
