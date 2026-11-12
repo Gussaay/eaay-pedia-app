@@ -4,12 +4,12 @@ import { initializeApp, getApps, getApp } from 'firebase/app';
 import {
   getAuth,
   initializeAuth,
-  indexedDBLocalPersistence,
   browserLocalPersistence,
 } from 'firebase/auth';
 import { getDatabase } from 'firebase/database';
 import { getStorage } from 'firebase/storage';
 import { Capacitor } from '@capacitor/core';
+import { ResilientLocalPersistence } from './lib/resilientAuthPersistence';
 
 const env = import.meta.env;
 
@@ -34,7 +34,8 @@ function createAuth() {
   if (!Capacitor.isNativePlatform()) return getAuth(app);
   try {
     return initializeAuth(app, {
-      persistence: [indexedDBLocalPersistence, browserLocalPersistence],
+      // The login survives a moment when IndexedDB fails at start-up (Android WebView).
+      persistence: [ResilientLocalPersistence, browserLocalPersistence],
     });
   } catch {
     return getAuth(app);
