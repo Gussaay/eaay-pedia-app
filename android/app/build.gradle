@@ -36,6 +36,11 @@ dependencies {
     implementation "androidx.coordinatorlayout:coordinatorlayout:$androidxCoordinatorLayoutVersion"
     implementation "androidx.core:core-splashscreen:$coreSplashScreenVersion"
     implementation project(':capacitor-android')
+    // BackgroundUpdateWorker (updates while the app is closed). Same version as the updater plugin uses.
+    implementation "androidx.work:work-runtime:2.10.5"
+    // Only to compile: Worker's methods use Guava's ListenableFuture type. At run
+    // time WorkManager already brings that class, so nothing is added to the APK.
+    compileOnly "com.google.guava:guava:33.3.1-android"
     testImplementation "junit:junit:$junitVersion"
     androidTestImplementation "androidx.test.ext:junit:$androidxJunitVersion"
     androidTestImplementation "androidx.test.espresso:espresso-core:$androidxEspressoCoreVersion"
